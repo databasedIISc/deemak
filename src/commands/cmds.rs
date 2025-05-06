@@ -1,8 +1,23 @@
 use super::*;
 
-pub fn cmd_manager(parts: &[&str]) -> String {
+pub enum CommandResult {
+    Output(String),
+    Clear,
+    Exit,
+    NotFound,
+}
+
+pub fn cmd_manager(parts: &[&str]) -> CommandResult {
+    if parts.is_empty() {
+        return CommandResult::NotFound;
+    }
+
     match parts[0] {
-        "echo" => echo(&parts[1..]),
-        _ => "Command not found. Try `help`.".to_string(),
+        "echo" => CommandResult::Output(echo(&parts[1..])),
+        "whoami" => CommandResult::Output(whoami()),
+        "help" => CommandResult::Output(help()),
+        "clear" => CommandResult::Clear,
+        "exit" => CommandResult::Exit,
+        _ => CommandResult::NotFound,
     }
 }
