@@ -1,3 +1,4 @@
+use commands::CommandResult;
 use deemak::commands;
 use raylib::prelude::*;
 
@@ -6,6 +7,7 @@ pub struct ShellScreen {
     thread: RaylibThread,
     input_buffer: String,
     output_lines: Vec<String>,
+    close_window: bool,
 }
 
 impl ShellScreen {
@@ -22,6 +24,7 @@ impl ShellScreen {
             output_lines: vec![
                 "Type commands and press Enter. Try `help` for more info.".to_string(),
             ],
+            close_window: false,
         }
     }
 
@@ -118,8 +121,23 @@ impl ShellScreen {
 
         // Parse and execute command
         let parts: Vec<&str> = input.split_whitespace().collect();
-        let output = commands::cmd_manager(&parts);
-
-        self.output_lines.push(output);
+        match commands::cmd_manager(&parts) {
+            CommandResult::Output(output) => {
+                self.output_lines.push(output);
+            }
+            CommandResult::Clear => {
+                self.output_lines.clear();
+                self.output_lines
+                    .push("Type commands and press Enter. Try `help` for more info.".to_string());
+            }
+            CommandResult::Exit => {
+                self.output_lines.push("Exiting...".to_string());
+                // TODO: Add exit logic
+            }
+            CommandResult::NotFound => {
+                self.output_lines
+                    .push("Command not found. Try `help`.".to_string());
+            }
+        }
     }
 }
