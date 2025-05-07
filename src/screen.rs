@@ -123,7 +123,7 @@ impl ShellScreen {
         let parts: Vec<&str> = input.split_whitespace().collect();
         match commands::cmd_manager(&parts) {
             CommandResult::Output(output) => {
-                self.output_lines.push(output);
+                self.output_lines.extend(output.split("\n").map(|s| s.to_string()));
             }
             CommandResult::Clear => {
                 self.output_lines.clear();
