@@ -1,6 +1,6 @@
+use raylib::prelude::KeyboardKey;
 
-pub fn key_to_char(&mut self, key: KeyboardKey) -> Option<char> {
-    let shift = self.rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT);
+pub fn key_to_char(key: KeyboardKey, shift: bool) -> Option<char> {
     let c = match key {
         key if ((key as u8) >= KeyboardKey::KEY_A as u8) && ((key as u8) <= KeyboardKey::KEY_Z as u8) => {
             let base = if shift { b'A' } else { b'a' };
@@ -30,6 +30,7 @@ pub fn key_to_char(&mut self, key: KeyboardKey) -> Option<char> {
         KeyboardKey::KEY_BACKSLASH => if shift { '|' } else { '\\' },
         KeyboardKey::KEY_GRAVE => if shift { '~' } else { '`' },
         
-        _ => { return None;}    };
+        _ => return None,
+    };
     Some(c)
 }
