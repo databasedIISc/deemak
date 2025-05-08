@@ -1,13 +1,20 @@
 mod keys;
 mod screen;
+mod server;
 
 fn main() {
-    // Initialize the shell screen
-    let mut shell = screen::ShellScreen::new();
+    let args: Vec<String> = std::env::args().collect();
 
-    // Main game loop
-    while !shell.window_should_close() {
-        shell.update();
-        shell.draw();
+    if args.len() > 1 && args[1] == "web" {
+        // Launch Rocket web server ()
+        server::launch_web();
+    } else {
+        // Launch terminal shell
+        let mut shell = screen::ShellScreen::new();
+
+        while !shell.window_should_close() {
+            shell.update();
+            shell.draw();
+        }
     }
 }

@@ -1,0 +1,36 @@
+body {
+    background-color: black;
+    color: white;
+    font-family: monospace;
+    padding: 20px;
+  }
+  
+  .terminal {
+    display: flex;
+    flex-direction: column;
+    font-size: 1rem;
+    font-family: monospace;
+  }
+  
+  .terminal_line {
+    display: flex;
+    align-items: center;
+  }
+  
+  .terminal_line > div {
+    margin-right: 5px;
+  }
+  
+  .response{
+    padding: 4px;
+  }
+  
+  #terminal_input {
+    background: transparent;
+    border: none;
+    color: white;
+    outline: none;
+    width: 100%;
+    font-size: 1rem;
+    font-family: monospace;
+  }
