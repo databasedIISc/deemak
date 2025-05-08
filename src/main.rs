@@ -1,4 +1,5 @@
 mod screen;
+mod keys;
 
 fn main() {
     // Initialize the shell screen
