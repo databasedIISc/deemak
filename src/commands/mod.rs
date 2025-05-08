@@ -9,3 +9,15 @@ pub use help::help;
 
 mod whoami;
 pub use whoami::whoami;
+
+mod ls;
+pub use ls::ls;
+
+mod go;
+pub use go::go;
+
+mod whereami;
+pub use whereami::{display_relative_path, whereami};
+
+mod read;
+pub use read::read;

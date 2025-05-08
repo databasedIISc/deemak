@@ -1,13 +1,15 @@
 use super::*;
+use std::path::{Path, PathBuf};
 
 pub enum CommandResult {
     Output(String),
+    ChangeDirectory(PathBuf),
     Clear,
     Exit,
     NotFound,
 }
 
-pub fn cmd_manager(parts: &[&str]) -> CommandResult {
+pub fn cmd_manager(parts: &[&str], current_dir: &PathBuf, root_dir: &Path) -> CommandResult {
     if parts.is_empty() {
         return CommandResult::NotFound;
     }
@@ -15,6 +17,18 @@ pub fn cmd_manager(parts: &[&str]) -> CommandResult {
     match parts[0] {
         "echo" => CommandResult::Output(echo(&parts[1..])),
         "whoami" => CommandResult::Output(whoami()),
+        "go" => {
+            let mut new_dir = current_dir.clone();
+            let output = go(&parts[1..], &mut new_dir, root_dir);
+            if output.is_empty() {
+                CommandResult::ChangeDirectory(new_dir)
+            } else {
+                CommandResult::Output(output)
+            }
+        }
+        "ls" => CommandResult::Output(ls(&parts[1..], current_dir, root_dir)),
+        "read" => CommandResult::Output(read(&parts[1..], current_dir, root_dir)),
+        "whereami" => CommandResult::Output(whereami(current_dir, root_dir)),
         "help" => CommandResult::Output(help()),
         "clear" => CommandResult::Clear,
         "exit" => CommandResult::Exit,
