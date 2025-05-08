@@ -56,10 +56,8 @@ impl ShellScreen {
         }
     }
 
-    fn key_to_char(&self, key: KeyboardKey) -> Option<char> {
+    fn key_to_char(&mut self, key: KeyboardKey) -> Option<char> {
         let shift = self.rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT)
-        || self.rl.is_key_down(KeyboardKey::KEY_RIGHT_SHIFT);
-
         let c = match key {
             key if ((key as u8) >= KeyboardKey::KEY_A as u8) && ((key as u8) <= KeyboardKey::KEY_Z as u8) => {
                 let base = if shift { b'A' } else { b'a' };
