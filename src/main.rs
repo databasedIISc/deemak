@@ -1,3 +1,5 @@
+mod commands;
+mod keys;
 mod screen;
 
 fn main() {
