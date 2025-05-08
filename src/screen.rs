@@ -19,6 +19,8 @@ impl ShellScreen {
             .title("DBD Deemak Shell")
             .build();
 
+        let root_dir = Self::find_sekai_root().expect("Sekai root directory not found");
+
         Self {
             rl,
             thread,
@@ -26,8 +28,8 @@ impl ShellScreen {
             output_lines: vec![
                 "Type commands and press Enter. Try `help` for more info.".to_string(),
             ],
-            root_dir: Self::find_sekai_root().unwrap_or_else(|| PathBuf::new()),
-            current_dir: Self::find_sekai_root().unwrap_or_else(|| PathBuf::new()),
+            root_dir: root_dir.clone(),
+            current_dir: root_dir, // Both point to same path initially
         }
     }
 
@@ -142,9 +144,11 @@ impl ShellScreen {
 
         // Parse and execute command
         let parts: Vec<&str> = input.split_whitespace().collect();
-        match commands::cmd_manager(&parts, &self.current_dir, &self.root_dir) {
-            CommandResult::ChangeDirectory(new_dir) => {
+        match commands::cmd_manager(&parts, &mut self.current_dir, &self.root_dir) {
+            CommandResult::ChangeDirectory(new_dir, message) => {
                 self.current_dir = new_dir;
+                self.output_lines
+                    .extend(message.split("\n").map(|s| s.to_string()));
             }
             CommandResult::Output(output) => {
                 self.output_lines

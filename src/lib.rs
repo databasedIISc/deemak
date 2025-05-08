@@ -1,2 +1,2 @@
 pub mod commands;
-pub mod info_utils;
+pub mod utils;

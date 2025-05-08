@@ -1,6 +1,6 @@
 use super::whereami::display_relative_path;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// Read and display file contents (similar to 'cat' command)
 pub fn read(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
