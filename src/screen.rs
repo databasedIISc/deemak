@@ -1,9 +1,7 @@
+use crate::keys::key_to_char;
 use commands::CommandResult;
 use deemak::commands;
 use raylib::prelude::*;
-use crate::keys::key_to_char;
-
-    
 
 pub struct ShellScreen {
     rl: RaylibHandle,
@@ -49,7 +47,10 @@ impl ShellScreen {
             }
             Some(key) => {
                 // Only accept printable ASCII characters
-                if let Some(c) = Self::key_to_char(self, key) {
+                let shift = self.rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT)
+                    || self.rl.is_key_down(KeyboardKey::KEY_RIGHT_SHIFT);
+
+                if let Some(c) = key_to_char(key, shift) {
                     self.input_buffer.push(c);
                 }
             }
@@ -96,7 +97,8 @@ impl ShellScreen {
         let parts: Vec<&str> = input.split_whitespace().collect();
         match commands::cmd_manager(&parts) {
             CommandResult::Output(output) => {
-                self.output_lines.extend(output.split("\n").map(|s| s.to_string()));
+                self.output_lines
+                    .extend(output.split("\n").map(|s| s.to_string()));
             }
             CommandResult::Clear => {
                 self.output_lines.clear();
