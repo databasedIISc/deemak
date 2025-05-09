@@ -29,22 +29,25 @@ Official Github Repo: https://github.com/databasedIISc/deemak
 pub const INITIAL_MSG: &str = "Type commands and press Enter. Try `help` for more info.";
 
 impl ShellScreen {
-    pub fn new() -> Self {
-        let (rl, thread) = raylib::init()
-            .size(800, 600)
-            .title("DBD Deemak Shell")
-            .build();
-
-        let root_dir = utils::find_home().expect("Sekai root directory not found");
+    pub fn new_with_context(rl: RaylibHandle, thread: RaylibThread) -> Self {
+        let root_dir = utils::find_home().expect("Could not find sekai home directory");
 
         Self {
             rl,
             thread,
             input_buffer: String::new(),
-            // output_lines: vec![DEEMAK_BANNER.to_string(), INITIAL_MSG.to_string()],
-            output_lines: vec![INITIAL_MSG.to_string()],
+            output_lines: vec![
+                "Type commands and press Enter. Try `help` for more info.".to_string(),
+            ],
             root_dir: root_dir.clone(),
-            current_dir: root_dir, // Both point to same path initially
+            current_dir: root_dir,
+        }
+    }
+
+    pub fn run(&mut self) {
+        while !self.window_should_close() {
+            self.update();
+            self.draw();
         }
     }
 

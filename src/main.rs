@@ -1,4 +1,5 @@
 mod keys;
+mod menu;
 mod screen;
 mod server;
 
@@ -10,11 +11,19 @@ fn main() {
         server::launch_web();
     } else {
         // Launch terminal shell
-        let mut shell = screen::ShellScreen::new();
+        let (mut rl, thread) = raylib::init().size(800, 600).title("DEEMAK Shell").build();
 
-        while !shell.window_should_close() {
-            shell.update();
-            shell.draw();
+        // Show menu and get selection
+        let selection = menu::show_menu(&mut rl, &thread);
+
+        match selection {
+            Some(0) => {
+                // Create shell using existing Raylib instance
+                let mut shell = screen::ShellScreen::new_with_context(rl, thread);
+                shell.run();
+            }
+            Some(1) => println!("Settings would go here"),
+            _ => {} // Exit
         }
     }
 }
