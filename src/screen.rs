@@ -29,7 +29,7 @@ Official Github Repo: https://github.com/databasedIISc/deemak
 pub const INITIAL_MSG: &str = "Type commands and press Enter. Try `help` for more info.";
 
 impl ShellScreen {
-    pub fn new_with_context(rl: RaylibHandle, thread: RaylibThread) -> Self {
+    pub fn new_world(rl: RaylibHandle, thread: RaylibThread) -> Self {
         let root_dir = utils::find_home().expect("Could not find sekai home directory");
 
         Self {
