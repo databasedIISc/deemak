@@ -4,6 +4,16 @@ use deemak::commands;
 use deemak::utils;
 use raylib::prelude::*;
 use std::path::PathBuf;
+use raylib::ffi::SetConfigFlags;
+use rocket::yansi::Paint;
+
+// TODO: Wrap text to new lines,
+// TODO: Make Deemak resizeable,
+// TODO: Make the font size relative to the device.
+// TODO: Change the font completely.
+// TODO: Add a cursor (partially implemented)
+// TODO: Add a ascii output
+// TODO: Add a image output
 
 pub struct ShellScreen {
     rl: RaylibHandle,
@@ -12,6 +22,7 @@ pub struct ShellScreen {
     output_lines: Vec<String>,
     current_dir: PathBuf,
     root_dir: PathBuf,
+    cursor_position: Vec<i32>,
 }
 
 pub const DEEMAK_BANNER: &str = r#"
@@ -35,6 +46,7 @@ impl ShellScreen {
             .title("DBD Deemak Shell")
             .build();
 
+        unsafe { SetConfigFlags(4) };
         let root_dir = utils::find_home().expect("Sekai root directory not found");
 
         Self {
@@ -45,6 +57,7 @@ impl ShellScreen {
             output_lines: vec![INITIAL_MSG.to_string()],
             root_dir: root_dir.clone(),
             current_dir: root_dir, // Both point to same path initially
+            cursor_position: vec![0, 0],
         }
     }
 
@@ -101,6 +114,15 @@ impl ShellScreen {
             10 + (self.output_lines.len() as i32 * 20),
             20,
             Color::WHITE,
+        );
+        self.cursor_position[0] = 30 + (self.input_buffer.len() as i32 * 10);
+        self.cursor_position[1] = 10 + (self.output_lines.len() as i32 * 20);
+        d.draw_rectangle(
+            self.cursor_position[0],
+            self.cursor_position[1],
+            10,
+            20,
+            Color::BLUE,
         );
     }
 
