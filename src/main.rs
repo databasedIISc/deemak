@@ -2,10 +2,8 @@ mod keys;
 mod screen;
 mod server;
 use deemak::menu;
-
 use raylib::ffi::SetConfigFlags;
 use raylib::prelude::get_monitor_width;
-use deemak::menu;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
