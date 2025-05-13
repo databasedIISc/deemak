@@ -2,7 +2,7 @@ body {
     background-color: black;
     color: white;
     font-family: monospace;
-    padding: 20px;
+    margin: 0;
   }
   
   .terminal {
@@ -12,6 +12,68 @@ body {
     font-family: monospace;
   }
   
+  #terminal_container{
+    display: none;
+    padding: 20px;
+    flex-direction: column;
+  }
+
+  #menu_container{
+    display: flex;
+    height: 100vh;
+    /* width: 100vw; */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #exit_container{
+    display: none;
+    height: 100vh;
+    /* width: 100vw; */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .menu_button{
+    background-color: transparent;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    font-family: monospace;
+    padding: 10px;
+    cursor: pointer;
+    margin: 10px;
+  }
+
+  #menu_title{
+    font-size: 5rem;
+    font-family: monospace;
+    margin: 10px;
+  }
+
+  #exit_title{
+    font-size: 5rem;
+    font-family: monospace;
+    margin: 10px;
+  }
+  
+  #terminal_input {
+    background-color: black;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    font-family: monospace;
+    padding: 10px;
+    outline: none;
+    width: 100%;
+  }
+  
+  .terminal_line {
+    display: flex;
+  }
+
   .terminal_line {
     display: flex;
     align-items: center;

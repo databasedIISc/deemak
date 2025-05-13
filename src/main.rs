@@ -1,6 +1,7 @@
 mod keys;
 mod screen;
 mod server;
+use deemak::menu;
 
 use raylib::ffi::SetConfigFlags;
 use raylib::prelude::get_monitor_width;

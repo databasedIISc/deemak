@@ -7,9 +7,6 @@ pub use echo::echo;
 mod help;
 pub use help::help;
 
-mod whoami;
-pub use whoami::whoami;
-
 mod ls;
 pub use ls::ls;
 

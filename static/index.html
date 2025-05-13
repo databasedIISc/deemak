@@ -6,75 +6,118 @@
     <link rel="stylesheet" href="./index.css"/>
   </head>
   <body>
-    <h2>Type commands and press Enter. Try <code>help</code> for more info.</h2>
-    <div class="terminal" id="terminal">
-      <div class="terminal_line">
-        <div>$</div><input id="terminal_input" type="text" autofocus>
+    <div id="menu_container">
+      <div id="menu_title">DEEMAK SHELL</div>
+      <div class="menu_item" id="menu_item_start">
+        <button class="menu_button" onclick="startTerminal()">Start Shell</button>
+      </div>
+      <div class="menu_item" id="menu_item_about">
+        <button class="menu_button">About</button>
+      </div>
+      <div class="menu_item" id="menu_item_exit">
+        <button class="menu_button" onclick="exitShell()">Exit</button>
+      </div>
+    </div>
+    <div id="exit_container">
+      <div id="exit_title">Thanks For visiting</div>
+    </div>
+    <div id="terminal_container" style="display: none;">
+      <h2>Type commands and press Enter. Try <code>help</code> for more info.</h2>
+      <div class="terminal" id="terminal">
+        <div class="terminal_line">
+          <div>$</div><input id="terminal_input" type="text" autofocus autocomplete="off">
+        </div>
       </div>
     </div>
 
     <script>
+      const menuContainer = document.getElementById('menu_container');
+      const terminalContainer = document.getElementById('terminal_container');
+      const exitContainer = document.getElementById('exit_container');
       const terminal = document.getElementById('terminal');
-      const terminalInput = document.getElementById('terminal_input')
+      const terminalInput = document.getElementById('terminal_input');
       let currentDir = "";
+
+      function startTerminal(){
+        terminalContainer.style.display = "flex";
+        menuContainer.style.display = "none";
+        terminalInput.focus();
+        terminal.innerHTML = '';
+        addNewInput();
+      }
+
+      function stopTerminal(){
+        terminalContainer.style.display = "none";
+        menuContainer.style.display = "flex";
+        terminal.innerHTML = '';
+        addNewInput();
+      }
+
+      function exitShell(){
+        exitContainer.style.display = "flex";
+        terminalContainer.style.display = "none";
+        menuContainer.style.display = "none";
+        terminalInput.value = "";
+        terminalInput.disabled = true;
+      }
 
       async function processCommand(input) {
         const command = input.value.trim();
         const output = document.createElement('div');
         output.classList.add("response");
-        
+
         if (command == "clear"){
           terminal.innerHTML = '';
           addNewInput();
           return;
         }
         if (command === "exit") {
-          terminal.innerText = "Session ended. You can now close the tab.";
+          stopTerminal();
           input.disabled = true;
           return;
         }
         try {
-           const response = await fetch(
-                  `http://localhost:8000/backend/run?command=${encodeURIComponent(command)}&current_dir=${encodeURIComponent(currentDir)}`
+          const response = await fetch(
+            `http://localhost:8000/backend/run?command=${encodeURIComponent(command)}&current_dir=${encodeURIComponent(currentDir)}`
           );
           const result = await response.json();
           output.innerText = result.output;
           if (result.new_current_dir) {
-             currentDir = result.new_current_dir;
-            }
+            currentDir = result.new_current_dir;
+          }
         } catch (error) {
           output.innerText = "Error: Could not reach server.";
         }
-    
+
         terminal.appendChild(output);
         input.disabled = true;
         addNewInput();
       }
-    
+
       function addNewInput() {
         const line = document.createElement('div');
         line.className = 'terminal_line';
-    
+
         const prompt = document.createElement('div');
         prompt.textContent = '$';
-    
+
         const input = document.createElement('input');
         input.type = 'text';
         input.id = 'terminal_input';
-    
+
         input.addEventListener('keydown', function (e) {
           if (e.key === 'Enter') {
             processCommand(input);
           }
         });
-    
+
         line.appendChild(prompt);
         line.appendChild(input);
         terminal.appendChild(line);
-    
+
         input.focus();
       }
-    
+
       // Initial input setup
       window.onload = () => {
         const initialInput = document.querySelector('#terminal_input');
@@ -85,6 +128,5 @@
         });
       };
     </script>
-    
   </body>
 </html>
