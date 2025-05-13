@@ -26,9 +26,8 @@ pub struct ShellScreen {
     font: ffi::Font,
     grid_width: f32,
     window_width: i32,
+    font_size: f32,
 }
-
-pub const FONT_SIZE: f32 = 20.0;
 
 pub const DEEMAK_BANNER: &str = r#"
  _____                            _
@@ -45,16 +44,13 @@ Official Github Repo: https://github.com/databasedIISc/deemak
 pub const INITIAL_MSG: &str = "Type commands and press Enter. Try `help` for more info.";
 
 impl ShellScreen {
-    pub fn new() -> Self {
-        unsafe {
-            SetConfigFlags(4);
-        }
+    pub fn new_world(rl: RaylibHandle, thread: RaylibThread, font_size: f32) -> Self {
         // Loading Font
         let font = unsafe {
             let path = CString::new("JetBrainsMono-2/fonts/ttf/JetBrainsMonoNL-Medium.ttf").unwrap();
             LoadFontEx(
                 path.as_ptr() as *const c_char,
-                FONT_SIZE as c_int,
+                font_size as c_int,
                 0 as *mut c_int,
                 0
             )
@@ -65,32 +61,36 @@ impl ShellScreen {
             MeasureTextEx(
                 font,
                 a_char.as_ptr() as *const c_char,
-                FONT_SIZE,
+                font_size,
                 0.0
             ).x
         };
 
-        let (rl, thread) = init()
-            .size(800, 600)
-            .title("DBD Deemak Shell")
-            .build();
-
         let window_width = rl.get_screen_width();
 
-        let root_dir = utils::find_home().expect("Sekai root directory not found");
+        let root_dir = utils::find_home().expect("Could not find sekai home directory");
 
         Self {
             rl,
             thread,
             input_buffer: String::new(),
-            // output_lines: vec![DEEMAK_BANNER.to_string(), INITIAL_MSG.to_string()],
-            output_lines: vec![INITIAL_MSG.to_string()],
+            output_lines: vec![
+                "Type commands and press Enter. Try `help` for more info.".to_string(),
+            ],
             root_dir: root_dir.clone(),
             current_dir: root_dir, // Both point to same path initially
             cursor_position: vec![0, 0],
             font,
             grid_width,
             window_width,
+            font_size,
+        }
+    }
+
+    pub fn run(&mut self) {
+        while !self.window_should_close() {
+            self.update();
+            self.draw();
         }
     }
 
@@ -136,18 +136,18 @@ impl ShellScreen {
         // Draw output lines
         let mut extra_lines = 0;
         for (i, line) in self.output_lines.iter().enumerate() {
-            let limit = (self.window_width / self.grid_width as i32) - 5;
+            let limit = (self.window_width / self.grid_width as i32) - 9;
             if line.len() as i32 > limit {
                 let lines = wrap(line, limit as usize);
                 for wrapped_line in lines {
                     unsafe {
-                        let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + ((i+extra_lines) as f32 * FONT_SIZE)};
+                        let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + ((i+extra_lines) as f32 * self.font_size)};
                         let content = CString::new(wrapped_line.to_string()).unwrap();
                         DrawTextEx(
                             self.font,
                             content.as_ptr() as *const c_char,
                             pos,
-                            FONT_SIZE,
+                            self.font_size,
                             1.0,
                             ColorFromHSV(0.0, 0.0, 1.0)
                         );
@@ -156,13 +156,13 @@ impl ShellScreen {
                 }
             } else {
                 unsafe {
-                    let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + ((i+extra_lines) as f32 * FONT_SIZE)};
+                    let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + ((i+extra_lines) as f32 * self.font_size)};
                     let content = CString::new(line.as_str()).unwrap();
                     DrawTextEx(
                         self.font,
                         content.as_ptr() as *const c_char,
                         pos,
-                        FONT_SIZE,
+                        self.font_size,
                         1.0,
                         ColorFromHSV(0.0, 0.0, 1.0)
                     );
@@ -172,13 +172,13 @@ impl ShellScreen {
 
         // '>' at the beginning of every line
         unsafe {
-            let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + ((self.output_lines.len()+extra_lines) as f32 * FONT_SIZE)};
+            let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + ((self.output_lines.len()+extra_lines) as f32 * self.font_size)};
             let content = CString::new(">").unwrap();
             DrawTextEx(
                 self.font,
                 content.as_ptr() as *const c_char,
                 pos,
-                FONT_SIZE,
+                self.font_size,
                 1.0,
                 ColorFromHSV(0.0, 0.0, 1.0)
             );
@@ -187,13 +187,13 @@ impl ShellScreen {
         // Input
         for (i, char) in self.input_buffer.as_str().chars().enumerate() {
             unsafe {
-                let pos: Vector2 = Vector2{x: 30.0 + (i as f32 * (2.5 + self.grid_width)), y: 10.0 + ((self.output_lines.len()+extra_lines) as f32 * FONT_SIZE)};
+                let pos: Vector2 = Vector2{x: 30.0 + (i as f32 * (2.5 + self.grid_width)), y: 10.0 + ((self.output_lines.len()+extra_lines) as f32 * self.font_size)};
                 let content = CString::new(char.to_string()).unwrap();
                 DrawTextEx(
                     self.font,
                     content.as_ptr() as *const c_char,
                     pos,
-                    FONT_SIZE,
+                    self.font_size,
                     1.0,
                     ColorFromHSV(0.0, 0.0, 1.0)
                 );
@@ -204,7 +204,7 @@ impl ShellScreen {
         unsafe {
             DrawRectangle(
                 (30.0 + (self.input_buffer.len() as f32 * (2.5 + self.grid_width))) as c_int,
-                (10.0 + ((self.output_lines.len()+extra_lines) as f32 * FONT_SIZE)) as c_int,
+                (10.0 + ((self.output_lines.len()+extra_lines) as f32 * self.font_size)) as c_int,
                 self.grid_width as c_int,
                 (self.grid_width*2.5) as c_int,
                 ColorFromHSV(10.0, 10.0, 1.0),
