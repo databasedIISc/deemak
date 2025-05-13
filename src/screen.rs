@@ -207,7 +207,7 @@ impl ShellScreen {
                 (10.0 + ((self.output_lines.len()+extra_lines) as f32 * self.font_size)) as c_int,
                 self.grid_width as c_int,
                 (self.grid_width*2.5) as c_int,
-                ColorFromHSV(10.0, 10.0, 1.0),
+                ColorFromHSV(0.0, 0.0, 1.0),
             );
         }
     }
