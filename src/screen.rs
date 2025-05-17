@@ -4,16 +4,11 @@ use deemak::commands;
 use deemak::utils;
 use raylib::prelude::*;
 use std::{path::PathBuf, mem::take, process::exit, os::raw::c_int};
+use std::borrow::Cow;
 use std::ffi::CString;
 use std::os::raw::c_char;
-use raylib::ffi::{DrawTextEx, LoadFontEx, MeasureTextEx, SetConfigFlags, Vector2, ColorFromHSV, DrawRectangle};
+use raylib::ffi::{DrawTextEx, LoadFontEx, MeasureTextEx, Vector2, ColorFromHSV, DrawRectangle};
 use textwrap::wrap;
-
-// BUGGY: Wrap text to new lines,
-// DONE: Make Deemak resizeable,
-// DONE: Make the font size relative to the device.
-// DONE: Change the font completely.
-// BUGGY: Add a cursor
 
 pub struct ShellScreen {
     rl: RaylibHandle,
@@ -22,9 +17,7 @@ pub struct ShellScreen {
     output_lines: Vec<String>,
     current_dir: PathBuf,
     root_dir: PathBuf,
-    cursor_position: Vec<i32>,
     font: ffi::Font,
-    grid_width: f32,
     window_width: i32,
     font_size: f32,
 }
@@ -47,23 +40,13 @@ impl ShellScreen {
     pub fn new_world(rl: RaylibHandle, thread: RaylibThread, font_size: f32) -> Self {
         // Loading Font
         let font = unsafe {
-            let path = CString::new("JetBrainsMono-2/fonts/ttf/JetBrainsMonoNL-Medium.ttf").unwrap();
+            let path = CString::new("JetBrainsMono-2/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();
             LoadFontEx(
                 path.as_ptr() as *const c_char,
-                font_size as c_int,
+                600.0 as c_int,
                 0 as *mut c_int,
                 0
             )
-        };
-
-        let grid_width = unsafe {
-            let a_char = CString::new("A").unwrap();
-            MeasureTextEx(
-                font,
-                a_char.as_ptr() as *const c_char,
-                font_size,
-                0.0
-            ).x
         };
 
         let window_width = rl.get_screen_width();
@@ -79,9 +62,7 @@ impl ShellScreen {
             ],
             root_dir: root_dir.clone(),
             current_dir: root_dir, // Both point to same path initially
-            cursor_position: vec![0, 0],
             font,
-            grid_width,
             window_width,
             font_size,
         }
@@ -135,38 +116,38 @@ impl ShellScreen {
 
         // Draw output lines
         let mut extra_lines = 0;
+        let char_width = unsafe {
+            let cstr = CString::new("W").unwrap();
+            MeasureTextEx(self.font, cstr.as_ptr(), self.font_size, 1.0).x
+        };
+        let limit = ((self.window_width as f32 - 30.0) / char_width).floor() as usize;
+
         for (i, line) in self.output_lines.iter().enumerate() {
-            let limit = (self.window_width / self.grid_width as i32) - 9;
-            if line.len() as i32 > limit {
-                let lines = wrap(line, limit as usize);
-                for wrapped_line in lines {
-                    unsafe {
-                        let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + ((i+extra_lines) as f32 * self.font_size)};
-                        let content = CString::new(wrapped_line.to_string()).unwrap();
-                        DrawTextEx(
-                            self.font,
-                            content.as_ptr() as *const c_char,
-                            pos,
-                            self.font_size,
-                            1.0,
-                            ColorFromHSV(0.0, 0.0, 1.0)
-                        );
-                    }
-                    extra_lines += 1;
-                }
+            let lines = if line.len() > limit {
+                wrap(line, limit)
             } else {
+                vec![Cow::Borrowed(line.as_str())]
+            };
+
+            for (j, wrapped_line) in lines.iter().enumerate() {
+                let line_index = i + extra_lines + j;
                 unsafe {
-                    let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + ((i+extra_lines) as f32 * self.font_size)};
-                    let content = CString::new(line.as_str()).unwrap();
+                    let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + (line_index as f32 * self.font_size)};
+                    let content = CString::new(wrapped_line.to_string()).unwrap();
                     DrawTextEx(
                         self.font,
                         content.as_ptr() as *const c_char,
                         pos,
                         self.font_size,
-                        1.0,
+                        1.2,
                         ColorFromHSV(0.0, 0.0, 1.0)
                     );
                 }
+            }
+
+            // Add only the number of 'extra' wrapped lines
+            if lines.len() > 1 {
+                extra_lines += lines.len() - 1;
             }
         }
 
@@ -174,6 +155,7 @@ impl ShellScreen {
         unsafe {
             let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + ((self.output_lines.len()+extra_lines) as f32 * self.font_size)};
             let content = CString::new(">").unwrap();
+
             DrawTextEx(
                 self.font,
                 content.as_ptr() as *const c_char,
@@ -185,28 +167,42 @@ impl ShellScreen {
         }
 
         // Input
-        for (i, char) in self.input_buffer.as_str().chars().enumerate() {
+        let input_lines = if self.input_buffer.len() > limit {
+            wrap(&self.input_buffer, limit)
+        } else {
+            vec![Cow::Borrowed(self.input_buffer.as_str())]
+        };
+
+        for (i, input_line) in input_lines.iter().enumerate() {
             unsafe {
-                let pos: Vector2 = Vector2{x: 30.0 + (i as f32 * (2.5 + self.grid_width)), y: 10.0 + ((self.output_lines.len()+extra_lines) as f32 * self.font_size)};
-                let content = CString::new(char.to_string()).unwrap();
+                let pos: Vector2 = Vector2{x: 30.0, y: 10.0 + ((self.output_lines.len() + extra_lines + i) as f32 * self.font_size)};
+                let content = CString::new(input_line.to_string()).unwrap();
+
                 DrawTextEx(
                     self.font,
                     content.as_ptr() as *const c_char,
                     pos,
                     self.font_size,
-                    1.0,
+                    1.2,
                     ColorFromHSV(0.0, 0.0, 1.0)
                 );
             }
         }
 
         // CURSOR
+        let cursor_line = self.output_lines.len() + extra_lines + input_lines.len() - 1;
+        let cursor_x_offset = unsafe {
+            let last_line = input_lines.last().unwrap();
+            let c_string = CString::new(last_line.to_string()).unwrap();
+            MeasureTextEx(self.font, c_string.as_ptr(), self.font_size, 1.0).x
+        };
+
         unsafe {
             DrawRectangle(
-                (30.0 + (self.input_buffer.len() as f32 * (2.5 + self.grid_width))) as c_int,
-                (10.0 + ((self.output_lines.len()+extra_lines) as f32 * self.font_size)) as c_int,
-                self.grid_width as c_int,
-                (self.grid_width*2.5) as c_int,
+                (30.0 + cursor_x_offset) as c_int,
+                (10.0 + (cursor_line as f32 * self.font_size)) as c_int,
+                char_width as c_int,
+                self.font_size as c_int,
                 ColorFromHSV(0.0, 0.0, 1.0),
             );
         }
