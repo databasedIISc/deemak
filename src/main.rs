@@ -17,7 +17,7 @@ fn main() {
     }
 
     // Initialize Raylib window
-        let loglevel = if !debug_mode {
+    let loglevel = if !debug_mode {
         raylib::consts::TraceLogLevel::LOG_ERROR
     } else {
         raylib::consts::TraceLogLevel::LOG_ALL
