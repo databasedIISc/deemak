@@ -17,7 +17,13 @@ fn main() {
     }
 
     // Initialize Raylib window
-    let (mut rl, thread) = raylib::init().size(800, 600).title("DEEMAK Shell").build();
+        let loglevel = if !debug_mode {
+        raylib::consts::TraceLogLevel::LOG_ERROR
+    } else {
+        raylib::consts::TraceLogLevel::LOG_ALL
+    };
+    let (mut rl, thread) = raylib::init().log_level(loglevel).size(800, 600).title("DEEMAK Shell").build();
+    rl.set_trace_log(loglevel);
     log::log_info("Raylib initialized successfully", debug_mode);
 
     // Main menu loop
