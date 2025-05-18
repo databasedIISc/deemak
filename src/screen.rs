@@ -12,6 +12,7 @@ pub struct ShellScreen {
     output_lines: Vec<String>,
     current_dir: PathBuf,
     root_dir: PathBuf,
+    debug_mode: bool,
 }
 
 pub const DEEMAK_BANNER: &str = r#"
@@ -29,7 +30,7 @@ Official Github Repo: https://github.com/databasedIISc/deemak
 pub const INITIAL_MSG: &str = "Type commands and press Enter. Try `help` for more info.";
 
 impl ShellScreen {
-    pub fn new_world(rl: RaylibHandle, thread: RaylibThread) -> Self {
+    pub fn new_world(rl: RaylibHandle, thread: RaylibThread, debug_mode: bool) -> Self {
         let root_dir = utils::find_home().expect("Could not find sekai home directory");
 
         Self {
@@ -41,6 +42,7 @@ impl ShellScreen {
             ],
             root_dir: root_dir.clone(),
             current_dir: root_dir,
+            debug_mode,
         }
     }
 
