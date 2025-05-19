@@ -195,7 +195,7 @@ impl ShellScreen {
         let cursor_x_offset = unsafe {
             let last_line = input_lines.last().unwrap();
             let c_string = CString::new(last_line.to_string()).unwrap();
-            MeasureTextEx(self.font, c_string.as_ptr(), self.font_size, 1.0).x
+            MeasureTextEx(self.font, c_string.as_ptr(), self.font_size, 1.2).x
         };
 
         unsafe {
