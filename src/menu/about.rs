@@ -1,8 +1,5 @@
 use raylib::prelude::*;
-use std::{
-    thread::sleep,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 const ABOUT_TEXT: &str = r#"
 DEEMAK Shell - Version 1.0
@@ -19,7 +16,7 @@ Created by: [Your Name]
 License: MIT
 "#;
 
-pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread) {
+pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread, debug_mode: bool) {
     let mut displayed_text = String::new();
     let mut char_index = 0;
     let mut last_char_time = Instant::now();

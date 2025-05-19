@@ -20,6 +20,7 @@ pub struct ShellScreen {
     font: ffi::Font,
     window_width: i32,
     font_size: f32,
+    debug_mode: bool,
 }
 
 pub const DEEMAK_BANNER: &str = r#"
@@ -37,7 +38,7 @@ Official Github Repo: https://github.com/databasedIISc/deemak
 pub const INITIAL_MSG: &str = "Type commands and press Enter. Try `help` for more info.";
 
 impl ShellScreen {
-    pub fn new_world(rl: RaylibHandle, thread: RaylibThread, font_size: f32) -> Self {
+    pub fn new_world(rl: RaylibHandle, thread: RaylibThread, font_size: f32, debug_mode: bool) -> Self {
         // Loading Font
         let font = unsafe {
             let path = CString::new("JetBrainsMono-2/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();
@@ -50,7 +51,6 @@ impl ShellScreen {
         };
 
         let window_width = rl.get_screen_width();
-
         let root_dir = utils::find_home().expect("Could not find sekai home directory");
 
         Self {
@@ -65,6 +65,7 @@ impl ShellScreen {
             font,
             window_width,
             font_size,
+            debug_mode,
         }
     }
 

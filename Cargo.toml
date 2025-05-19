@@ -3,6 +3,10 @@ name = "deemak"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+debug = []
+
 [dependencies]
 raylib = "5.5.1"
 serde = { version = "1.0.219", features = ["derive"] }
