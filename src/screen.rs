@@ -7,7 +7,7 @@ use std::{path::PathBuf, mem::take, process::exit, os::raw::c_int};
 use std::borrow::Cow;
 use std::ffi::CString;
 use std::os::raw::c_char;
-use raylib::ffi::{DrawTextEx, LoadFontEx, MeasureTextEx, Vector2, ColorFromHSV, DrawRectangle};
+use raylib::ffi::{DrawTextEx, DrawLineEx, LoadFontEx, MeasureTextEx, Vector2, ColorFromHSV, DrawRectangle};
 use textwrap::wrap;
 
 pub struct ShellScreen {
@@ -19,6 +19,9 @@ pub struct ShellScreen {
     root_dir: PathBuf,
     font: ffi::Font,
     window_width: i32,
+    window_height: i32,
+    char_width: f32,
+    term_split_ratio: f32,
     font_size: f32,
     debug_mode: bool,
 }
@@ -51,6 +54,11 @@ impl ShellScreen {
         };
 
         let window_width = rl.get_screen_width();
+        let window_height = rl.get_screen_height();
+        let char_width = unsafe {
+            let cstr = CString::new("W").unwrap();
+            MeasureTextEx(font, cstr.as_ptr(), font_size, 1.2).x
+        };
         let root_dir = utils::find_home().expect("Could not find sekai home directory");
 
         Self {
@@ -64,6 +72,9 @@ impl ShellScreen {
             current_dir: root_dir, // Both point to same path initially
             font,
             window_width,
+            window_height,
+            char_width,
+            term_split_ratio: 2.0/3.0,
             font_size,
             debug_mode,
         }
@@ -119,9 +130,9 @@ impl ShellScreen {
         let mut extra_lines = 0;
         let char_width = unsafe {
             let cstr = CString::new("W").unwrap();
-            MeasureTextEx(self.font, cstr.as_ptr(), self.font_size, 1.0).x
+            MeasureTextEx(self.font, cstr.as_ptr(), self.font_size, 1.2).x
         };
-        let limit = ((self.window_width as f32 - 30.0) / char_width).floor() as usize;
+        let limit = ((self.window_width as f32 * (self.term_split_ratio - 0.12) ) / char_width).floor() as usize;
 
         for (i, line) in self.output_lines.iter().enumerate() {
             let lines = if line.len() > limit {
@@ -162,7 +173,7 @@ impl ShellScreen {
                 content.as_ptr() as *const c_char,
                 pos,
                 self.font_size,
-                1.0,
+                1.2,
                 ColorFromHSV(0.0, 0.0, 1.0)
             );
         }
@@ -205,6 +216,17 @@ impl ShellScreen {
                 char_width as c_int,
                 self.font_size as c_int,
                 ColorFromHSV(0.0, 0.0, 1.0),
+            );
+        }
+
+        // DIVIDER
+        let divider_pos = self.term_split_ratio;
+        unsafe {
+            DrawLineEx(
+                Vector2{x: self.window_width as f32 * divider_pos, y: 0.0},
+                Vector2{x: self.window_width as f32 * divider_pos, y: self.window_height as f32},
+                2.0,
+                ColorFromHSV(0.0, 0.0, 0.3)
             );
         }
     }

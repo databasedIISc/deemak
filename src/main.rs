@@ -2,7 +2,7 @@ mod keys;
 mod screen;
 mod server;
 use deemak::menu;
-use raylib::ffi::SetConfigFlags;
+use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
 mod log;
 
@@ -21,15 +21,16 @@ fn main() {
     // Initialize Raylib window
     unsafe {
         SetConfigFlags(4);
+        SetTargetFPS(60);
     }
-    let font_size = get_monitor_width(0) as f32 / 73.5;
     let loglevel = if !debug_mode {
         raylib::consts::TraceLogLevel::LOG_ERROR
     } else {
         raylib::consts::TraceLogLevel::LOG_ALL
     };
-  
+
     let (mut rl, thread) = raylib::init().log_level(loglevel).size(800, 600).title("DEEMAK Shell").build();
+    let font_size = get_monitor_width(0) as f32 / 73.5;
     rl.set_trace_log(loglevel);
     log::log_info("Raylib initialized successfully", debug_mode);
 
