@@ -2,6 +2,12 @@ use super::whereami::display_relative_path;
 use std::fs;
 use std::path::Path;
 
+pub const HELP_TXT: &str = r#"
+Usage: read <object_name>
+
+Read the contents of a file and display it.
+"#;
+
 /// Read and display file contents (similar to 'cat' command)
 pub fn read(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
     if args.is_empty() {

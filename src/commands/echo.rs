@@ -4,3 +4,9 @@ pub fn echo(args: &[&str]) -> String {
     }
     args.join(" ")
 }
+
+pub const HELP_TXT: &str = r#"
+Usage: echo [message]
+
+Echoes the message back to you.
+"#;
