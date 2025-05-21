@@ -66,6 +66,7 @@ impl ShellScreen {
             thread,
             input_buffer: String::new(),
             output_lines: vec![
+                DEEMAK_BANNER.to_string(),
                 "Type commands and press Enter. Try `help` for more info.".to_string(),
             ],
             root_dir: root_dir.clone(),
@@ -127,45 +128,46 @@ impl ShellScreen {
         d.clear_background(Color::BLACK);
 
         // Draw output lines
-        let mut extra_lines = 0;
         let char_width = unsafe {
             let cstr = CString::new("W").unwrap();
             MeasureTextEx(self.font, cstr.as_ptr(), self.font_size, 1.2).x
         };
         let limit = ((self.window_width as f32 * (self.term_split_ratio - 0.12) ) / char_width).floor() as usize;
+        let max_lines_on_screen = self.window_height / self.font_size as i32;
 
-        for (i, line) in self.output_lines.iter().enumerate() {
+        let mut visible_lines = Vec::new();
+        for line in self.output_lines.iter() {
             let lines = if line.len() > limit {
                 wrap(line, limit)
             } else {
                 vec![Cow::Borrowed(line.as_str())]
             };
+            visible_lines.extend(lines);
+        }
 
-            for (j, wrapped_line) in lines.iter().enumerate() {
-                let line_index = i + extra_lines + j;
-                unsafe {
-                    let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + (line_index as f32 * self.font_size)};
-                    let content = CString::new(wrapped_line.to_string()).unwrap();
-                    DrawTextEx(
-                        self.font,
-                        content.as_ptr() as *const c_char,
-                        pos,
-                        self.font_size,
-                        1.2,
-                        ColorFromHSV(0.0, 0.0, 1.0)
-                    );
-                }
-            }
+        if visible_lines.len() > max_lines_on_screen as usize {
+            let neg_index = visible_lines.len() - max_lines_on_screen as usize + 5;
+            visible_lines = visible_lines[neg_index..].to_owned();
+        }
 
-            // Add only the number of 'extra' wrapped lines
-            if lines.len() > 1 {
-                extra_lines += lines.len() - 1;
+        for (i, line) in visible_lines.iter().enumerate() {
+            unsafe {
+                let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + (i as f32 * self.font_size)};
+                let content = CString::new(line.to_string()).unwrap();
+                DrawTextEx(
+                    self.font,
+                    content.as_ptr() as *const c_char,
+                    pos,
+                    self.font_size,
+                    1.2,
+                    ColorFromHSV(0.0, 0.0, 1.0)
+                );
             }
         }
 
         // '>' at the beginning of every line
         unsafe {
-            let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + ((self.output_lines.len()+extra_lines) as f32 * self.font_size)};
+            let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + (visible_lines.len() as f32 * self.font_size)};
             let content = CString::new(">").unwrap();
 
             DrawTextEx(
@@ -187,7 +189,7 @@ impl ShellScreen {
 
         for (i, input_line) in input_lines.iter().enumerate() {
             unsafe {
-                let pos: Vector2 = Vector2{x: 30.0, y: 10.0 + ((self.output_lines.len() + extra_lines + i) as f32 * self.font_size)};
+                let pos: Vector2 = Vector2{x: 30.0, y: 10.0 + ((visible_lines.len() + i) as f32 * self.font_size)};
                 let content = CString::new(input_line.to_string()).unwrap();
 
                 DrawTextEx(
@@ -202,7 +204,7 @@ impl ShellScreen {
         }
 
         // CURSOR
-        let cursor_line = self.output_lines.len() + extra_lines + input_lines.len() - 1;
+        let cursor_line = visible_lines.len() + input_lines.len() - 1;
         let cursor_x_offset = unsafe {
             let last_line = input_lines.last().unwrap();
             let c_string = CString::new(last_line.to_string()).unwrap();
