@@ -137,6 +137,7 @@ impl ShellScreen {
 
         let mut visible_lines = Vec::new();
         for line in self.output_lines.iter() {
+
             let lines = if line.len() > limit {
                 wrap(line, limit)
             } else {
