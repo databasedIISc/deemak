@@ -1,5 +1,23 @@
-pub fn help() -> String {
-    let help_text = r#"
+use super::*;
+
+pub fn get_command_help(command: &str) -> Option<&'static str> {
+    match command {
+        "echo" => Some(echo::HELP_TXT),
+        "go" => Some(go::HELP_TXT),
+        "ls" => Some(ls::HELP_TXT),
+        "help" => Some("help [command]: Displays help for the specified command."),
+        "read" => Some(read::HELP_TXT),
+        "whereami" => Some("whereami: Displays the current directory."),
+        "whoami" => Some("whoami: Displays who you are."),
+        "exit" => Some("exit: Exits the program."),
+        "clear" => Some("clear: Clears the screen."),
+        _ => None,
+    }
+}
+
+pub fn help(cmd: &str) -> String {
+    if cmd.is_empty() {
+        let help_text = r#"
 Welcome to DBD Deemak Help. You can use the following commands:
 
 - echo <message>: Echoes the message back to you.
@@ -11,6 +29,13 @@ Welcome to DBD Deemak Help. You can use the following commands:
 - help: Displays this help message.
 - exit: Exits the program.
 - clear: Clears the screen.
+
+Try `help command` to get help on a specific command.
 "#;
-    help_text.to_string()
+        help_text.to_string()
+    } else {
+        get_command_help(cmd)
+            .unwrap_or("No help available for this command.")
+            .to_string()
+    }
 }

@@ -24,7 +24,16 @@ pub fn cmd_manager(parts: &[&str], current_dir: &PathBuf, root_dir: &Path) -> Co
         "ls" => CommandResult::Output(ls(&parts[1..], current_dir, root_dir)),
         "read" => CommandResult::Output(read(&parts[1..], current_dir, root_dir)),
         "whereami" => CommandResult::Output(whereami(current_dir, root_dir)),
-        "help" => CommandResult::Output(help()),
+        "help" => {
+            if parts.len() > 1 {
+                match help::get_command_help(parts[1]) {
+                    Some(msg) => CommandResult::Output(msg.to_string()),
+                    None => CommandResult::Output(format!("No help available for '{}'", parts[1])),
+                }
+            } else {
+                CommandResult::Output(help(""))
+            }
+        }
         "clear" => CommandResult::Clear,
         "exit" => CommandResult::Exit,
         _ => CommandResult::NotFound,

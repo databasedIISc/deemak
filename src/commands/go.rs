@@ -2,6 +2,17 @@ use super::whereami::display_relative_path;
 use crate::utils::info_reader;
 use std::path::{Path, PathBuf};
 
+pub const HELP_TXT: &str = r#"
+Usage: go [destination]
+
+Navigate to different directories:
+- go <dirname>    : Enter specified directory
+- go HOME         : Return to home directory
+- go ..           : Move up one directory
+- go back         : Same as `go ..`
+
+"#;
+
 pub fn go(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, String) {
     if args.is_empty() {
         return (
@@ -13,7 +24,7 @@ pub fn go(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, St
     let target = args[0];
     let new_path = match target {
         "HOME" | "home" => root_dir.to_path_buf(),
-        ".." | "back" | "up" => {
+        ".." | "back" => {
             if current_dir == root_dir {
                 return (
                     current_dir.clone(),

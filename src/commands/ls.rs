@@ -1,6 +1,12 @@
 use super::whereami::display_relative_path;
 use std::path::Path;
 
+pub const HELP_TXT: &str = r#"
+Usage: ls
+
+Lists the objects and places you can go to in the current directory.
+"#;
+
 pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
     // Determine target path with security checks
     let target_path = if args.is_empty() {
