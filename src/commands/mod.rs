@@ -5,7 +5,7 @@ mod echo;
 pub use echo::echo;
 
 mod help;
-pub use help::help;
+pub use help::{get_command_help, help};
 
 mod ls;
 pub use ls::ls;
@@ -18,3 +18,5 @@ pub use whereami::{display_relative_path, whereami};
 
 mod read;
 pub use read::read;
+
+mod argparser;

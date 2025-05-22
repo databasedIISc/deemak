@@ -1,3 +1,4 @@
+use super::argparser::ArgParser;
 use super::whereami::display_relative_path;
 use crate::utils::info_reader;
 use std::path::{Path, PathBuf};
@@ -13,16 +14,8 @@ Navigate to different directories:
 
 "#;
 
-pub fn go(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, String) {
-    if args.is_empty() {
-        return (
-            current_dir.clone(),
-            "go: missing directory operand".to_string(),
-        );
-    }
-
-    let target = args[0];
-    let new_path = match target {
+pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, String) {
+    let new_path = match destination {
         "HOME" | "home" => root_dir.to_path_buf(),
         ".." | "back" => {
             if current_dir == root_dir {
@@ -33,7 +26,7 @@ pub fn go(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, St
             }
             current_dir.parent().unwrap().to_path_buf()
         }
-        _ => current_dir.join(target),
+        _ => current_dir.join(destination),
     };
 
     // Normalize path and verify it exists
@@ -42,7 +35,7 @@ pub fn go(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, St
         Err(_) => {
             return (
                 current_dir.clone(),
-                format!("go: {}: No such directory", target),
+                format!("go: {}: No such directory", destination),
             );
         }
     };
@@ -59,12 +52,15 @@ pub fn go(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, St
         if canonical_path.is_file() {
             return (
                 current_dir.clone(),
-                format!("go: {}: Is a file (try 'read {}')", target, target),
+                format!(
+                    "go: {}: Is a file (try 'read {}')",
+                    destination, destination
+                ),
             );
         }
         return (
             current_dir.clone(),
-            format!("go: {}: Not a directory", target),
+            format!("go: {}: Not a directory", destination),
         );
     }
 
@@ -83,4 +79,37 @@ pub fn go(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, St
     };
 
     (canonical_path, message)
+}
+
+pub fn go(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, String) {
+    let mut parser = ArgParser::new(&[]);
+
+    let args_string: Vec<String> = args.iter().map(|s| s.to_string()).collect();
+    // Parse arguments
+    match parser.parse(&args_string) {
+        Ok(_) => {
+            let pos_args = parser.get_positional_args();
+
+            if pos_args.is_empty() {
+                return (
+                    current_dir.clone(),
+                    "go: missing directory operand\nTry 'help go' for more information."
+                        .to_string(),
+                );
+            }
+            if pos_args.len() > 1 {
+                return (
+                    current_dir.clone(),
+                    "go: too many arguments\nTry 'help go' for more information.".to_string(),
+                );
+            }
+            let target = pos_args[0].as_str();
+            navigate(target, current_dir, root_dir)
+        }
+        Err(e) if e == "help" => (current_dir.clone(), HELP_TXT.to_string()),
+        Err(_) => (
+            current_dir.clone(),
+            "Error parsing arguments. Try `help go` for more information.".to_string(),
+        ),
+    }
 }
