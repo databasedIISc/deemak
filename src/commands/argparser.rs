@@ -27,10 +27,11 @@ impl ArgParser {
             if arg.starts_with('-') {
                 if self.flags.contains(arg) {
                     self.args.push(arg.clone());
+                } else {
+                    Err("unknown".to_string())?;
                 }
-                // Other flags are ignored per requirement
             } else {
-                self.args.push(arg.clone());
+                Err("Error parsing arguments".to_string())?;
             }
         }
 

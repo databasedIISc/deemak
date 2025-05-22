@@ -82,10 +82,11 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
                 directories = directories
             )
         }
-        Err(e) if e == "help" => {
-            // Return the help text when -h or --help is used
-            HELP_TXT.to_string()
+        Err(e) => match &e[..] {
+            "help" => HELP_TXT,
+            "unknown" => "ls: unknown flag\nTry 'help ls' for more information.",
+            _ => "Error parsing arguments. Try 'help ls' for more information.",
         }
-        Err(_) => "Error parsing arguments. Try `help ls` for more information.".to_string(),
+        .to_string(),
     }
 }

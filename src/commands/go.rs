@@ -1,7 +1,10 @@
 use super::argparser::ArgParser;
 use super::whereami::display_relative_path;
 use crate::utils::info_reader;
-use std::path::{Path, PathBuf};
+use std::{
+    env::current_dir,
+    path::{Path, PathBuf},
+};
 
 pub const HELP_TXT: &str = r#"
 Usage: go [destination]
@@ -106,10 +109,16 @@ pub fn go(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, St
             let target = pos_args[0].as_str();
             navigate(target, current_dir, root_dir)
         }
-        Err(e) if e == "help" => (current_dir.clone(), HELP_TXT.to_string()),
-        Err(_) => (
-            current_dir.clone(),
-            "Error parsing arguments. Try `help go` for more information.".to_string(),
-        ),
+        Err(e) => match &e[..] {
+            "help" => (current_dir.clone(), HELP_TXT.to_string()),
+            "unknown" => (
+                current_dir.clone(),
+                "ls: unknown flag\nTry 'help go' for more information.".to_string(),
+            ),
+            _ => (
+                current_dir.clone(),
+                "Error parsing arguments. Try 'help ls' for more information.".to_string(),
+            ),
+        },
     }
 }
