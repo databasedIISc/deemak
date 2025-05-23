@@ -83,7 +83,7 @@ pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread, debug_mode: bool
             y_offset += line_height;
         }
 
-        // Draw prompt to continue
+        // Draw prompt to continue and skip
         if char_index >= ABOUT_TEXT.len() {
             let prompt = "Press ESC/ENTER/SPACE to continue";
             // let prompt_width = measure_text_ex(&font, prompt, 20.0, 1.0).x as i32;
