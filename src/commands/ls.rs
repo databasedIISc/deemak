@@ -5,7 +5,7 @@ use std::path::Path;
 pub const HELP_TXT: &str = r#"
 Usage: ls [directory]
 
-Lists the objects and places you can go to in the specified directory.
+Lists the objects and places you can go to in the specified(current by default) directory.
 "#;
 
 pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
