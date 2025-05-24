@@ -1,4 +1,7 @@
+use std::ffi::CString;
+use std::os::raw::{c_char, c_int};
 use raylib::prelude::*;
+use raylib::ffi::{DrawTextEx, LoadFontEx, ColorFromHSV, Vector2, MeasureTextEx};
 use std::time::{Duration, Instant};
 
 const ABOUT_TEXT: &str = r#"
@@ -25,7 +28,15 @@ pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread, debug_mode: bool
     let mut input_ready = false;
 
     // Load font
-    let font = rl.get_font_default();
+    let font = unsafe {
+        let path = CString::new("JetBrainsMono-2/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();
+        LoadFontEx(
+            path.as_ptr() as *const c_char,
+            600.0 as c_int,
+            0 as *mut c_int,
+            0
+        )
+    };
 
     while !rl.window_should_close() && !should_exit {
 
@@ -67,19 +78,22 @@ pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread, debug_mode: bool
         d.clear_background(Color::BLACK);
 
         // Draw animated text
-        let text_pos = Vector2::new(50.0, 50.0);
         let mut y_offset = 0.0;
         let line_height = 30.0;
 
         for line in displayed_text.lines() {
-            d.draw_text_ex(
-                &font,
-                line,
-                text_pos + Vector2::new(0.0, y_offset),
-                24.0,
-                1.0,
-                Color::WHITE,
-            );
+            unsafe {
+                let content = CString::new(line).unwrap();
+                let pos = Vector2{x: 50.0, y: 50.0 + y_offset};
+                DrawTextEx(
+                    font,
+                    content.as_ptr() as *const c_char,
+                    pos,
+                    24.0,
+                    1.0,
+                    ColorFromHSV(0.0, 0.0, 1.0),
+                );
+            }
             y_offset += line_height;
         }
 
@@ -87,12 +101,36 @@ pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread, debug_mode: bool
         if char_index >= ABOUT_TEXT.len() {
             let prompt = "Press ESC/ENTER/SPACE to continue";
             // let prompt_width = measure_text_ex(&font, prompt, 20.0, 1.0).x as i32;
-            let prompt_width = d.measure_text(prompt, 24);
-            d.draw_text(prompt, (800 - prompt_width) / 2, 550, 20, Color::GRAY);
+            unsafe {
+                let c_prompt = CString::new(prompt).unwrap();
+                let prompt_width = MeasureTextEx(font, c_prompt.as_ptr(), 20.0, 1.0).x;
+                let content = CString::new(prompt).unwrap();
+                let pos = Vector2{x: (800.0 - prompt_width) / 2.0, y: 550.0};
+                DrawTextEx(
+                    font,
+                    content.as_ptr() as *const c_char,
+                    pos,
+                    20.0,
+                    1.0,
+                    ColorFromHSV(0.0, 0.0, 0.51)
+                );
+            }
         } else {
             let skip_prompt = "Press SPACE to skip";
-            let skip_width = d.measure_text(skip_prompt, 20);
-            d.draw_text(skip_prompt, (800 - skip_width) / 2, 550, 20, Color::GRAY);
+            unsafe {
+                let c_skip = CString::new(skip_prompt).unwrap();
+                let skip_width = MeasureTextEx(font, c_skip.as_ptr(), 20.0, 1.0).x;
+                let content = CString::new(skip_prompt).unwrap();
+                let pos = Vector2{x: (600.0 - skip_width) / 2.0, y: 550.0};
+                DrawTextEx(
+                    font,
+                    content.as_ptr() as *const c_char,
+                    pos,
+                    20.0,
+                    1.0,
+                    ColorFromHSV(0.0, 0.0, 0.51)
+                );
+            }
         }
     }
 }
