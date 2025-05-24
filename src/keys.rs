@@ -2,6 +2,14 @@ use raylib::prelude::KeyboardKey;
 
 pub fn key_to_char(key: KeyboardKey, shift: bool) -> Option<char> {
     let c = match key {
+        KeyboardKey::KEY_LEFT_SHIFT => return None,
+        KeyboardKey::KEY_RIGHT_SHIFT => return None,
+        KeyboardKey::KEY_LEFT_ALT => return None,
+        KeyboardKey::KEY_RIGHT_ALT => return None,
+        KeyboardKey::KEY_LEFT_CONTROL => return None,
+        KeyboardKey::KEY_RIGHT_CONTROL => return None,
+        KeyboardKey::KEY_LEFT_SUPER => return None,
+        KeyboardKey::KEY_RIGHT_SUPER => return None,
         key if ((key as u8) >= KeyboardKey::KEY_A as u8) && ((key as u8) <= KeyboardKey::KEY_Z as u8) => {
             let base = if shift { b'A' } else { b'a' };
             (base + (key as u8 - KeyboardKey::KEY_A as u8)) as char
