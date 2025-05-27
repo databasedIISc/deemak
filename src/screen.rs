@@ -1,10 +1,14 @@
+
 use crate::keys::key_to_char;
+use std::borrow::Cow;
 use commands::CommandResult;
 use deemak::commands;
 use deemak::utils;
 use raylib::prelude::*;
+use std::cmp::max;
+use std::cmp::min;
 use std::{path::PathBuf, mem::take, process::exit, os::raw::c_int};
-use std::borrow::Cow;
+
 use std::ffi::CString;
 use std::os::raw::c_char;
 use raylib::ffi::{DrawTextEx, DrawLineEx, LoadFontEx, MeasureTextEx, Vector2, ColorFromHSV, DrawRectangle};
@@ -24,6 +28,7 @@ pub struct ShellScreen {
     term_split_ratio: f32,
     font_size: f32,
     debug_mode: bool,
+    scroll_offset:i32,
 }
 
 pub const DEEMAK_BANNER: &str = r#"
@@ -78,6 +83,7 @@ impl ShellScreen {
             term_split_ratio: 2.0/3.0,
             font_size,
             debug_mode,
+            scroll_offset: 0,
         }
     }
 
@@ -98,6 +104,7 @@ impl ShellScreen {
             Some(KeyboardKey::KEY_ENTER) => {
                 let input = take(&mut self.input_buffer);
                 self.process_input(&input);
+                self.scroll_offset=0;
             }
             Some(KeyboardKey::KEY_BACKSPACE) => {
                 if !self.input_buffer.is_empty() {
@@ -120,13 +127,15 @@ impl ShellScreen {
         if self.rl.is_window_resized() {
             self.window_width = self.rl.get_screen_width();
         }
+
+        // Handle scroll
+        let scroll_y =self.rl.get_mouse_wheel_move();
+        if scroll_y != 0.0 {
+            self.scroll_offset -= (scroll_y/2.00) as i32;
+        }
     }
 
     pub fn draw(&mut self) {
-        let mut d = self.rl.begin_drawing(&self.thread);
-
-        d.clear_background(Color::BLACK);
-
         // Draw output lines
         let char_width = unsafe {
             let cstr = CString::new("W").unwrap();
@@ -146,12 +155,40 @@ impl ShellScreen {
             visible_lines.extend(lines);
         }
 
-        if visible_lines.len() > max_lines_on_screen as usize {
-            let neg_index = visible_lines.len() - max_lines_on_screen as usize + 5;
-            visible_lines = visible_lines[neg_index..].to_owned();
-        }
+        // Scroll offset is negative or zero. Clamp it to valid range.
+        let min_scroll_offset = -max(0, visible_lines.len() as i32 - max_lines_on_screen+3);
+        self.scroll_offset = max(self.scroll_offset, min_scroll_offset);
+        self.scroll_offset = min(self.scroll_offset, 0); // Never go below bottom
 
-        for (i, line) in visible_lines.iter().enumerate() {
+        let mut d = self.rl.begin_drawing(&self.thread);
+        d.clear_background(Color::BLACK);
+
+        
+        
+        // Input
+        // let input_lines = if self.input_buffer.len()+1 > limit {
+        //     wrap(&self.input_buffer, limit)
+        // } else {
+        //     vec![Cow::Borrowed(self.input_buffer.as_str())]
+        // };
+        let input_lines :Vec<String>=  {
+         wrap(&format!("> {}", self.input_buffer), limit)
+        .into_iter()
+        .map(|line| line.into_owned())
+        .collect()};
+        
+        let length_input:usize=input_lines.len();
+        visible_lines.extend(input_lines.into_iter().map(Cow::from));
+
+
+        let mut index:usize=0;
+
+        index = min(max(0,visible_lines.len() as i32- max_lines_on_screen +self.scroll_offset+3),visible_lines.len()as i32-1) as usize;
+        let display_lines = &visible_lines[index as usize..];
+
+        
+
+        for (i, line) in display_lines.iter().enumerate() {
             unsafe {
                 let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + (i as f32 * self.font_size)};
                 let content = CString::new(line.to_string()).unwrap();
@@ -165,49 +202,27 @@ impl ShellScreen {
                 );
             }
         }
-
+        //promt
+        
         // '>' at the beginning of every line
         unsafe {
-            let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + (visible_lines.len() as f32 * self.font_size)};
+            let pos_cursr: Vector2 = Vector2{x: 10.0, y: 10.0 + ((display_lines.len()-length_input)as f32 * self.font_size)};
             let content = CString::new(">").unwrap();
 
             DrawTextEx(
                 self.font,
                 content.as_ptr() as *const c_char,
-                pos,
+                pos_cursr,
                 self.font_size,
                 1.2,
                 ColorFromHSV(0.0, 0.0, 1.0)
             );
         }
 
-        // Input
-        let input_lines = if self.input_buffer.len() > limit {
-            wrap(&self.input_buffer, limit)
-        } else {
-            vec![Cow::Borrowed(self.input_buffer.as_str())]
-        };
-
-        for (i, input_line) in input_lines.iter().enumerate() {
-            unsafe {
-                let pos: Vector2 = Vector2{x: 30.0, y: 10.0 + ((visible_lines.len() + i) as f32 * self.font_size)};
-                let content = CString::new(input_line.to_string()).unwrap();
-
-                DrawTextEx(
-                    self.font,
-                    content.as_ptr() as *const c_char,
-                    pos,
-                    self.font_size,
-                    1.2,
-                    ColorFromHSV(0.0, 0.0, 1.0)
-                );
-            }
-        }
-
         // CURSOR
-        let cursor_line = visible_lines.len() + input_lines.len() - 1;
+        let cursor_line = display_lines.len()  - 1;
         let cursor_x_offset = unsafe {
-            let last_line = input_lines.last().unwrap();
+            let last_line = display_lines.last().unwrap();
             let c_string = CString::new(last_line.to_string()).unwrap();
             MeasureTextEx(self.font, c_string.as_ptr(), self.font_size, 1.2).x
         };
@@ -234,11 +249,11 @@ impl ShellScreen {
         }
     }
 
-    pub fn process_input(&mut self, input: &str) {
+    pub fn process_input(&mut self, mut input: &str) {
         if input.is_empty() {
             return;
         }
-
+        
         // Add input to output
         self.output_lines.push(format!("> {}", input));
 
