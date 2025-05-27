@@ -229,7 +229,7 @@ impl ShellScreen {
 
         unsafe {
             DrawRectangle(
-                (30.0 + cursor_x_offset) as c_int,
+                (10.0 + cursor_x_offset) as c_int,
                 (10.0 + (cursor_line as f32 * self.font_size)) as c_int,
                 char_width as c_int,
                 self.font_size as c_int,
