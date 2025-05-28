@@ -1,6 +1,5 @@
 
 use crate::keys::key_to_char;
-use std::borrow::Cow;
 use commands::CommandResult;
 use deemak::commands;
 use deemak::utils;
@@ -8,10 +7,10 @@ use raylib::prelude::*;
 use std::cmp::max;
 use std::cmp::min;
 use std::{path::PathBuf, mem::take, process::exit, os::raw::c_int};
-
 use std::ffi::CString;
 use std::os::raw::c_char;
 use raylib::ffi::{DrawTextEx, DrawLineEx, LoadFontEx, MeasureTextEx, Vector2, ColorFromHSV, DrawRectangle};
+use crate::utils::wrapit::wrapit;
 use textwrap::wrap;
 
 pub struct ShellScreen {
@@ -65,15 +64,12 @@ impl ShellScreen {
             MeasureTextEx(font, cstr.as_ptr(), font_size, 1.2).x
         };
         let root_dir = utils::find_home().expect("Could not find sekai home directory");
-
+        
         Self {
             rl,
             thread,
             input_buffer: String::new(),
-            output_lines: vec![
-                DEEMAK_BANNER.to_string(),
-                "Type commands and press Enter. Try `help` for more info.".to_string(),
-            ],
+            output_lines:Vec::<String>::new(),
             root_dir: root_dir.clone(),
             current_dir: root_dir, // Both point to same path initially
             font,
@@ -88,6 +84,13 @@ impl ShellScreen {
     }
 
     pub fn run(&mut self) {
+        //add to output lines the banner 
+        let limit: usize =((self.window_width as f32 * (self.term_split_ratio - 0.12) ) / self.char_width).floor() as usize;
+        let wrapped_banner=wrap(DEEMAK_BANNER,limit);
+        let wrapped_initial=wrap(INITIAL_MSG,limit);
+        self.output_lines.extend(wrapped_banner.into_iter().map(|c| c.into_owned()));
+        self.output_lines.extend(wrapped_initial.into_iter().map(|c| c.into_owned()));
+
         while !self.window_should_close() {
             self.update();
             self.draw();
@@ -144,13 +147,13 @@ impl ShellScreen {
         let limit = ((self.window_width as f32 * (self.term_split_ratio - 0.12) ) / char_width).floor() as usize;
         let max_lines_on_screen = self.window_height / self.font_size as i32;
 
-        let mut visible_lines = Vec::new();
+        let mut visible_lines = Vec::<String>::new();
         for line in self.output_lines.iter() {
 
             let lines = if line.len() > limit {
-                wrap(line, limit)
+                wrapit(line, limit)
             } else {
-                vec![Cow::Borrowed(line.as_str())]
+                vec![line.to_string()]
             };
             visible_lines.extend(lines);
         }
@@ -172,13 +175,13 @@ impl ShellScreen {
         //     vec![Cow::Borrowed(self.input_buffer.as_str())]
         // };
         let input_lines :Vec<String>=  {
-         wrap(&format!("> {}", self.input_buffer), limit)
+         wrapit(&format!("> {}", self.input_buffer), limit)
         .into_iter()
-        .map(|line| line.into_owned())
+        .map(|line| line.to_owned())
         .collect()};
         
         let length_input:usize=input_lines.len();
-        visible_lines.extend(input_lines.into_iter().map(Cow::from));
+        visible_lines.extend(input_lines.into_iter());
 
 
         let mut index:usize=0;

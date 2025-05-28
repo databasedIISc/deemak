@@ -1,6 +1,6 @@
 mod keys;
 mod screen;
-
+mod utils;
 mod server;
 use deemak::menu;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
@@ -41,11 +41,8 @@ fn main() {
             Some(0) => {
                 // Shell mode
                 let mut shell = screen::ShellScreen::new_world(rl, thread, font_size, debug_mode);
-                
                 shell.run();
-                
                 break; // Exit after shell closes
-                
             }
             Some(1) => {
                 // About screen
@@ -59,3 +56,5 @@ fn main() {
         }
     }
 }
+
+ 
