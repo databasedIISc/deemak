@@ -7,33 +7,58 @@
   </head>
   <body>
     <div id="menu_container">
-      <div id="menu_title">DEEMAK SHELL</div>
-      <div class="menu_item" id="menu_item_start">
-        <button class="menu_button" onclick="startTerminal()">Start Shell</button>
-      </div>
-      <div class="menu_item" id="menu_item_about">
-        <button class="menu_button">About</button>
-      </div>
-      <div class="menu_item" id="menu_item_exit">
-        <button class="menu_button" onclick="exitShell()">Exit</button>
+      <div class="menu_card">
+        <div id="menu_title">DEEMAK SHELL</div>
+        <div class="menu_item"><button class="menu_button" onclick="startTerminal()">Start Shell</button></div>
+        <div class="menu_item"><button class="menu_button" onclick="about()">About</button></div>
+        <div class="menu_item"><button class="menu_button" onclick="exitShell()">Exit</button></div>
       </div>
     </div>
+    
     <div id="exit_container">
-      <div id="exit_title">Thanks For visiting</div>
+      <div id="exit_title">Thanks For Visiting</div>
     </div>
     <div id="terminal_container" style="display: none;">
       <h2>Type commands and press Enter. Try <code>help</code> for more info.</h2>
-      <div class="terminal" id="terminal">
-        <div class="terminal_line">
-          <div>$</div><input id="terminal_input" type="text" autofocus autocomplete="off">
+
+      <div  class="terminal_card">
+        <div class="terminal" id="terminal">
+          <div class="terminal_line">
+            <div>$</div><input id="terminal_input" type="text" autofocus autocomplete="off">
+          </div>
         </div>
+        <div class="terminal_display">
+          
+        </div>
+    </div>
+
+    </div>
+    <div id="about_container" style="display: none;">
+      <div class="about_card">
+        <h2>DEEMAK Shell - Version 1.0</h2>
+        <p>A modern terminal shell built with <strong>Rust</strong> and <strong>Raylib</strong>.</p>
+    
+        <h3>Features</h3>
+        <ul>
+          <li>Command parsing</li>
+          <li>Directory navigation</li>
+          <li>File operations</li>
+          <li>Customizable interface</li>
+        </ul>
+    
+        <p><strong>Created by:</strong> IISc Databased Club</p>
+        <p><strong>License:</strong> MIT License</p>
+
+        <button class="back_button" onclick="backToMenu()">Back</button>
       </div>
     </div>
+    
 
     <script>
       const menuContainer = document.getElementById('menu_container');
       const terminalContainer = document.getElementById('terminal_container');
       const exitContainer = document.getElementById('exit_container');
+      const aboutContainer = document.getElementById('about_container');
       const terminal = document.getElementById('terminal');
       const terminalInput = document.getElementById('terminal_input');
       let currentDir = "";
@@ -59,6 +84,22 @@
         menuContainer.style.display = "none";
         terminalInput.value = "";
         terminalInput.disabled = true;
+      }
+
+      function about(){
+        aboutContainer.style.display = "flex";
+        terminalContainer.style.display = "none";
+        menuContainer.style.display = "none";
+        terminalInput.value = "";
+        terminalInput.disabled = true;
+      }
+
+      function backToMenu() {
+        aboutContainer.style.display = "none";
+        terminalContainer.style.display = "none";
+        menuContainer.style.display = "flex";
+        terminal.innerHTML = '';
+        addNewInput();
       }
 
       async function processCommand(input) {
