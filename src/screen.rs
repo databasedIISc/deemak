@@ -1,16 +1,17 @@
-
 use crate::keys::key_to_char;
+use crate::utils::wrapit::wrapit;
 use commands::CommandResult;
 use deemak::commands;
 use deemak::utils;
+use raylib::ffi::{
+    ColorFromHSV, DrawLineEx, DrawRectangle, DrawTextEx, LoadFontEx, MeasureTextEx, Vector2,
+};
 use raylib::prelude::*;
 use std::cmp::max;
 use std::cmp::min;
-use std::{path::PathBuf, mem::take, process::exit, os::raw::c_int};
 use std::ffi::CString;
 use std::os::raw::c_char;
-use raylib::ffi::{DrawTextEx, DrawLineEx, LoadFontEx, MeasureTextEx, Vector2, ColorFromHSV, DrawRectangle};
-use crate::utils::wrapit::wrapit;
+use std::{mem::take, os::raw::c_int, path::PathBuf, process::exit};
 use textwrap::wrap;
 
 pub struct ShellScreen {
@@ -27,7 +28,7 @@ pub struct ShellScreen {
     term_split_ratio: f32,
     font_size: f32,
     debug_mode: bool,
-    scroll_offset:i32,
+    scroll_offset: i32,
 }
 
 pub const DEEMAK_BANNER: &str = r#"
@@ -45,7 +46,13 @@ Official Github Repo: https://github.com/databasedIISc/deemak
 pub const INITIAL_MSG: &str = "Type commands and press Enter. Try `help` for more info.";
 
 impl ShellScreen {
-    pub fn new_world(rl: RaylibHandle, thread: RaylibThread, font_size: f32, debug_mode: bool) -> Self {
+    pub fn new_world(
+        rl: RaylibHandle,
+        thread: RaylibThread,
+        world_dir: PathBuf,
+        font_size: f32,
+        debug_mode: bool,
+    ) -> Self {
         // Loading Font
         let font = unsafe {
             let path = CString::new("JetBrainsMono-2/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();
@@ -53,7 +60,7 @@ impl ShellScreen {
                 path.as_ptr() as *const c_char,
                 600.0 as c_int,
                 0 as *mut c_int,
-                0
+                0,
             )
         };
 
@@ -63,20 +70,20 @@ impl ShellScreen {
             let cstr = CString::new("W").unwrap();
             MeasureTextEx(font, cstr.as_ptr(), font_size, 1.2).x
         };
-        let root_dir = utils::find_home().expect("Could not find sekai home directory");
-        
+        let root_dir = utils::find_home(&world_dir).expect("Could not find sekai home directory");
+
         Self {
             rl,
             thread,
             input_buffer: String::new(),
-            output_lines:Vec::<String>::new(),
+            output_lines: Vec::<String>::new(),
             root_dir: root_dir.clone(),
             current_dir: root_dir, // Both point to same path initially
             font,
             window_width,
             window_height,
             char_width,
-            term_split_ratio: 2.0/3.0,
+            term_split_ratio: 2.0 / 3.0,
             font_size,
             debug_mode,
             scroll_offset: 0,
@@ -84,12 +91,16 @@ impl ShellScreen {
     }
 
     pub fn run(&mut self) {
-        //add to output lines the banner 
-        let limit: usize =((self.window_width as f32 * (self.term_split_ratio - 0.12) ) / self.char_width).floor() as usize;
-        let wrapped_banner=wrap(DEEMAK_BANNER,limit);
-        let wrapped_initial=wrap(INITIAL_MSG,limit);
-        self.output_lines.extend(wrapped_banner.into_iter().map(|c| c.into_owned()));
-        self.output_lines.extend(wrapped_initial.into_iter().map(|c| c.into_owned()));
+        //add to output lines the banner
+        let limit: usize = ((self.window_width as f32 * (self.term_split_ratio - 0.12))
+            / self.char_width)
+            .floor() as usize;
+        let wrapped_banner = wrap(DEEMAK_BANNER, limit);
+        let wrapped_initial = wrap(INITIAL_MSG, limit);
+        self.output_lines
+            .extend(wrapped_banner.into_iter().map(|c| c.into_owned()));
+        self.output_lines
+            .extend(wrapped_initial.into_iter().map(|c| c.into_owned()));
 
         while !self.window_should_close() {
             self.update();
@@ -107,7 +118,7 @@ impl ShellScreen {
             Some(KeyboardKey::KEY_ENTER) => {
                 let input = take(&mut self.input_buffer);
                 self.process_input(&input);
-                self.scroll_offset=0;
+                self.scroll_offset = 0;
             }
             Some(KeyboardKey::KEY_BACKSPACE) => {
                 if !self.input_buffer.is_empty() {
@@ -132,9 +143,9 @@ impl ShellScreen {
         }
 
         // Handle scroll
-        let scroll_y =self.rl.get_mouse_wheel_move();
+        let scroll_y = self.rl.get_mouse_wheel_move();
         if scroll_y != 0.0 {
-            self.scroll_offset -= (scroll_y/2.00) as i32;
+            self.scroll_offset -= (scroll_y / 2.00) as i32;
         }
     }
 
@@ -144,12 +155,12 @@ impl ShellScreen {
             let cstr = CString::new("W").unwrap();
             MeasureTextEx(self.font, cstr.as_ptr(), self.font_size, 1.2).x
         };
-        let limit = ((self.window_width as f32 * (self.term_split_ratio - 0.12) ) / char_width).floor() as usize;
+        let limit = ((self.window_width as f32 * (self.term_split_ratio - 0.12)) / char_width)
+            .floor() as usize;
         let max_lines_on_screen = self.window_height / self.font_size as i32;
 
         let mut visible_lines = Vec::<String>::new();
         for line in self.output_lines.iter() {
-
             let lines = if line.len() > limit {
                 wrapit(line, limit)
             } else {
@@ -159,41 +170,46 @@ impl ShellScreen {
         }
 
         // Scroll offset is negative or zero. Clamp it to valid range.
-        let min_scroll_offset = -max(0, visible_lines.len() as i32 - max_lines_on_screen+3);
+        let min_scroll_offset = -max(0, visible_lines.len() as i32 - max_lines_on_screen + 3);
         self.scroll_offset = max(self.scroll_offset, min_scroll_offset);
         self.scroll_offset = min(self.scroll_offset, 0); // Never go below bottom
 
         let mut d = self.rl.begin_drawing(&self.thread);
         d.clear_background(Color::BLACK);
 
-        
-        
         // Input
         // let input_lines = if self.input_buffer.len()+1 > limit {
         //     wrap(&self.input_buffer, limit)
         // } else {
         //     vec![Cow::Borrowed(self.input_buffer.as_str())]
         // };
-        let input_lines :Vec<String>=  {
-         wrapit(&format!("> {}", self.input_buffer), limit)
-        .into_iter()
-        .map(|line| line.to_owned())
-        .collect()};
-        
-        let length_input:usize=input_lines.len();
+        let input_lines: Vec<String> = {
+            wrapit(&format!("> {}", self.input_buffer), limit)
+                .into_iter()
+                .map(|line| line.to_owned())
+                .collect()
+        };
+
+        let length_input: usize = input_lines.len();
         visible_lines.extend(input_lines.into_iter());
 
+        let mut index: usize = 0;
 
-        let mut index:usize=0;
-
-        index = min(max(0,visible_lines.len() as i32- max_lines_on_screen +self.scroll_offset+3),visible_lines.len()as i32-1) as usize;
+        index = min(
+            max(
+                0,
+                visible_lines.len() as i32 - max_lines_on_screen + self.scroll_offset + 3,
+            ),
+            visible_lines.len() as i32 - 1,
+        ) as usize;
         let display_lines = &visible_lines[index as usize..];
-
-        
 
         for (i, line) in display_lines.iter().enumerate() {
             unsafe {
-                let pos: Vector2 = Vector2{x: 10.0, y: 10.0 + (i as f32 * self.font_size)};
+                let pos: Vector2 = Vector2 {
+                    x: 10.0,
+                    y: 10.0 + (i as f32 * self.font_size),
+                };
                 let content = CString::new(line.to_string()).unwrap();
                 DrawTextEx(
                     self.font,
@@ -201,15 +217,18 @@ impl ShellScreen {
                     pos,
                     self.font_size,
                     1.2,
-                    ColorFromHSV(0.0, 0.0, 1.0)
+                    ColorFromHSV(0.0, 0.0, 1.0),
                 );
             }
         }
         //promt
-        
+
         // '>' at the beginning of every line
         unsafe {
-            let pos_cursr: Vector2 = Vector2{x: 10.0, y: 10.0 + ((display_lines.len()-length_input)as f32 * self.font_size)};
+            let pos_cursr: Vector2 = Vector2 {
+                x: 10.0,
+                y: 10.0 + ((display_lines.len() - length_input) as f32 * self.font_size),
+            };
             let content = CString::new(">").unwrap();
 
             DrawTextEx(
@@ -218,12 +237,12 @@ impl ShellScreen {
                 pos_cursr,
                 self.font_size,
                 1.2,
-                ColorFromHSV(0.0, 0.0, 1.0)
+                ColorFromHSV(0.0, 0.0, 1.0),
             );
         }
 
         // CURSOR
-        let cursor_line = display_lines.len()  - 1;
+        let cursor_line = display_lines.len() - 1;
         let cursor_x_offset = unsafe {
             let last_line = display_lines.last().unwrap();
             let c_string = CString::new(last_line.to_string()).unwrap();
@@ -244,10 +263,16 @@ impl ShellScreen {
         let divider_pos = self.term_split_ratio;
         unsafe {
             DrawLineEx(
-                Vector2{x: self.window_width as f32 * divider_pos, y: 0.0},
-                Vector2{x: self.window_width as f32 * divider_pos, y: self.window_height as f32},
+                Vector2 {
+                    x: self.window_width as f32 * divider_pos,
+                    y: 0.0,
+                },
+                Vector2 {
+                    x: self.window_width as f32 * divider_pos,
+                    y: self.window_height as f32,
+                },
                 2.0,
-                ColorFromHSV(0.0, 0.0, 0.3)
+                ColorFromHSV(0.0, 0.0, 0.3),
             );
         }
     }
@@ -256,7 +281,7 @@ impl ShellScreen {
         if input.is_empty() {
             return;
         }
-        
+
         // Add input to output
         self.output_lines.push(format!("> {}", input));
 
@@ -286,3 +311,4 @@ impl ShellScreen {
         }
     }
 }
+

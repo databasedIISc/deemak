@@ -1,8 +1,9 @@
 use super::read_info;
 use std::path::PathBuf;
 
-pub fn find_home() -> Option<PathBuf> {
-    let mut current = std::env::current_dir().ok()?;
+pub fn find_home(world_path: &PathBuf) -> Option<PathBuf> {
+    // let mut current = std::env::current_dir().ok()?;
+    let mut current = world_path.clone();
     let max_depth = 10; // Prevent infinite recursion
 
     for _ in 0..max_depth {

@@ -1,7 +1,7 @@
 mod keys;
 mod screen;
-mod utils;
 mod server;
+mod utils;
 use deemak::menu;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
@@ -9,12 +9,34 @@ mod log;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    let debug_mode: bool = args.iter().any(|arg| arg == "debug");
+    // first argument is world name to parse
+    let debug_mode: bool = args.iter().any(|arg| arg == "--debug");
     log::log_info("Starting application", debug_mode);
+
+    let world_dir = if args.len() > 1 {
+        // get absolute path to the world directory
+        let world_path = std::env::current_dir().unwrap().join(&args[1]);
+        log::log_info(
+            &format!("World directory provided: {:?}", world_path),
+            debug_mode,
+        );
+        Some(world_path)
+    } else {
+        log::log_error(
+            "No world directory provided. Please specify a world directory as the first argument.",
+            debug_mode,
+        );
+        None
+    };
+
+    if world_dir.is_none() {
+        log::log_error("World directory is required. Exiting.", debug_mode);
+        return;
+    }
 
     // We have 2 modes, the web and the raylib gui. The web argument runs it on the web, else
     // raylib gui is set by default.
-    if args.iter().any(|arg| arg == "web") {
+    if args.iter().any(|arg| arg == "--web") {
         server::launch_web();
         return;
     }
@@ -30,7 +52,11 @@ fn main() {
         raylib::consts::TraceLogLevel::LOG_ALL
     };
 
-    let (mut rl, thread) = raylib::init().log_level(loglevel).size(800, 600).title("DEEMAK Shell").build();
+    let (mut rl, thread) = raylib::init()
+        .log_level(loglevel)
+        .size(800, 600)
+        .title("DEEMAK Shell")
+        .build();
     let font_size = get_monitor_width(0) as f32 / 73.5;
     rl.set_trace_log(loglevel);
     log::log_info("Raylib initialized successfully", debug_mode);
@@ -40,7 +66,13 @@ fn main() {
         match menu::show_menu(&mut rl, &thread) {
             Some(0) => {
                 // Shell mode
-                let mut shell = screen::ShellScreen::new_world(rl, thread, font_size, debug_mode);
+                let mut shell = screen::ShellScreen::new_world(
+                    rl,
+                    thread,
+                    world_dir.clone().unwrap(),
+                    font_size,
+                    debug_mode,
+                );
                 shell.run();
                 break; // Exit after shell closes
             }
@@ -57,4 +89,3 @@ fn main() {
     }
 }
 
- 
