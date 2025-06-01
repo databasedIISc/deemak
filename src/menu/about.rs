@@ -1,7 +1,7 @@
+use raylib::ffi::{ColorFromHSV, DrawTextEx, LoadFontEx, MeasureTextEx, Vector2};
+use raylib::prelude::*;
 use std::ffi::CString;
 use std::os::raw::{c_char, c_int};
-use raylib::prelude::*;
-use raylib::ffi::{DrawTextEx, LoadFontEx, ColorFromHSV, Vector2, MeasureTextEx};
 use std::time::{Duration, Instant};
 
 const ABOUT_TEXT: &str = r#"
@@ -19,7 +19,7 @@ Created by: IISc Databased Club
 License: MIT
 "#;
 
-pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread, debug_mode: bool) {
+pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread) {
     let mut displayed_text = String::new();
     let mut char_index = 0;
     let mut last_char_time = Instant::now();
@@ -34,12 +34,11 @@ pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread, debug_mode: bool
             path.as_ptr() as *const c_char,
             600.0 as c_int,
             0 as *mut c_int,
-            0
+            0,
         )
     };
 
     while !rl.window_should_close() && !should_exit {
-
         // Wait before the next input
         if !input_ready {
             if !rl.is_key_down(KeyboardKey::KEY_ENTER)
@@ -48,22 +47,21 @@ pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread, debug_mode: bool
             {
                 input_ready = true;
             }
-        } else {
-            if rl.is_key_pressed(KeyboardKey::KEY_SPACE) {
-                if char_index < ABOUT_TEXT.len() {
-                    // Skip animation
-                    displayed_text = ABOUT_TEXT.to_string();
-                    char_index = ABOUT_TEXT.len();
-                } else {
-                    // Exit after animation complete
-                    should_exit = true;
-                }
-            } else if char_index >= ABOUT_TEXT.len()
-                && (rl.is_key_pressed(KeyboardKey::KEY_ENTER) || rl.is_key_pressed(KeyboardKey::KEY_ESCAPE))
-            {
+        } else if rl.is_key_pressed(KeyboardKey::KEY_SPACE) {
+            if char_index < ABOUT_TEXT.len() {
+                // Skip animation
+                displayed_text = ABOUT_TEXT.to_string();
+                char_index = ABOUT_TEXT.len();
+            } else {
                 // Exit after animation complete
                 should_exit = true;
             }
+        } else if char_index >= ABOUT_TEXT.len()
+            && (rl.is_key_pressed(KeyboardKey::KEY_ENTER)
+                || rl.is_key_pressed(KeyboardKey::KEY_ESCAPE))
+        {
+            // Exit after animation complete
+            should_exit = true;
         }
 
         // Typewriter animation
@@ -84,7 +82,10 @@ pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread, debug_mode: bool
         for line in displayed_text.lines() {
             unsafe {
                 let content = CString::new(line).unwrap();
-                let pos = Vector2{x: 50.0, y: 50.0 + y_offset};
+                let pos = Vector2 {
+                    x: 50.0,
+                    y: 50.0 + y_offset,
+                };
                 DrawTextEx(
                     font,
                     content.as_ptr() as *const c_char,
@@ -105,14 +106,17 @@ pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread, debug_mode: bool
                 let c_prompt = CString::new(prompt).unwrap();
                 let prompt_width = MeasureTextEx(font, c_prompt.as_ptr(), 20.0, 1.0).x;
                 let content = CString::new(prompt).unwrap();
-                let pos = Vector2{x: (800.0 - prompt_width) / 2.0, y: 550.0};
+                let pos = Vector2 {
+                    x: (800.0 - prompt_width) / 2.0,
+                    y: 550.0,
+                };
                 DrawTextEx(
                     font,
                     content.as_ptr() as *const c_char,
                     pos,
                     20.0,
                     1.0,
-                    ColorFromHSV(0.0, 0.0, 0.51)
+                    ColorFromHSV(0.0, 0.0, 0.51),
                 );
             }
         } else {
@@ -121,14 +125,17 @@ pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread, debug_mode: bool
                 let c_skip = CString::new(skip_prompt).unwrap();
                 let skip_width = MeasureTextEx(font, c_skip.as_ptr(), 20.0, 1.0).x;
                 let content = CString::new(skip_prompt).unwrap();
-                let pos = Vector2{x: (600.0 - skip_width) / 2.0, y: 550.0};
+                let pos = Vector2 {
+                    x: (600.0 - skip_width) / 2.0,
+                    y: 550.0,
+                };
                 DrawTextEx(
                     font,
                     content.as_ptr() as *const c_char,
                     pos,
                     20.0,
                     1.0,
-                    ColorFromHSV(0.0, 0.0, 0.51)
+                    ColorFromHSV(0.0, 0.0, 0.51),
                 );
             }
         }

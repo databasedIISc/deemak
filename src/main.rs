@@ -2,20 +2,19 @@ mod keys;
 mod screen;
 mod server;
 mod utils;
+use deemak::DEBUG_MODE;
 use deemak::menu;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
-use std::sync::{LazyLock, atomic::AtomicBool, atomic::Ordering};
+use utils::debug_mode;
 use utils::log;
-
-pub static DEBUG_MODE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     // first argument is world name to parse
-    if args.iter().any(|arg| arg == "--debug") {
-        DEBUG_MODE.store(true, std::sync::atomic::Ordering::Relaxed);
-    }
+    DEBUG_MODE
+        .set(args.iter().any(|arg| arg == "--debug"))
+        .expect("DEBUG_MODE already set");
     log::log_info("Starting application");
 
     let world_dir = if args.len() > 1 {
@@ -47,7 +46,7 @@ fn main() {
         SetConfigFlags(4);
         SetTargetFPS(60);
     }
-    let loglevel = if !DEBUG_MODE {
+    let loglevel = if !debug_mode() {
         raylib::consts::TraceLogLevel::LOG_ERROR
     } else {
         raylib::consts::TraceLogLevel::LOG_ALL
@@ -60,7 +59,7 @@ fn main() {
         .build();
     let font_size = get_monitor_width(0) as f32 / 73.5;
     rl.set_trace_log(loglevel);
-    log::log_info("Raylib initialized successfully", DEBUG_MODE);
+    log::log_info("Raylib initialized successfully");
 
     // Main menu loop
     loop {

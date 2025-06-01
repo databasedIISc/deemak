@@ -85,7 +85,6 @@ impl ShellScreen {
             char_width,
             term_split_ratio: 2.0 / 3.0,
             font_size,
-            debug_mode,
             scroll_offset: 0,
         }
     }
