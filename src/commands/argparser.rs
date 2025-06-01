@@ -1,3 +1,4 @@
+use crate::utils::log;
 use std::collections::HashSet;
 
 pub struct ArgParser {
@@ -14,9 +15,11 @@ impl ArgParser {
         }
     }
 
+    /// Get the flag arguments
     pub fn parse(&mut self, input_args: &[String]) -> Result<(), String> {
         self.args.clear();
 
+        log::log_debug("Argparse", &format!("Input arguments: {:?}", input_args));
         for arg in input_args {
             // Check for help flags first
             if arg == "-h".trim() || arg == "--help".trim() {
@@ -31,7 +34,8 @@ impl ArgParser {
                     Err("unknown".to_string())?;
                 }
             } else {
-                Err("Error parsing arguments".to_string())?;
+                // Otherwise, treat it as a positional argument
+                self.args.push(arg.clone());
             }
         }
 

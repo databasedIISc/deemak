@@ -11,26 +11,30 @@ use utils::log;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    // first argument is world name to parse
+    // first argument is sekai name to parse
     DEBUG_MODE
         .set(args.iter().any(|arg| arg == "--debug"))
         .expect("DEBUG_MODE already set");
-    log::log_info("Starting application");
+    log::log_info("Application", "Starting DEEMAK Shell");
 
-    let world_dir = if args.len() > 1 {
-        // get absolute path to the world directory
-        let world_path = std::env::current_dir().unwrap().join(&args[1]);
-        log::log_info(&format!("World directory provided: {:?}", world_path));
-        Some(world_path)
+    let sekai_dir = if args.len() > 1 {
+        // get absolute path to the sekai directory
+        let sekai_path = std::env::current_dir().unwrap().join(&args[1]);
+        log::log_info(
+            "SEKAI",
+            &format!("sekai directory provided: {:?}", sekai_path),
+        );
+        Some(sekai_path)
     } else {
         log::log_error(
-            "No world directory provided. Please specify a world directory as the first argument.",
+            "SEKAI",
+            "No sekai directory provided. Please specify a sekai directory as the first argument.",
         );
         None
     };
 
-    if world_dir.is_none() {
-        log::log_error("World directory is required. Exiting.");
+    if sekai_dir.is_none() {
+        log::log_error("SEKAI", "sekai directory is required. Exiting.");
         return;
     }
 
@@ -59,17 +63,17 @@ fn main() {
         .build();
     let font_size = get_monitor_width(0) as f32 / 73.5;
     rl.set_trace_log(loglevel);
-    log::log_info("Raylib initialized successfully");
+    log::log_info("Application", "DEEMAK initialized successfully");
 
     // Main menu loop
     loop {
         match menu::show_menu(&mut rl, &thread) {
             Some(0) => {
                 // Shell mode
-                let mut shell = screen::ShellScreen::new_world(
+                let mut shell = screen::ShellScreen::new_sekai(
                     rl,
                     thread,
-                    world_dir.clone().unwrap(),
+                    sekai_dir.clone().unwrap(),
                     font_size,
                 );
                 shell.run();

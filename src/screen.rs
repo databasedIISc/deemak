@@ -2,7 +2,6 @@ use crate::keys::key_to_char;
 use crate::utils::wrapit::wrapit;
 use commands::CommandResult;
 use deemak::commands;
-use deemak::utils;
 use deemak::utils::find_root;
 use raylib::ffi::{
     ColorFromHSV, DrawLineEx, DrawRectangle, DrawTextEx, LoadFontEx, MeasureTextEx, Vector2,
@@ -46,7 +45,7 @@ Official Github Repo: https://github.com/databasedIISc/deemak
 pub const INITIAL_MSG: &str = "Type commands and press Enter. Try `help` for more info.";
 
 impl ShellScreen {
-    pub fn new_world(
+    pub fn new_sekai(
         rl: RaylibHandle,
         thread: RaylibThread,
         world_dir: PathBuf,

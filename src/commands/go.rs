@@ -16,11 +16,11 @@ Navigate to different directories:
 "#;
 
 pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, String) {
-    log::log_info(" **** GO Command ****");
     let new_path = match destination {
         "HOME" | "home" => root_dir.to_path_buf(),
         ".." | "back" => {
             if current_dir == root_dir {
+                log::log_warning("go", "Attempted to go back from root directory");
                 return (
                     current_dir.clone(),
                     "You are at the root. Cannot go back further".to_string(),
@@ -35,6 +35,10 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
     let canonical_path = match new_path.canonicalize() {
         Ok(p) => p,
         Err(_) => {
+            log::log_error(
+                "go",
+                &format!("No such directory, path: {}", new_path.display()),
+            );
             return (
                 current_dir.clone(),
                 format!("go: {}: No such directory", destination),
@@ -44,6 +48,13 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
 
     // Verify it's within root and is a directory
     if !canonical_path.starts_with(root_dir) {
+        log::log_warning(
+            "go",
+            &format!(
+                "Access denied: Attempted to go outside root directory: {}",
+                canonical_path.display()
+            ),
+        );
         return (
             current_dir.clone(),
             "Access denied: Cannot go outside root".to_string(),
@@ -52,6 +63,13 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
 
     if !canonical_path.is_dir() {
         if canonical_path.is_file() {
+            log::log_warning(
+                "go",
+                &format!(
+                    "Attempted to go to a file instead of a directory: {}",
+                    canonical_path.display()
+                ),
+            );
             return (
                 current_dir.clone(),
                 format!(
@@ -60,6 +78,14 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
                 ),
             );
         }
+
+        log::log_warning(
+            "go",
+            &format!(
+                "Attempted to go to a non-directory path: {}",
+                canonical_path.display()
+            ),
+        );
         return (
             current_dir.clone(),
             format!("go: {}: Not a directory", destination),
@@ -87,6 +113,16 @@ pub fn go(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, St
     let mut parser = ArgParser::new(&[]);
 
     let args_string: Vec<String> = args.iter().map(|s| s.to_string()).collect();
+
+    log::log_debug(
+        "go",
+        &format!(
+            "Parsing arguments: {:?}, Current Directory: {}, Root Directory: {}",
+            args_string,
+            current_dir.display(),
+            root_dir.display()
+        ),
+    );
     // Parse arguments
     match parser.parse(&args_string) {
         Ok(_) => {
@@ -116,7 +152,7 @@ pub fn go(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, St
             ),
             _ => (
                 current_dir.clone(),
-                "Error parsing arguments. Try 'help ls' for more information.".to_string(),
+                "Error parsing arguments. Try 'help go' for more information.".to_string(),
             ),
         },
     }
