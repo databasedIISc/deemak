@@ -11,10 +11,11 @@ use valid_sekai::validate_sekai;
 
 pub const HELP_TXT: &str = r#"
 Usage: deemak <sekai_directory> [--debug] [--web]
+
 Options:
-  <sekai_directory>  Path to the Sekai directory to parse.
-  --debug            Enable debug mode for more verbose logging.
-  --web              Run the application in web mode (requires a web server).
+  <sekai_directory> [Required]  :   Path to the Sekai directory to parse.
+  --debug [Optional]            :   Enable debug mode for more verbose logging.
+  --web [Optional]              :   Run the application in web mode (requires a web server).
 "#;
 
 fn main() {
@@ -44,22 +45,17 @@ fn main() {
         }
         Some(sekai_path)
     } else {
-        log::log_error("SEKAI", "No sekai directory provided.");
-        eprintln!("Error: No sekai directory provided.");
-        println!("{}", HELP_TXT);
-        None
-    };
-
-    if sekai_dir.is_none() {
-        log::log_error("SEKAI", "sekai directory is required.");
-        eprintln!("Error: sekai directory is required. Exiting.");
+        // args.len() == 1
+        log::log_error("Application", "Invalid arguments provided.");
+        eprintln!("Error: At least one argument is required.");
         println!("{}", HELP_TXT);
         return;
-    }
+    };
 
     // We have 2 modes, the web and the raylib gui. The web argument runs it on the web, else
     // raylib gui is set by default.
     if args.iter().any(|arg| arg == "--web") {
+        log::log_info("Application", "Running in web mode");
         server::launch_web();
         return;
     }
