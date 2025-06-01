@@ -5,32 +5,33 @@ mod utils;
 use deemak::menu;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
-mod log;
+use std::sync::{LazyLock, atomic::AtomicBool, atomic::Ordering};
+use utils::log;
+
+pub static DEBUG_MODE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     // first argument is world name to parse
-    let debug_mode: bool = args.iter().any(|arg| arg == "--debug");
-    log::log_info("Starting application", debug_mode);
+    if args.iter().any(|arg| arg == "--debug") {
+        DEBUG_MODE.store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+    log::log_info("Starting application");
 
     let world_dir = if args.len() > 1 {
         // get absolute path to the world directory
         let world_path = std::env::current_dir().unwrap().join(&args[1]);
-        log::log_info(
-            &format!("World directory provided: {:?}", world_path),
-            debug_mode,
-        );
+        log::log_info(&format!("World directory provided: {:?}", world_path));
         Some(world_path)
     } else {
         log::log_error(
             "No world directory provided. Please specify a world directory as the first argument.",
-            debug_mode,
         );
         None
     };
 
     if world_dir.is_none() {
-        log::log_error("World directory is required. Exiting.", debug_mode);
+        log::log_error("World directory is required. Exiting.");
         return;
     }
 
@@ -46,7 +47,7 @@ fn main() {
         SetConfigFlags(4);
         SetTargetFPS(60);
     }
-    let loglevel = if !debug_mode {
+    let loglevel = if !DEBUG_MODE {
         raylib::consts::TraceLogLevel::LOG_ERROR
     } else {
         raylib::consts::TraceLogLevel::LOG_ALL
@@ -59,7 +60,7 @@ fn main() {
         .build();
     let font_size = get_monitor_width(0) as f32 / 73.5;
     rl.set_trace_log(loglevel);
-    log::log_info("Raylib initialized successfully", debug_mode);
+    log::log_info("Raylib initialized successfully", DEBUG_MODE);
 
     // Main menu loop
     loop {
@@ -71,14 +72,13 @@ fn main() {
                     thread,
                     world_dir.clone().unwrap(),
                     font_size,
-                    debug_mode,
                 );
                 shell.run();
                 break; // Exit after shell closes
             }
             Some(1) => {
                 // About screen
-                menu::about::show_about(&mut rl, &thread, debug_mode);
+                menu::about::show_about(&mut rl, &thread);
             }
             Some(2) | None => {
                 // Exit
@@ -88,4 +88,3 @@ fn main() {
         }
     }
 }
-

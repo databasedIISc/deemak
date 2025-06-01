@@ -1,10 +1,8 @@
 use super::argparser::ArgParser;
 use super::whereami::display_relative_path;
 use crate::utils::info_reader;
-use std::{
-    env::current_dir,
-    path::{Path, PathBuf},
-};
+use crate::utils::log;
+use std::path::{Path, PathBuf};
 
 pub const HELP_TXT: &str = r#"
 Usage: go [destination]
@@ -17,7 +15,13 @@ Navigate to different directories:
 
 "#;
 
-pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, String) {
+pub fn navigate(
+    destination: &str,
+    current_dir: &PathBuf,
+    root_dir: &Path,
+    debug_mode: bool,
+) -> (PathBuf, String) {
+    log::log_info(" **** GO Command ****", debug_mode);
     let new_path = match destination {
         "HOME" | "home" => root_dir.to_path_buf(),
         ".." | "back" => {

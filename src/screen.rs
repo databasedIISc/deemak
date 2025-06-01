@@ -3,6 +3,7 @@ use crate::utils::wrapit::wrapit;
 use commands::CommandResult;
 use deemak::commands;
 use deemak::utils;
+use deemak::utils::find_root;
 use raylib::ffi::{
     ColorFromHSV, DrawLineEx, DrawRectangle, DrawTextEx, LoadFontEx, MeasureTextEx, Vector2,
 };
@@ -27,7 +28,6 @@ pub struct ShellScreen {
     char_width: f32,
     term_split_ratio: f32,
     font_size: f32,
-    debug_mode: bool,
     scroll_offset: i32,
 }
 
@@ -51,7 +51,6 @@ impl ShellScreen {
         thread: RaylibThread,
         world_dir: PathBuf,
         font_size: f32,
-        debug_mode: bool,
     ) -> Self {
         // Loading Font
         let font = unsafe {
@@ -70,7 +69,8 @@ impl ShellScreen {
             let cstr = CString::new("W").unwrap();
             MeasureTextEx(font, cstr.as_ptr(), font_size, 1.2).x
         };
-        let root_dir = utils::find_home(&world_dir).expect("Could not find sekai home directory");
+        let root_dir =
+            find_root::find_home(&world_dir).expect("Could not find sekai home directory");
 
         Self {
             rl,
@@ -311,4 +311,3 @@ impl ShellScreen {
         }
     }
 }
-
