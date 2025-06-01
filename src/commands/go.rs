@@ -94,7 +94,7 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
 
     // Get directory info if available
     let info_path = canonical_path.join("info.json");
-    let message = match info_reader::read_info(&info_path) {
+    let message = match info_reader::read_validate_info(&info_path) {
         Ok(info) => format!(
             "You have entered {}\n\nAbout:\n{}",
             display_relative_path(&canonical_path, root_dir),

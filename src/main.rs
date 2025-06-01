@@ -6,8 +6,16 @@ use deemak::DEBUG_MODE;
 use deemak::menu;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
-use utils::debug_mode;
-use utils::log;
+use utils::{debug_mode, log, valid_sekai};
+use valid_sekai::validate_sekai;
+
+pub const HELP_TXT: &str = r#"
+Usage: deemak <sekai_directory> [--debug] [--web]
+Options:
+  <sekai_directory>  Path to the Sekai directory to parse.
+  --debug            Enable debug mode for more verbose logging.
+  --web              Run the application in web mode (requires a web server).
+"#;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -22,19 +30,30 @@ fn main() {
         let sekai_path = std::env::current_dir().unwrap().join(&args[1]);
         log::log_info(
             "SEKAI",
-            &format!("sekai directory provided: {:?}", sekai_path),
+            &format!("Sekai directory provided: {:?}", sekai_path),
         );
+        if !validate_sekai(&sekai_path) {
+            log::log_error(
+                "SEKAI",
+                &format!("sekai directory does not exist: {:?}", sekai_path),
+            );
+            eprintln!("Error: sekai directory does not exist: {:?}", sekai_path);
+            return;
+        } else {
+            log::log_info("SEKAI", &format!("Sekai is Valid {:?}", sekai_path));
+        }
         Some(sekai_path)
     } else {
-        log::log_error(
-            "SEKAI",
-            "No sekai directory provided. Please specify a sekai directory as the first argument.",
-        );
+        log::log_error("SEKAI", "No sekai directory provided.");
+        eprintln!("Error: No sekai directory provided.");
+        println!("{}", HELP_TXT);
         None
     };
 
     if sekai_dir.is_none() {
-        log::log_error("SEKAI", "sekai directory is required. Exiting.");
+        log::log_error("SEKAI", "sekai directory is required.");
+        eprintln!("Error: sekai directory is required. Exiting.");
+        println!("{}", HELP_TXT);
         return;
     }
 
