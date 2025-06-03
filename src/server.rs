@@ -1,11 +1,11 @@
-use rocket::{get, options, routes, Request, Response};
+use deemak::commands;
+use rocket::fairing::{Fairing, Info, Kind};
 use rocket::fs::{FileServer, relative};
 use rocket::http::Header;
-use rocket::fairing::{Fairing, Info, Kind};
-use rocket::serde::{Serialize, Deserialize};
+use rocket::serde::Serialize;
 use rocket::serde::json::Json;
+use rocket::{Request, Response, get, options, routes};
 use std::path::PathBuf;
-use deemak::commands;
 
 #[derive(Serialize)]
 struct CommandResponse {
@@ -16,7 +16,7 @@ struct CommandResponse {
 // === Main GET endpoint ===
 #[get("/run?<command>&<current_dir>")]
 fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
-    use commands::{cmd_manager, CommandResult};
+    use commands::{CommandResult, cmd_manager};
 
     let parts: Vec<&str> = command.split_whitespace().collect();
     let root_dir = find_sekai_root().expect("Sekai root directory not found");
@@ -70,7 +70,10 @@ impl Fairing for CORS {
 
     async fn on_response<'r>(&self, _req: &'r Request<'_>, res: &mut Response<'r>) {
         res.set_header(Header::new("Access-Control-Allow-Origin", "*"));
-        res.set_header(Header::new("Access-Control-Allow-Methods", "POST, GET, OPTIONS"));
+        res.set_header(Header::new(
+            "Access-Control-Allow-Methods",
+            "POST, GET, OPTIONS",
+        ));
         res.set_header(Header::new("Access-Control-Allow-Headers", "*"));
         res.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
     }
@@ -80,7 +83,7 @@ impl Fairing for CORS {
 fn find_sekai_root() -> Option<PathBuf> {
     let mut current = std::env::current_dir().ok()?;
     loop {
-        let info_path = current.join("sekai/info.json");
+        let info_path = current.join("sekai/.dir_info/info.json");
         if info_path.exists() {
             return Some(current.join("sekai"));
         }
