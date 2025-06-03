@@ -18,7 +18,7 @@ pub fn cmd_manager(parts: &[&str], current_dir: &PathBuf, root_dir: &Path) -> Co
         "echo" => CommandResult::Output(echo(&parts[1..])),
         "whoami" => CommandResult::Output("Database Deemak User.".to_string()),
         "go" => {
-            let (new_dir, msg) = go(&parts[1..], &current_dir, root_dir);
+            let (new_dir, msg) = go(&parts[1..], current_dir, root_dir);
             CommandResult::ChangeDirectory(new_dir, msg)
         }
         "ls" => CommandResult::Output(ls(&parts[1..], current_dir, root_dir)),

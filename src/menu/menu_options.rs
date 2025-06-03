@@ -7,7 +7,7 @@ pub fn show_menu(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<usize> 
     let mut selected: usize = 0;
     let mut last_change = Instant::now();
     let mut alpha = 0.0f32;
-    let mut show_menu = true;
+    let show_menu = true;
 
     // Animation variables
     let mut y_offset = 300.0;
@@ -78,3 +78,4 @@ pub fn show_menu(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<usize> 
 
     None
 }
+

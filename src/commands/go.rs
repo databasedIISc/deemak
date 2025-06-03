@@ -35,7 +35,7 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
             );
             return (
                 current_dir.clone(),
-                "Access to .dir_info directory is not allowed for ANY user".to_string(),
+                "go: Access to .dir_info directory is not allowed for ANY user".to_string(),
             );
         }
         _ => current_dir.join(destination),
@@ -67,7 +67,7 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
         );
         return (
             current_dir.clone(),
-            "Access denied: Cannot go outside root".to_string(),
+            "go: Access denied: Cannot go outside root".to_string(),
         );
     }
 

@@ -57,7 +57,7 @@ impl ShellScreen {
             LoadFontEx(
                 path.as_ptr() as *const c_char,
                 600.0 as c_int,
-                0 as *mut c_int,
+                std::ptr::null_mut::<c_int>(),
                 0,
             )
         };

@@ -1,5 +1,6 @@
 use super::argparser::ArgParser;
 use super::whereami::display_relative_path;
+use crate::utils::log;
 use std::path::Path;
 
 pub const HELP_TXT: &str = r#"
@@ -22,7 +23,18 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
             let target_path = if positional_args.is_empty() {
                 current_dir.to_path_buf()
             } else {
-                let joined = current_dir.join(&positional_args[0]);
+                if positional_args.len() > 1 {
+                    return "ls: too many arguments\nTry 'help ls' for more information."
+                        .to_string();
+                }
+
+                if positional_args[0] == ".dir_info" {
+                    log::log_warning("ls", "Attempted to read .dir_info directory.");
+                    return "ls: cannot list .dir_info directory. Access now allowed to ANY user"
+                        .to_string();
+                }
+
+                let joined = current_dir.join(positional_args[0]);
                 if joined.starts_with(root_dir) {
                     joined
                 } else {
