@@ -1,6 +1,7 @@
 use super::*;
 use std::path::{Path, PathBuf};
 
+/// CommandResult enum to represent the result of a command execution
 pub enum CommandResult {
     Output(String),
     ChangeDirectory(PathBuf, String),
@@ -9,6 +10,7 @@ pub enum CommandResult {
     NotFound,
 }
 
+/// Command manager that processes commands and processed to return appropriate outputs
 pub fn cmd_manager(parts: &[&str], current_dir: &PathBuf, root_dir: &Path) -> CommandResult {
     if parts.is_empty() {
         return CommandResult::NotFound;

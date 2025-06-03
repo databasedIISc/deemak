@@ -1,6 +1,7 @@
 use crate::utils::log;
 use std::collections::HashSet;
 
+/// Argument parser for command-line flags and arguments
 pub struct ArgParser {
     flags: HashSet<String>,
     args: Vec<String>,

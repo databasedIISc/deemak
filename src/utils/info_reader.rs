@@ -24,6 +24,7 @@ pub enum InfoError {
     ValidationError(String),
 }
 
+/// Implements methods for the `Info` struct.
 impl Info {
     /// Validates the struct contents
     pub fn validate(&self) -> Result<(), InfoError> {
@@ -43,6 +44,7 @@ impl Info {
     }
 }
 
+/// Reads and validates the info.json file and returns an `Info` struct.
 pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
     // File existence check
     if !info_path.exists() {
@@ -63,6 +65,7 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
     Ok(info)
 }
 
+/// Validates a JSON string against the expected schema for `Info`.
 pub fn validate_json_schema(json_str: &str) -> Result<(), InfoError> {
     let value: serde_json::Value = serde_json::from_str(json_str)?;
 

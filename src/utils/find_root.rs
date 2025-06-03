@@ -1,6 +1,8 @@
 use super::read_validate_info;
 use std::path::PathBuf;
 
+/// Find the root directory of a a sekai, by finding "location" : "home"
+/// in nearest `.dir_info/info.json`.
 pub fn find_home(world_path: &PathBuf) -> Option<PathBuf> {
     // let mut current = std::env::current_dir().ok()?;
     let mut current = world_path.clone();
