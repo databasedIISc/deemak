@@ -12,7 +12,7 @@ pub fn find_home(world_path: &PathBuf) -> Option<PathBuf> {
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.is_dir() {
-                    let info_path = path.join("info.json");
+                    let info_path = path.join(".dir_info").join("info.json");
                     if let Ok(info) = read_validate_info(&info_path) {
                         if info.location == "home" {
                             return Some(path);
