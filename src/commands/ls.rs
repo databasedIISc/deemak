@@ -55,7 +55,7 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
                         let path = entry.path();
                         let name = entry.file_name().to_string_lossy().into_owned();
 
-                        if name == "info.json" {
+                        if name == ".dir_info" || name == "info.json" {
                             continue; // Skip info.json
                         }
 

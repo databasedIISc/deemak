@@ -28,6 +28,16 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
             }
             current_dir.parent().unwrap().to_path_buf()
         }
+        ".dir_info" => {
+            log::log_warning(
+                "go",
+                "Attempted to go to .dir_info directory, which is not allowed",
+            );
+            return (
+                current_dir.clone(),
+                "Access to .dir_info directory is not allowed for ANY user".to_string(),
+            );
+        }
         _ => current_dir.join(destination),
     };
 
@@ -93,7 +103,7 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
     }
 
     // Get directory info if available
-    let info_path = canonical_path.join("info.json");
+    let info_path = canonical_path.join(".dir_info/info.json");
     let message = match info_reader::read_validate_info(&info_path) {
         Ok(info) => format!(
             "You have entered {}\n\nAbout:\n{}",
@@ -101,7 +111,7 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
             info.about.trim_matches('"')
         ),
         Err(_) => format!(
-            "Entered {}",
+            "You have entered {}\n\nNo additional information available.",
             display_relative_path(&canonical_path, root_dir)
         ),
     };
