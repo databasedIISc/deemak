@@ -11,6 +11,8 @@ pub fn get_command_help(command: &str) -> Option<&'static str> {
         "whoami" => Some("whoami: Displays who you are."),
         "exit" => Some("exit: Exits the program."),
         "clear" => Some("clear: Clears the screen."),
+        "restore" => Some(restore::HELP_TEXT),
+        "save" => Some(save::HELP_TEXT),
         _ => None,
     }
 }
@@ -29,6 +31,8 @@ Welcome to DBD Deemak Help. You can use the following commands:
 - help: Displays this help message.
 - exit: Exits the program.
 - clear: Clears the screen.
+- restore: Restores the Sekai from starting point.
+- save: Saves your current progress of the Sekai.
 
 Try `help command` to get help on a specific command.
 "#;

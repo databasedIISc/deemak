@@ -5,6 +5,6 @@ pub mod find_root;
 pub mod log;
 pub use log::debug_mode;
 
+pub mod restore_comp;
 pub mod valid_sekai;
-
 pub mod wrapit;
