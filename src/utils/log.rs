@@ -14,7 +14,7 @@ pub fn debug_mode() -> bool {
 ///     log_debug("info_reader", "Reading info from file: ...");
 pub fn log_debug(feature: &str, message: &str) {
     if debug_mode() {
-        println!("[DEBUG] {} :: {}", feature, message);
+        println!("\x1b[34m[DEBUG] \x1b[0m {} :: {}", feature, message);
     }
 }
 
@@ -40,7 +40,7 @@ pub fn log_info(feature: &str, message: &str) {
 ///     log_warning("info_reader", "The info.json contains incorrect fields: ...");
 pub fn log_warning(feature: &str, message: &str) {
     if debug_mode() {
-        println!("[WARNING] {} :: {}", feature, message);
+        eprintln!("\x1b[33m[WARNING] \x1b[0m {} :: {}", feature, message);
     }
 }
 
@@ -53,6 +53,6 @@ pub fn log_warning(feature: &str, message: &str) {
 ///     log_error("info_reader", "Failed to parse: ...");
 pub fn log_error(feature: &str, message: &str) {
     if debug_mode() {
-        eprintln!("[ERROR] {} :: {}", feature, message);
+        eprintln!("\x1b[31m[ERROR] \x1b[0m {} :: {}", feature, message);
     }
 }
