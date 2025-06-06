@@ -1,4 +1,5 @@
 use deemak::commands;
+use deemak::utils::find_root;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::fs::{FileServer, relative};
 use rocket::http::Header;
@@ -6,6 +7,8 @@ use rocket::serde::Serialize;
 use rocket::serde::json::Json;
 use rocket::{Request, Response, get, options, routes};
 use std::path::PathBuf;
+use crate::globals::WORLD_DIR;
+
 
 #[derive(Serialize)]
 struct CommandResponse {
@@ -15,11 +18,12 @@ struct CommandResponse {
 
 // === Main GET endpoint ===
 #[get("/run?<command>&<current_dir>")]
-fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
+fn response(command: &str, current_dir: &str ) -> Json<CommandResponse> {
     use commands::{CommandResult, cmd_manager};
 
+    let world_dir = WORLD_DIR.get().expect("WORLD_DIR not initialized");
     let parts: Vec<&str> = command.split_whitespace().collect();
-    let root_dir = find_sekai_root().expect("Sekai root directory not found");
+    let root_dir = find_root::find_home(&world_dir).expect("Could not find sekai home directory");
     let mut current_dir = if current_dir.is_empty() {
         root_dir.clone()
     } else {
@@ -79,25 +83,14 @@ impl Fairing for CORS {
     }
 }
 
-// === Root directory finder ===
-fn find_sekai_root() -> Option<PathBuf> {
-    let mut current = std::env::current_dir().ok()?;
-    loop {
-        let info_path = current.join("sekai/.dir_info/info.json");
-        if info_path.exists() {
-            return Some(current.join("sekai"));
-        }
-        if !current.pop() {
-            break;
-        }
-    }
-    None
-}
+// // === Root directory finder ===
+// fn set_world_dir(world_dir: PathBuf) -> Option<PathBuf> {
+//     WORLD_DIR.set(world_dir).expect("WORLD_DIR already set");
+// }
 
-// === Main entry point ===
 #[rocket::main]
-pub async fn launch_web() {
-    let _ = rocket::build()
+pub async fn server() {
+        let _ = rocket::build()
         .attach(CORS)
         .mount("/", FileServer::from(relative!("static")))
         .mount("/backend", routes![response, cors_preflight])

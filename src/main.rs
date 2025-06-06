@@ -6,8 +6,12 @@ use deemak::DEBUG_MODE;
 use deemak::menu;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
-use utils::{debug_mode, log, valid_sekai};
+use utils::{debug_mode, log, valid_sekai,globals};
 use valid_sekai::validate_sekai;
+use std::path::PathBuf;
+use once_cell::sync::OnceCell;
+
+static WORLD_DIR: OnceCell<PathBuf> = OnceCell::new();
 
 pub const HELP_TXT: &str = r#"
 Usage: deemak <sekai_directory> [--debug] [--web]
@@ -18,6 +22,7 @@ Options:
   --web [Optional]              :   Run the application in web mode (requires a web server).
 "#;
 
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     // first argument is sekai name to parse
@@ -26,7 +31,8 @@ fn main() {
         .expect("DEBUG_MODE already set");
     log::log_info("Application", "Starting DEEMAK Shell");
 
-    let sekai_dir = if args.len() > 1 {
+    
+     let sekai_dir = if args.len() > 1 {
         // get absolute path to the sekai directory
         let sekai_path = std::env::current_dir().unwrap().join(&args[1]);
         log::log_info(
@@ -52,11 +58,14 @@ fn main() {
         return;
     };
 
+    globals::WORLD_DIR.set(sekai_dir.clone().unwrap()).expect("Failed to set world dir");
+    
     // We have 2 modes, the web and the raylib gui. The web argument runs it on the web, else
     // raylib gui is set by default.
     if args.iter().any(|arg| arg == "--web") {
         log::log_info("Application", "Running in web mode");
-        server::launch_web();
+        // server::launch_web(sekai_dir.clone().unwrap());
+        server::server();
         return;
     }
 

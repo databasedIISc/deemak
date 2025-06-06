@@ -67,8 +67,9 @@ body {
   align-items: center;
   flex-direction: column;
   width: 90%;
-  height: 95vh;
+  height: 100vh;
   overflow: hidden;
+  justify-content: center;
 }
 
 .terminal_card {

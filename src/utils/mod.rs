@@ -6,5 +6,6 @@ pub mod log;
 pub use log::debug_mode;
 
 pub mod valid_sekai;
+pub mod globals;
 
 pub mod wrapit;
