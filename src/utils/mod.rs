@@ -7,4 +7,6 @@ pub use log::debug_mode;
 
 pub mod restore_comp;
 pub mod valid_sekai;
+pub mod globals;
+
 pub mod wrapit;

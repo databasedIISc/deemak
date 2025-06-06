@@ -208,6 +208,7 @@ name = "deemak"
 version = "0.1.0"
 dependencies = [
  "flate2",
+ "once_cell",
  "raylib",
  "rocket",
  "serde",

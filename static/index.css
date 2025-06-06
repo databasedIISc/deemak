@@ -67,8 +67,9 @@ body {
   align-items: center;
   flex-direction: column;
   width: 90%;
-  height: 95vh;
+  height: 100vh;
   overflow: hidden;
+  justify-content: center;
 }
 
 .terminal_card {
@@ -78,7 +79,7 @@ body {
   justify-content: center;
 }
 
-.terminal {
+#terminal {
     background-color: black;
     border: 1px solid #444;
     padding: 20px;
@@ -103,7 +104,12 @@ body {
 
 .terminal_line div {
   margin-right: 8px;
-  color: #50fa7b;
+  color: white;
+}
+
+.terminal_line .dollor{
+    margin-right: 8px;
+    color: #50fa7b;
 }
 
 .terminal_line input {
@@ -197,16 +203,16 @@ body {
 }
 
 /* WebKit Scrollbar for terminal only */
-.terminal::-webkit-scrollbar {
+#terminal::-webkit-scrollbar {
   width: 10px;
 }
 
-.terminal::-webkit-scrollbar-thumb {
+#terminal::-webkit-scrollbar-thumb {
   background-color: #44475a;
   border-radius: 10px;
   border: 2px solid #1e1e2f;
 }
 
-.terminal::-webkit-scrollbar-thumb:hover {
+#terminal::-webkit-scrollbar-thumb:hover {
   background-color: #6272a4;
 }
