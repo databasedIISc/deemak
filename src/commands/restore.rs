@@ -1,6 +1,7 @@
 use super::argparser::ArgParser;
 use crate::utils::log;
 use crate::utils::restore_comp::{backup_sekai, can_restore, restore_sekai};
+use crate::utils::prompt::UserPrompter;
 use std::path::PathBuf;
 
 pub const HELP_TEXT: &str = r#"
@@ -9,7 +10,7 @@ Usage: restore
 Restore the Sekai directory. This means all your progress is gone, and you will have to start over from scratch.
 "#;
 
-pub fn restore(args: &[&str], root_path: &PathBuf) -> String {
+pub fn restore(args: &[&str], root_path: &PathBuf, prompter: &mut dyn UserPrompter) -> String {
     let mut parser = ArgParser::new(&[]);
     let args_string: Vec<String> = args.iter().map(|s| s.to_string()).collect();
 
@@ -21,6 +22,10 @@ pub fn restore(args: &[&str], root_path: &PathBuf) -> String {
                 err_msg += "Too many positional arguments provided. No arguments expected.";
                 log::log_info("restore", err_msg.as_str());
                 return err_msg;
+            }
+            // Ask for confirmation
+            if !prompter.confirm("Are you sure you want to restore? This will erase all progress.") {
+                return "Restore cancelled by user.".to_string();
             }
             if can_restore(root_path) {
                 // Restore file already exists.

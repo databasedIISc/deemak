@@ -1,5 +1,6 @@
 use super::*;
 use std::path::PathBuf;
+use crate::utils::prompt::UserPrompter;
 
 /// CommandResult enum to represent the result of a command execution
 pub enum CommandResult {
@@ -11,7 +12,7 @@ pub enum CommandResult {
 }
 
 /// Command manager that processes commands and processed to return appropriate outputs
-pub fn cmd_manager(parts: &[&str], current_dir: &PathBuf, root_dir: &PathBuf) -> CommandResult {
+pub fn cmd_manager(parts: &[&str], current_dir: &PathBuf, root_dir: &PathBuf, prompter: &mut dyn UserPrompter) -> CommandResult {
     if parts.is_empty() {
         return CommandResult::NotFound;
     }
@@ -38,7 +39,7 @@ pub fn cmd_manager(parts: &[&str], current_dir: &PathBuf, root_dir: &PathBuf) ->
         }
         "clear" => CommandResult::Clear,
         "exit" => CommandResult::Exit,
-        "restore" => CommandResult::Output(restore::restore(&parts[1..], root_dir)),
+        "restore" => CommandResult::Output(restore::restore(&parts[1..], root_dir, prompter)),
         "save" => CommandResult::Output(save::save(&parts[1..], root_dir)),
         _ => CommandResult::NotFound,
     }

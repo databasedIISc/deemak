@@ -8,6 +8,7 @@ use rocket::serde::json::Json;
 use rocket::{Request, Response, get, options, routes};
 use std::path::PathBuf;
 use crate::globals::WORLD_DIR;
+use deemak::utils::prompt::DummyPrompter;
 
 
 #[derive(Serialize)]
@@ -30,7 +31,8 @@ fn response(command: &str, current_dir: &str ) -> Json<CommandResponse> {
         PathBuf::from(current_dir)
     };
 
-    match cmd_manager(&parts, &mut current_dir, &root_dir) {
+    let mut prompter = DummyPrompter;
+    match cmd_manager(&parts, &mut current_dir, &root_dir, &mut prompter) {
         CommandResult::Output(output) => Json(CommandResponse {
             output,
             new_current_dir: None,
