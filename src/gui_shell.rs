@@ -1,9 +1,9 @@
 use crate::keys::key_to_char;
-use crate::utils::wrapit::wrapit;
-use deemak::utils::prompt::UserPrompter;
-use deemak::commands::CommandResult;
-use deemak::commands;
 use crate::utils::find_root;
+use crate::utils::wrapit::wrapit;
+use deemak::commands;
+use deemak::commands::CommandResult;
+use deemak::utils::prompt::UserPrompter;
 use raylib::ffi::{
     ColorFromHSV, DrawLineEx, DrawRectangle, DrawTextEx, LoadFontEx, MeasureTextEx, Vector2,
 };
@@ -61,7 +61,8 @@ impl ShellScreen {
     ) -> Self {
         // Loading Font
         let font = unsafe {
-            let path = CString::new("JetBrainsMono-2/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();
+            let path = CString::new("fontbook/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();
+
             LoadFontEx(
                 path.as_ptr() as *const c_char,
                 600.0 as c_int,
@@ -341,7 +342,9 @@ impl ShellScreen {
                 return true;
             }
             if self.rl.is_key_pressed(raylib::consts::KeyboardKey::KEY_N)
-                || self.rl.is_key_pressed(raylib::consts::KeyboardKey::KEY_ENTER)
+                || self
+                    .rl
+                    .is_key_pressed(raylib::consts::KeyboardKey::KEY_ENTER)
             {
                 self.active_prompt = None;
                 self.output_lines.push(format!("{} [y/N] no", message));

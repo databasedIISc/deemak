@@ -29,7 +29,7 @@ pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread) {
 
     // Load font
     let font = unsafe {
-        let path = CString::new("JetBrainsMono-2/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();
+        let path = CString::new("fontbook/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();
         LoadFontEx(
             path.as_ptr() as *const c_char,
             600.0 as c_int,
