@@ -1,6 +1,6 @@
 use deemak::commands;
 use deemak::utils::find_root;
-use rocket::{Config, Rocket};
+use rocket::Config;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::fs::{FileServer, relative};
 use rocket::http::Header;
