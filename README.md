@@ -25,7 +25,7 @@ cargo run sekai --web
 ```
 
 Then, open your browser and navigate to: http://localhost:8000
-
+- To change the port, you go to .env file and change the `BACKEND_PORT` value (default BACKEND_PORT=8001).    
 - To run in debug mode, you can do -
 
 ```bash

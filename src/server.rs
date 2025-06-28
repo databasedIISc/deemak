@@ -107,7 +107,7 @@ pub async fn server() -> Result<(), rocket::Error> {
     dotenv().ok();
 
     let port: u16 = env::var("BACKEND_PORT")
-        .unwrap_or_else(|_| "8000".to_string())
+        .unwrap_or_else(|_| "8001".to_string())
         .parse()
         .expect("Invalid port number");
 
