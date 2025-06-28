@@ -120,7 +120,7 @@ pub async fn server() -> Result<(), rocket::Error> {
 
     let _rocket = rocket::custom(config)
         .attach(CORS)
-        .mount("/", FileServer::from("static"))
+        .mount("/", FileServer::from(relative!("static")))
         .mount("/backend", routes![response, cors_preflight])
         .launch()
         .await
