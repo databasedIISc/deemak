@@ -1,5 +1,6 @@
 use deemak::commands;
 use deemak::utils::find_root;
+use rocket::{Config, Rocket};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::fs::{FileServer, relative};
 use rocket::http::Header;
@@ -9,6 +10,10 @@ use rocket::{Request, Response, get, options, routes};
 use std::path::PathBuf;
 use crate::globals::WORLD_DIR;
 
+use dotenvy::dotenv;
+use std::env;
+use std::fs::File;
+use std::io::Write;
 
 #[derive(Serialize)]
 struct CommandResponse {
@@ -83,18 +88,43 @@ impl Fairing for CORS {
     }
 }
 
-// // === Root directory finder ===
-// fn set_world_dir(world_dir: PathBuf) -> Option<PathBuf> {
-//     WORLD_DIR.set(world_dir).expect("WORLD_DIR already set");
-// }
+fn generate_config_js(port: u16) {
+    let js_content = format!(
+        r#"export const BACKEND_URL = "http://localhost:{}";"#,
+        port
+    );
+
+    let path = "static/config.js";
+    let mut file = File::create(path).expect("Failed to create config.js");
+    file.write_all(js_content.as_bytes())
+        .expect("Failed to write config.js");
+
+    println!("Generated static/config.js with port {}", port);
+}
 
 #[rocket::main]
-pub async fn server() {
-        let _ = rocket::build()
+pub async fn server() -> Result<(), rocket::Error> {
+    dotenv().ok();
+
+    let port: u16 = env::var("BACKEND_PORT")
+        .unwrap_or_else(|_| "8000".to_string())
+        .parse()
+        .expect("Invalid port number");
+
+    generate_config_js(port);
+
+    let config = Config {
+        port,
+        ..Config::default()
+    };
+
+    let _rocket = rocket::custom(config)
         .attach(CORS)
-        .mount("/", FileServer::from(relative!("static")))
+        .mount("/", FileServer::from("static"))
         .mount("/backend", routes![response, cors_preflight])
         .launch()
         .await
         .expect("failed to launch Rocket server");
+
+    Ok(())
 }

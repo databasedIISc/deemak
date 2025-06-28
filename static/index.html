@@ -57,7 +57,10 @@
     </div>
   </div>
 
-
+  <script type="module">
+    import { BACKEND_URL } from './config.js';
+    window.BACKEND_URL = BACKEND_URL;
+  </script>
   <script>
     const menuContainer = document.getElementById('menu_container');
     const terminalContainer = document.getElementById('terminal_container');
@@ -171,7 +174,7 @@
       
       try {
         const response = await fetch(
-          `http://localhost:8000/backend/run?command=${encodeURIComponent(command)}&current_dir=${encodeURIComponent(currentDir)}`
+          `${window.BACKEND_URL}/backend/run?command=${encodeURIComponent(command)}&current_dir=${encodeURIComponent(currentDir)}`
         );
         const result = await response.json();
         output.innerText = result.output;
@@ -179,6 +182,7 @@
           currentDir = result.new_current_dir;
         }
       } catch (error) {
+        console.error("Error:", error);
         output.innerText = "Error: Could not reach server.";
       }
 
