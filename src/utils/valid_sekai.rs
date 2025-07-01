@@ -53,7 +53,7 @@ pub fn create_dir_info(dir: &PathBuf) -> bool {
 /// Checks if .dir_info/info.json exists and is valid (updated for PathBuf)
 pub fn check_dir_info_exists(dir: &PathBuf) -> bool {
     // Skip .dir_info directories
-    if dir.file_name().and_then(|n| n.to_str()) == Some(".dir_info") {
+    if dir.components().any(|c| c.as_os_str() == ".dir_info") {
         return true;
     }
 

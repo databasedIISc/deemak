@@ -10,6 +10,9 @@ pub use help::{get_command_help, help};
 mod ls;
 pub use ls::ls;
 
+mod tap;
+pub use tap::tap;
+
 mod go;
 pub use go::go;
 

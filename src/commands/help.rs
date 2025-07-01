@@ -7,6 +7,7 @@ pub fn get_command_help(command: &str) -> Option<&'static str> {
         "ls" => Some(ls::HELP_TXT),
         "help" => Some("help [command]: Displays help for the specified command."),
         "read" => Some(read::HELP_TXT),
+        "tap" => Some(tap::HELP_TXT),
         "whereami" => Some("whereami: Displays the current directory."),
         "whoami" => Some("whoami: Displays who you are."),
         "exit" => Some("exit: Exits the program."),
