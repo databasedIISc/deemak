@@ -30,6 +30,9 @@ Welcome to DBD Deemak Help. You can use the following commands:
 - go <directory>: Changes the current directory to the specified directory.
 - ls: Lists the objects and places you can go to in the current directory.
 - read <file>: Reads the specified file.
+- copy <source> <destination>: Copies a file/directory from source to destination.
+- tap <file>: Creates new file/directory with the specified name.
+- del <file>: Deletes the specified file/directory.
 - whereami: Displays where you are.
 - help: Displays this help message.
 - exit: Exits the program.
