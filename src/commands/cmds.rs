@@ -53,7 +53,7 @@ pub fn cmd_manager(
         "ls" => CommandResult::Output(ls(&parts[1..], current_dir, root_dir)),
         "read" => CommandResult::Output(read(&parts[1..], current_dir, root_dir)),
         "copy" => {
-            let msg = copy::copy(&parts[1..], current_dir, root_dir);
+            let msg = copy::copy(&parts[1..], current_dir, root_dir, prompter);
             CommandResult::Output(msg)
         }
         "tap" => {

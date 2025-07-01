@@ -2,6 +2,7 @@ use super::argparser::ArgParser;
 use super::cmds::normalize_path;
 use super::display_relative_path;
 use crate::utils::log;
+use crate::utils::prompt::UserPrompter;
 use crate::utils::valid_sekai::create_dir_info;
 use std::fs;
 use std::io;
@@ -155,10 +156,7 @@ fn move_item(
 
     if src.is_dir() {
         if !recursive {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                "Use -r for directories",
-            ));
+            return Err(io::Error::other("Use -r for directories"));
         }
 
         // Prepare destination
@@ -236,7 +234,12 @@ fn delete_directory_contents(path: &Path) -> io::Result<()> {
 }
 
 /// Main copy command function
-pub fn copy(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> String {
+pub fn copy(
+    args: &[&str],
+    current_dir: &PathBuf,
+    root_dir: &Path,
+    prompter: &mut dyn UserPrompter,
+) -> String {
     let valid_flags = vec![
         "-x",
         "--cut",
@@ -278,6 +281,12 @@ pub fn copy(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> String {
             let cut = args.contains(&"-x") || args.contains(&"--cut");
             let recursive = args.contains(&"-r") || args.contains(&"--recursive");
             let force = args.contains(&"-f") || args.contains(&"--force");
+
+            // Prompt for force confirmation
+            if force && !prompter.confirm("Are you sure you want to force overwrite files?") {
+                return "Operation of force overwriting cancelled. No files copied/moved."
+                    .to_string();
+            }
 
             // Validate paths and perform operations
             match validate_paths(src, dest, current_dir, root_dir) {
