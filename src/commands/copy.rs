@@ -317,7 +317,7 @@ pub fn copy(
         }
         Err(e) => match &e[..] {
             "help" => HELP_TXT.to_string(),
-            "unknown" => "tap: unknown flag\nTry 'help copy' for more information.".to_string(),
+            "unknown" => "copy: unknown flag\nTry 'help copy' for more information.".to_string(),
             _ => "Error parsing arguments. Try 'help copy' for more information.".to_string(),
         },
     }
