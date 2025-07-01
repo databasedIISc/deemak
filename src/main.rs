@@ -4,11 +4,8 @@ mod server;
 mod utils;
 use deemak::DEBUG_MODE;
 use deemak::menu;
-use raylib::RaylibHandle;
-use raylib::RaylibThread;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
-use utils::globals::WORLD_DIR;
 use utils::{debug_mode, find_root, globals, log, restore_comp, valid_sekai};
 use valid_sekai::validate_or_create_sekai;
 
@@ -36,6 +33,7 @@ fn main() {
             "SEKAI",
             &format!("Sekai directory provided: {:?}", sekai_path),
         );
+        // If not valid, create .dir_info for each of them.
         if !validate_or_create_sekai(&sekai_path) {
             log::log_error(
                 "SEKAI",
@@ -46,8 +44,11 @@ fn main() {
         } else {
             log::log_info("SEKAI", &format!("Sekai is Valid {:?}", sekai_path));
 
-            // Create the restore file if it does/doesn't exist, because anyways that world only
-            // will be played, so make the restore file of that
+            let root_dir =
+                find_root::find_home(&sekai_path).expect("Failed to find root directory");
+
+            // Create the restore file if it doesn't exist, since it is required for restoring. The
+            // progress will be saved as `save_me` and will be recreated every run.
             log::log_info(
                 "SEKAI",
                 &format!(
@@ -55,12 +56,35 @@ fn main() {
                     sekai_path.join(".dir_info/restore_me")
                 ),
             );
-            let root_dir =
-                find_root::find_home(&sekai_path).expect("Failed to find root directory");
-            if let Err(e) = restore_comp::backup_sekai("restore", &root_dir) {
-                log::log_error("SEKAI", &format!("Failed to create restore file: {}", e));
-                eprintln!("Error: Failed to create restore file: {}\nContinuing...", e);
-                return;
+            // restore_me should be made initially if it doesnt exist, else it will not be created
+            match restore_comp::backup_sekai("restore", &root_dir) {
+                Err(e) => {
+                    log::log_error("SEKAI", &format!("Failed to create restore file: {}", e));
+                    eprintln!("Error: Failed to create restore file: {}\nContinuing...", e);
+                    return;
+                }
+                Ok(msg) => {
+                    log::log_info("SEKAI", &msg);
+                }
+            }
+
+            // save_me should be made initially if it doesnt exist, it will be created every run
+            log::log_info(
+                "SEKAI",
+                &format!(
+                    "Creating save file for Sekai at {:?}",
+                    sekai_path.join(".dir_info/save_me")
+                ),
+            );
+            match restore_comp::backup_sekai("save", &root_dir) {
+                Err(e) => {
+                    log::log_error("SEKAI", &format!("Failed to create save file: {}", e));
+                    eprintln!("Error: Failed to create save file: {}\nContinuing...", e);
+                    return;
+                }
+                Ok(msg) => {
+                    log::log_info("SEKAI", &msg);
+                }
             }
         }
         Some(sekai_path)
@@ -72,19 +96,44 @@ fn main() {
         return;
     };
 
+    // If `save_me` already exists, then the sekai will be restored from it.
+    match restore_comp::restore_sekai("save", &sekai_dir.clone().unwrap()) {
+        Err(err) => {
+            log::log_error(
+                "SEKAI",
+                &format!("Failed to restore Sekai from save file: {}", err),
+            );
+            eprintln!(
+                "Error: Failed to restore Sekai from save file at {:?}\nContinuing...",
+                sekai_dir
+            );
+        }
+        Ok(_) => {
+            log::log_info("SEKAI", "Sekai restored successfully from save file");
+        }
+    }
+
     globals::WORLD_DIR
         .set(sekai_dir.clone().unwrap())
         .expect("Failed to set world dir");
 
+    // NOTE: All Directory operations and variables settings should be done before this point.
+    //
     // We have 2 modes, the web and the raylib gui. The web argument runs it on the web, else
     // raylib gui is set by default.
+    //
+    // NOTE: #############    SERVER USAGE    #############
+    //
+    // Initialize the server if --web argument is provided
     if args.iter().any(|arg| arg == "--web") {
         log::log_info("Application", "Running in web mode");
         // server::launch_web(sekai_dir.clone().unwrap());
-        server::server();
+        let _ = server::server();
         return;
     }
 
+    // NOTE: #############    RAYLIB GUI USAGE    #############
+    //
     // Initialize Raylib window
     unsafe {
         SetConfigFlags(4);

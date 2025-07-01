@@ -17,7 +17,7 @@ fn generate_temp_path(usage: &str, root_path: &PathBuf) -> PathBuf {
     PathBuf::from(format!("/tmp/deemak-{}-{:x}", usage, hash))
 }
 
-pub fn backup_sekai(usage: &str, root_path: &PathBuf) -> std::io::Result<()> {
+pub fn backup_sekai(usage: &str, root_path: &PathBuf) -> std::io::Result<String> {
     let dir_info_path = root_path.join(".dir_info");
     fs::create_dir_all(&dir_info_path)?;
 
@@ -31,6 +31,11 @@ pub fn backup_sekai(usage: &str, root_path: &PathBuf) -> std::io::Result<()> {
             ));
         }
     };
+
+    // if `restore_me` already exists, then do not recreate it
+    if usage == "restore" && dir_info_path.join(RESTORE_FILE).exists() {
+        return Ok("Restore file already exists, skipping creation.".to_string());
+    }
 
     let file = File::create(&backup_file)?;
     let mut encoder = ZlibEncoder::new(file, Compression::best());
@@ -59,7 +64,7 @@ pub fn backup_sekai(usage: &str, root_path: &PathBuf) -> std::io::Result<()> {
     }
 
     encoder.finish()?;
-    Ok(())
+    Ok(format!("Backup created at {:?}", backup_file))
 }
 
 pub fn restore_sekai(usage: &str, root_path: &PathBuf) -> std::io::Result<()> {
@@ -107,6 +112,7 @@ pub fn restore_sekai(usage: &str, root_path: &PathBuf) -> std::io::Result<()> {
     let mut archive = tar::Archive::new(decoder);
     archive.unpack(root_path)?;
 
+    // Clean up temporary file
     fs::remove_file(temp_path)?;
     Ok(())
 }

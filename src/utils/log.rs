@@ -27,7 +27,7 @@ pub fn log_debug(feature: &str, message: &str) {
 ///     log_info("info_reader", "Successfully read info from file: ...");
 pub fn log_info(feature: &str, message: &str) {
     if debug_mode() {
-        println!("[INFO] {} :: {}", feature, message);
+        println!("\x1b[32m[INFO]\x1b[0m {} :: {}", feature, message);
     }
 }
 
