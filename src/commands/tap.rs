@@ -1,4 +1,5 @@
 use super::argparser::ArgParser;
+use super::cmds::normalize_path;
 use super::display_relative_path;
 use crate::utils::log;
 use crate::utils::valid_sekai::create_dir_info;
@@ -97,29 +98,10 @@ fn handle_destination(
     Ok(new_path)
 }
 
-/// Normalizes a path by removing `.` and `..` components
-fn normalize_path(path: &Path) -> PathBuf {
-    let components = path.components();
-    let mut normalized = PathBuf::new();
-
-    for component in components {
-        match component {
-            std::path::Component::ParentDir => {
-                if !normalized.pop() {
-                    // If we can't go up further, keep the parent dir
-                    normalized.push("..");
-                }
-            }
-            std::path::Component::CurDir => {}
-            _ => normalized.push(component.as_os_str()),
-        }
-    }
-    normalized
-}
-
 // Check if the destination is within the root directory
 pub fn tap(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> String {
-    let mut parser = ArgParser::new(&[]);
+    let valid_flags = ["-d", "--dir", "-h", "--help"];
+    let mut parser = ArgParser::new(&valid_flags);
 
     let args_string: Vec<String> = args.iter().map(|s| s.to_string()).collect();
 
@@ -135,11 +117,15 @@ pub fn tap(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> String {
         Ok(_) => {
             let mut destination = args
                 .iter()
-                .find(|&&arg| !arg.starts_with('-'))
+                .find(|&&arg| !valid_flags.contains(&arg))
                 .unwrap_or(&"") as &str;
 
             if destination.is_empty() {
                 return "tap: No destination specified. Use 'tap --help' for usage.".to_string();
+            }
+            if destination.contains(".dir_info") {
+                return "tap: Cannot create .dir_info file or directory. Operation Not Allowed."
+                    .to_string();
             }
             // handle destination path
             let destination_path = Path::new(destination);
@@ -162,6 +148,10 @@ pub fn tap(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> String {
                 create_file(destination, current_dir, root_dir)
             }
         }
-        Err(e) => format!("tap: Invalid arguments: {}", e),
+        Err(e) => match &e[..] {
+            "help" => HELP_TXT.to_string(),
+            "unknown" => "tap: unknown flag\nTry 'help tap' for more information.".to_string(),
+            _ => "Error parsing arguments. Try 'help tap' for more information.".to_string(),
+        },
     }
 }

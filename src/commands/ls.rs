@@ -83,10 +83,12 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
                 }
             }
 
+            // Use (none) for no files or directories
             if directories.is_empty() {
                 directories = "   (none)\n".to_string();
             }
 
+            // Displaying files and directories
             // Format output with relative path header
             format!(
                 "\nObjects:\n{files}\nFrom inside here, you can go to:\n{directories}",

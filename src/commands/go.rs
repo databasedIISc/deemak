@@ -158,7 +158,7 @@ pub fn go(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, St
             "help" => (current_dir.clone(), HELP_TXT.to_string()),
             "unknown" => (
                 current_dir.clone(),
-                "ls: unknown flag\nTry 'help go' for more information.".to_string(),
+                "go: unknown flag\nTry 'help go' for more information.".to_string(),
             ),
             _ => (
                 current_dir.clone(),
