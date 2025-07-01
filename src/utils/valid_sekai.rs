@@ -118,7 +118,7 @@ fn check_subdirectories(path: &PathBuf) -> bool {
                 continue;
             }
 
-            let entry_path_buf = PathBuf::from(entry_path);
+            let entry_path_buf = entry_path;
             if !check_dir_info_exists(&entry_path_buf) {
                 all_valid = false;
             }
@@ -170,11 +170,12 @@ pub fn validate_or_create_sekai(sekai_path: &PathBuf) -> bool {
         // Create for subdirectories if missing
         if let Ok(entries) = std::fs::read_dir(sekai_path) {
             for entry in entries.filter_map(|e| e.ok()) {
-                let path = PathBuf::from(entry.path());
-                if path.is_dir() && path.file_name().and_then(|n| n.to_str()) != Some(".dir_info") {
-                    if !path.join(".dir_info/info.json").exists() {
-                        all_valid &= create_dir_info(&path);
-                    }
+                let path = entry.path();
+                if path.is_dir()
+                    && path.file_name().and_then(|n| n.to_str()) != Some(".dir_info")
+                    && !path.join(".dir_info/info.json").exists()
+                {
+                    all_valid &= create_dir_info(&path);
                 }
             }
         }

@@ -37,9 +37,15 @@ fn main() {
         if !validate_or_create_sekai(&sekai_path) {
             log::log_error(
                 "SEKAI",
-                &format!("sekai directory does not exist: {:?}", sekai_path),
+                &format!(
+                    "Sekai directory is not valid even after creating default `.dir_info`. Sekai: {:?}",
+                    sekai_path
+                ),
             );
-            eprintln!("Error: sekai directory does not exist: {:?}", sekai_path);
+            eprintln!(
+                "Error: Sekai directory is not valid even after creating default `.dir_info`. Please check the sekai validity. Sekai: {:?}",
+                sekai_path
+            );
             return;
         } else {
             log::log_info("SEKAI", &format!("Sekai is Valid {:?}", sekai_path));
