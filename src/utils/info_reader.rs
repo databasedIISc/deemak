@@ -1,10 +1,11 @@
-use serde::Deserialize;
+use super::valid_sekai::check_dir_info_exists;
+use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::Path;
+use std::path::PathBuf;
 use thiserror::Error;
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)] // Rejects unexpected fields
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct Info {
     #[serde(rename = "location")]
     pub location: String,
@@ -24,70 +25,52 @@ pub enum InfoError {
     ValidationError(String),
 }
 
-/// Implements methods for the `Info` struct.
 impl Info {
-    /// Validates the struct contents
+    /// Creates default Info values for a path
+    pub fn default_for_path(path: &PathBuf) -> Self {
+        let dir_name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("unknown");
+
+        Info {
+            location: if path.ends_with("sekai") {
+                "home".to_string()
+            } else {
+                dir_name.to_string()
+            },
+            about: format!("You are in '{}'. Look around and explore!", dir_name),
+        }
+    }
+
     pub fn validate(&self) -> Result<(), InfoError> {
         if self.location.trim().is_empty() {
             return Err(InfoError::ValidationError(
                 "Location cannot be empty".to_string(),
             ));
         }
-
         if self.about.trim().is_empty() {
             return Err(InfoError::ValidationError(
                 "About cannot be empty".to_string(),
             ));
         }
-
         Ok(())
     }
 }
 
-/// Reads and validates the info.json file and returns an `Info` struct.
-pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
-    // File existence check
+pub fn read_validate_info(info_path: &PathBuf) -> Result<Info, InfoError> {
+    check_dir_info_exists(info_path);
+
     if !info_path.exists() {
         return Err(InfoError::NotFound(info_path.display().to_string()));
     }
 
-    // Read and parse
     let contents = fs::read_to_string(info_path)?;
     let mut info: Info = serde_json::from_str(&contents)?;
 
-    // Clean data
     info.about = info.about.trim_matches('"').trim().to_string();
     info.location = info.location.trim().to_string();
 
-    // Validate
     info.validate()?;
-
     Ok(info)
-}
-
-/// Validates a JSON string against the expected schema for `Info`.
-pub fn validate_json_schema(json_str: &str) -> Result<(), InfoError> {
-    let value: serde_json::Value = serde_json::from_str(json_str)?;
-
-    match (value.get("location"), value.get("about")) {
-        (Some(loc), Some(about)) => {
-            if !loc.is_string() {
-                return Err(InfoError::ValidationError(
-                    "location must be a string".to_string(),
-                ));
-            }
-            if !about.is_string() {
-                return Err(InfoError::ValidationError(
-                    "about must be a string".to_string(),
-                ));
-            }
-        }
-        _ => {
-            return Err(InfoError::ValidationError(
-                "Missing required fields: 'location' and 'about'".to_string(),
-            ));
-        }
-    }
-
-    Ok(())
 }

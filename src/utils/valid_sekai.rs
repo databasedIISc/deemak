@@ -1,34 +1,63 @@
 use super::{log, read_validate_info};
-use std::path::Path;
+use std::path::PathBuf;
 
-/// Validates an info.json file at the given path
-fn validate_info_file(info_path: &Path) -> bool {
-    match read_validate_info(info_path) {
-        Ok(info) => {
-            if let Err(e) = info.validate() {
-                log::log_error(
-                    "SEKAI",
-                    &format!("Invalid info.json at {}: {}", info_path.display(), e),
-                );
-                false
-            } else {
-                true
-            }
+/// Creates properly formatted .dir_info with valid JSON info.json
+pub fn create_dir_info(dir: &PathBuf) -> bool {
+    // Skip if this is a .dir_info directory
+    if dir.file_name().and_then(|n| n.to_str()) == Some(".dir_info") {
+        return true;
+    }
+
+    let dir_info = dir.join(".dir_info");
+    let info_path = dir_info.join("info.json");
+
+    // Skip if already exists
+    if info_path.exists() {
+        return true;
+    }
+
+    // Create directory if needed
+    if let Err(e) = std::fs::create_dir_all(&dir_info) {
+        log::log_error(
+            "SEKAI",
+            &format!("Failed to create .dir_info in {}: {}", dir.display(), e),
+        );
+        return false;
+    }
+
+    // Get default values from Info struct
+    let default_info = super::info_reader::Info::default_for_path(dir);
+
+    // Write as proper JSON file
+    match std::fs::write(
+        &info_path,
+        serde_json::to_string_pretty(&default_info).unwrap(),
+    ) {
+        Ok(_) => {
+            log::log_info(
+                "SEKAI",
+                &format!("Created valid info.json for: {}", dir.display()),
+            );
+            true
         }
         Err(e) => {
             log::log_error(
                 "SEKAI",
-                &format!("Failed to read info.json at {}: {}", info_path.display(), e),
+                &format!("Failed to create info.json in {}: {}", dir.display(), e),
             );
             false
         }
     }
 }
 
-/// Checks if .dir_info/info.json exists and is valid
-fn check_dir_info_exists(dir: &Path) -> bool {
-    let info_path = dir.join(".dir_info/info.json");
+/// Checks if .dir_info/info.json exists and is valid (updated for PathBuf)
+pub fn check_dir_info_exists(dir: &PathBuf) -> bool {
+    // Skip .dir_info directories
+    if dir.file_name().and_then(|n| n.to_str()) == Some(".dir_info") {
+        return true;
+    }
 
+    let info_path = dir.join(".dir_info/info.json");
     if !info_path.exists() {
         log::log_warning(
             "SEKAI",
@@ -36,14 +65,26 @@ fn check_dir_info_exists(dir: &Path) -> bool {
         );
         return false;
     }
-
     validate_info_file(&info_path)
 }
 
-/// Recursively checks directory structure
-fn check_subdirectories(path: &Path) -> bool {
-    let mut all_valid = true;
+/// Validates an info.json file at the given path (updated for PathBuf)
+fn validate_info_file(info_path: &PathBuf) -> bool {
+    match read_validate_info(info_path) {
+        Ok(info) => info.validate().is_ok(),
+        Err(e) => {
+            log::log_error(
+                "SEKAI",
+                &format!("Invalid info.json at {}: {}", info_path.display(), e),
+            );
+            false
+        }
+    }
+}
 
+/// Recursively checks directory structure (updated for PathBuf)
+fn check_subdirectories(path: &PathBuf) -> bool {
+    let mut all_valid = true;
     let entries = match std::fs::read_dir(path) {
         Ok(entries) => entries,
         Err(e) => {
@@ -57,35 +98,31 @@ fn check_subdirectories(path: &Path) -> bool {
 
     for entry in entries.filter_map(|e| e.ok()) {
         let entry_path = entry.path();
-
         if entry_path.is_dir() {
             let dir_name = entry_path
                 .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or("");
 
-            // Skip recursing into .dir_info directory
+            // Skip .dir_info directories
             if dir_name == ".dir_info" {
                 continue;
             }
 
-            // All directories (including dot-directories) must have .dir_info/info.json
-            if !check_dir_info_exists(&entry_path) {
+            let entry_path_buf = PathBuf::from(entry_path);
+            if !check_dir_info_exists(&entry_path_buf) {
                 all_valid = false;
             }
-
-            // Recursively check other subdirectories
-            if !check_subdirectories(&entry_path) {
+            if !check_subdirectories(&entry_path_buf) {
                 all_valid = false;
             }
         }
     }
-
     all_valid
 }
 
-/// Main validation function
-pub fn validate_sekai(sekai_path: &Path) -> bool {
+/// Main validation function with auto-creation
+pub fn validate_or_create_sekai(sekai_path: &PathBuf) -> bool {
     if !sekai_path.exists() {
         log::log_error(
             "SEKAI",
@@ -107,19 +144,44 @@ pub fn validate_sekai(sekai_path: &Path) -> bool {
         &format!("Validating directory: {}", sekai_path.display()),
     );
 
-    // First check the root directory's .dir_info
-    if !check_dir_info_exists(sekai_path) {
-        return false;
-    }
+    // First validate
+    let mut all_valid = check_dir_info_exists(sekai_path);
+    all_valid &= check_subdirectories(sekai_path);
 
-    let all_valid = check_subdirectories(sekai_path);
+    // If invalid, attempt to fix
+    if !all_valid {
+        log::log_info("SEKAI", "Attempting to create missing .dir_info...");
+        all_valid = true; // Reset and check again after creation
+
+        // Create for root if missing
+        if !sekai_path.join(".dir_info/info.json").exists() {
+            all_valid &= create_dir_info(sekai_path);
+        }
+
+        // Create for subdirectories if missing
+        if let Ok(entries) = std::fs::read_dir(sekai_path) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = PathBuf::from(entry.path());
+                if path.is_dir() && path.file_name().and_then(|n| n.to_str()) != Some(".dir_info") {
+                    if !path.join(".dir_info/info.json").exists() {
+                        all_valid &= create_dir_info(&path);
+                    }
+                }
+            }
+        }
+
+        // Re-validate after creation attempts
+        if all_valid {
+            all_valid = check_dir_info_exists(sekai_path) && check_subdirectories(sekai_path);
+        }
+    }
 
     if all_valid {
         log::log_info("SEKAI", "Directory structure is valid");
     } else {
         log::log_error(
             "SEKAI",
-            "Directory structure is invalid - missing or invalid .dir_info/info.json files",
+            "Directory structure could not be validated/created",
         );
     }
 

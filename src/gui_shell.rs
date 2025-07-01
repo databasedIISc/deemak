@@ -88,11 +88,11 @@ impl ShellScreen {
             root_dir: root_dir.clone(),
             current_dir: root_dir, // Both point to same path initially
             font,
+            font_size,
             window_width,
             window_height,
             char_width,
             term_split_ratio: 2.0 / 3.0,
-            font_size,
             scroll_offset: 0,
             active_prompt: None,
         }

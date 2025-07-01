@@ -4,14 +4,13 @@ mod server;
 mod utils;
 use deemak::DEBUG_MODE;
 use deemak::menu;
-use once_cell::sync::OnceCell;
+use raylib::RaylibHandle;
+use raylib::RaylibThread;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
-use std::path::PathBuf;
+use utils::globals::WORLD_DIR;
 use utils::{debug_mode, find_root, globals, log, restore_comp, valid_sekai};
-use valid_sekai::validate_sekai;
-
-static WORLD_DIR: OnceCell<PathBuf> = OnceCell::new();
+use valid_sekai::validate_or_create_sekai;
 
 pub const HELP_TXT: &str = r#"
 Usage: deemak <sekai_directory> [--debug] [--web]
@@ -37,7 +36,7 @@ fn main() {
             "SEKAI",
             &format!("Sekai directory provided: {:?}", sekai_path),
         );
-        if !validate_sekai(&sekai_path) {
+        if !validate_or_create_sekai(&sekai_path) {
             log::log_error(
                 "SEKAI",
                 &format!("sekai directory does not exist: {:?}", sekai_path),
