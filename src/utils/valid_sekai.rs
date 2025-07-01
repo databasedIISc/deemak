@@ -31,7 +31,16 @@ pub fn create_dir_info(dir: &PathBuf) -> bool {
     // Write as proper JSON file
     match std::fs::write(
         &info_path,
-        serde_json::to_string_pretty(&default_info).unwrap(),
+        match serde_json::to_string_pretty(&default_info) {
+            Ok(json) => json,
+            Err(e) => {
+                log::log_error(
+                    "SEKAI",
+                    &format!("Failed to serialize default info for {}: {}", dir.display(), e),
+                );
+                return false;
+            }
+        },
     ) {
         Ok(_) => {
             log::log_info(
