@@ -59,7 +59,6 @@ impl Info {
 }
 
 pub fn read_validate_info(info_path: &PathBuf) -> Result<Info, InfoError> {
-    check_dir_info_exists(info_path);
 
     if !info_path.exists() {
         return Err(InfoError::NotFound(info_path.display().to_string()));
