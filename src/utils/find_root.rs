@@ -1,5 +1,4 @@
 use super::read_validate_info;
-use crate::utils::log;
 use std::path::{Path, PathBuf};
 
 /// Find the root directory of a sekai by finding "location": "home"
