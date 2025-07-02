@@ -64,7 +64,7 @@ pub fn backup_sekai(usage: &str, root_path: &PathBuf) -> std::io::Result<String>
     }
 
     encoder.finish()?;
-    Ok(format!("Backup created at {:?}", backup_file))
+    Ok(format!("Backup {} created at {:?}", usage, backup_file))
 }
 
 pub fn restore_sekai(usage: &str, root_path: &PathBuf) -> std::io::Result<()> {

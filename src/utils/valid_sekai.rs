@@ -2,7 +2,7 @@ use super::{log, read_validate_info};
 use std::path::PathBuf;
 
 /// Creates properly formatted .dir_info with valid JSON info.json
-pub fn create_dir_info(dir: &PathBuf) -> bool {
+pub fn create_dir_info(dir: &PathBuf, home_dir: bool) -> bool {
     // Skip if this is a .dir_info directory
     if dir.file_name().and_then(|n| n.to_str()) == Some(".dir_info") {
         return true;
@@ -26,7 +26,7 @@ pub fn create_dir_info(dir: &PathBuf) -> bool {
     }
 
     // Get default values from Info struct
-    let default_info = super::info_reader::Info::default_for_path(dir);
+    let default_info = super::info_reader::Info::default_for_path(dir, home_dir);
 
     // Write as proper JSON file
     match std::fs::write(
@@ -36,7 +36,11 @@ pub fn create_dir_info(dir: &PathBuf) -> bool {
             Err(e) => {
                 log::log_error(
                     "SEKAI",
-                    &format!("Failed to serialize default info for {}: {}", dir.display(), e),
+                    &format!(
+                        "Failed to serialize default info for {}: {}",
+                        dir.display(),
+                        e
+                    ),
                 );
                 return false;
             }
@@ -61,11 +65,6 @@ pub fn create_dir_info(dir: &PathBuf) -> bool {
 
 /// Checks if .dir_info/info.json exists and is valid (updated for PathBuf)
 pub fn check_dir_info_exists(dir: &PathBuf) -> bool {
-    // Skip .dir_info directories
-    if dir.components().any(|c| c.as_os_str() == ".dir_info") {
-        return true;
-    }
-
     let info_path = dir.join(".dir_info/info.json");
     if !info_path.exists() {
         log::log_warning(
@@ -164,7 +163,7 @@ pub fn validate_or_create_sekai(sekai_path: &PathBuf) -> bool {
 
         // Create for root if missing
         if !sekai_path.join(".dir_info/info.json").exists() {
-            all_valid &= create_dir_info(sekai_path);
+            all_valid &= create_dir_info(sekai_path, true);
         }
 
         // Create for subdirectories if missing
@@ -175,7 +174,7 @@ pub fn validate_or_create_sekai(sekai_path: &PathBuf) -> bool {
                     && path.file_name().and_then(|n| n.to_str()) != Some(".dir_info")
                     && !path.join(".dir_info/info.json").exists()
                 {
-                    all_valid &= create_dir_info(&path);
+                    all_valid &= create_dir_info(&path, false);
                 }
             }
         }

@@ -124,7 +124,7 @@ fn copy_directory(src: &Path, dest: &Path, root_dir: &Path, force: bool) -> io::
     }
 
     // Create new .dir_info in destination
-    if !create_dir_info(&dest.to_path_buf()) {
+    if !create_dir_info(&dest.to_path_buf(), false) {
         return Err(io::Error::other(format!(
             "Failed to create .dir_info in {}",
             display_relative_path(dest, root_dir)
@@ -180,12 +180,12 @@ fn move_item(
                     } else {
                         copy_file(&e.path(), &new_path, force)?;
                     }
-                    fs::remove_dir_all(&e.path()).or_else(|_| fs::remove_file(&e.path()))
+                    fs::remove_dir_all(e.path()).or_else(|_| fs::remove_file(e.path()))
                 })
             })?;
 
         fs::remove_dir(src)?;
-        if !create_dir_info(&dest.to_path_buf()) {
+        if !create_dir_info(&dest.to_path_buf(), false) {
             return Err(io::Error::other(format!(
                 "Failed to create .dir_info in {}",
                 display_relative_path(dest, root_dir)
