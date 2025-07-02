@@ -1,3 +1,4 @@
+#![allow(unused_variables, unused_mut, dead_code, unused_imports)]
 mod gui_shell;
 mod keys;
 mod server;
@@ -66,7 +67,8 @@ fn main() {
             match restore_comp::backup_sekai("restore", &root_dir) {
                 Err(e) => {
                     log::log_error("SEKAI", &format!("Failed to create restore file: {}", e));
-                    eprintln!("Error: Failed to create restore file: {}\nContinuing...", e);
+                    eprintln!("Error: Failed to create restore file: {}
+Continuing...", e);
                     return;
                 }
                 Ok(msg) => {
@@ -85,7 +87,8 @@ fn main() {
             match restore_comp::backup_sekai("save", &root_dir) {
                 Err(e) => {
                     log::log_error("SEKAI", &format!("Failed to create save file: {}", e));
-                    eprintln!("Error: Failed to create save file: {}\nContinuing...", e);
+                    eprintln!("Error: Failed to create save file: {}
+Continuing...", e);
                     return;
                 }
                 Ok(msg) => {
@@ -110,7 +113,8 @@ fn main() {
                 &format!("Failed to restore Sekai from save file: {}", err),
             );
             eprintln!(
-                "Error: Failed to restore Sekai from save file at {:?}\nContinuing...",
+                "Error: Failed to restore Sekai from save file at {:?}
+Continuing...",
                 sekai_dir
             );
         }

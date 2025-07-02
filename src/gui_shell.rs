@@ -1,3 +1,4 @@
+use crate::globals;
 use crate::keys::key_to_char;
 use crate::utils::find_root;
 use crate::utils::wrapit::wrapit;
@@ -56,7 +57,7 @@ impl ShellScreen {
     pub fn new_sekai(
         rl: RaylibHandle,
         thread: RaylibThread,
-        world_dir: PathBuf,
+        sekai_dir: PathBuf,
         font_size: f32,
     ) -> Self {
         // Loading Font
@@ -78,7 +79,7 @@ impl ShellScreen {
             MeasureTextEx(font, cstr.as_ptr(), font_size, 1.2).x
         };
         let root_dir =
-            find_root::find_home(&world_dir).expect("Could not find sekai home directory");
+            find_root::find_home(&sekai_dir).expect("Could not find sekai home directory");
 
         Self {
             rl,
