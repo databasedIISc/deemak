@@ -131,6 +131,7 @@ fn check_subdirectories(path: &PathBuf) -> bool {
 
 /// Main validation function with auto-creation
 pub fn validate_or_create_sekai(sekai_path: &PathBuf) -> bool {
+    // Initial validation checks
     if !sekai_path.exists() {
         log::log_error(
             "SEKAI",
@@ -138,7 +139,6 @@ pub fn validate_or_create_sekai(sekai_path: &PathBuf) -> bool {
         );
         return false;
     }
-
     if !sekai_path.is_dir() {
         log::log_error(
             "SEKAI",
@@ -152,34 +152,24 @@ pub fn validate_or_create_sekai(sekai_path: &PathBuf) -> bool {
         &format!("Validating directory: {}", sekai_path.display()),
     );
 
-    // First validate
+    // First validate current structure
     let mut all_valid = check_dir_info_exists(sekai_path);
     all_valid &= check_subdirectories(sekai_path);
 
-    // If invalid, attempt to fix
+    // If invalid, attempt to fix recursively
     if !all_valid {
         log::log_info("SEKAI", "Attempting to create missing .dir_info...");
-        all_valid = true; // Reset and check again after creation
+        all_valid = true; // Reset for creation phase
 
-        // Create for root if missing
+        // Process current directory
         if !sekai_path.join(".dir_info/info.json").exists() {
             all_valid &= create_dir_info(sekai_path, true);
         }
 
-        // Create for subdirectories if missing
-        if let Ok(entries) = std::fs::read_dir(sekai_path) {
-            for entry in entries.filter_map(|e| e.ok()) {
-                let path = entry.path();
-                if path.is_dir()
-                    && path.file_name().and_then(|n| n.to_str()) != Some(".dir_info")
-                    && !path.join(".dir_info/info.json").exists()
-                {
-                    all_valid &= create_dir_info(&path, false);
-                }
-            }
-        }
+        // Process all subdirectories recursively
+        all_valid &= process_directory_recursively(sekai_path);
 
-        // Re-validate after creation attempts
+        // Final validation after creation attempts
         if all_valid {
             all_valid = check_dir_info_exists(sekai_path) && check_subdirectories(sekai_path);
         }
@@ -192,6 +182,32 @@ pub fn validate_or_create_sekai(sekai_path: &PathBuf) -> bool {
             "SEKAI",
             "Directory structure could not be validated/created",
         );
+    }
+
+    all_valid
+}
+
+/// Helper function for recursive directory processing
+fn process_directory_recursively(dir: &PathBuf) -> bool {
+    let mut all_valid = true;
+
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.filter_map(|e| e.ok()) {
+            let path = entry.path();
+
+            // Skip .dir_info and non-directories
+            if !path.is_dir() || path.file_name().and_then(|n| n.to_str()) == Some(".dir_info") {
+                continue;
+            }
+
+            // Create .dir_info if missing
+            if !path.join(".dir_info/info.json").exists() {
+                all_valid &= create_dir_info(&path, false);
+            }
+
+            // Recurse into subdirectories
+            all_valid &= process_directory_recursively(&path);
+        }
     }
 
     all_valid
