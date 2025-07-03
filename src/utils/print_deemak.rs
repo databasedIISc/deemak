@@ -1,5 +1,7 @@
+use std::ffi::{c_char, CString};
 use std::sync::Mutex;
 use once_cell::sync::OnceCell;
+use raylib::ffi::{ColorFromHSV, DrawTextEx, Font, Vector2};
 
 pub static GLOBAL_OUTPUT_LINES: OnceCell<Mutex<Vec<String>>> = OnceCell::new();
 
@@ -28,5 +30,21 @@ pub fn deemak_clear() {
     if let Some(output) = GLOBAL_OUTPUT_LINES.get() {
         let mut lines = output.lock().unwrap();
         lines.clear();
+    }
+}
+
+pub fn print_deemak_at(x: f32, y: f32, text: &str, font: Font, font_size: f32, hsv_color: (f32, f32, f32)) {
+    let content = CString::new(text).unwrap();
+    let pos = Vector2 { x, y };
+
+    unsafe {
+        DrawTextEx(
+            font,
+            content.as_ptr() as *const c_char,
+            pos,
+            font_size,
+            1.2,
+            ColorFromHSV(hsv_color.0, hsv_color.1, hsv_color.2),
+        )
     }
 }

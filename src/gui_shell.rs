@@ -15,9 +15,7 @@ use std::ffi::CString;
 use std::os::raw::c_char;
 use std::{mem::take, os::raw::c_int, path::PathBuf, process::exit};
 use textwrap::wrap;
-use crate::utils::print_deemak::{
-    init_output_lines, GLOBAL_OUTPUT_LINES, print_deemak, print_deemak_extend, deemak_clear
-};
+use crate::utils::print_deemak::*;
 
 pub struct ShellScreen {
     rl: RaylibHandle,
@@ -222,7 +220,7 @@ impl ShellScreen {
             ),
             visible_lines.len() as i32 - 1,
         ) as usize;
-        let display_lines = &visible_lines[index as usize..];
+        let display_lines = &visible_lines[index..];
 
         for (i, line) in display_lines.iter().enumerate() {
             unsafe {
@@ -295,6 +293,14 @@ impl ShellScreen {
                 ColorFromHSV(0.0, 0.0, 0.3),
             );
         }
+
+        // Random text
+        print_deemak_at(
+            350.0, 350.0,
+            "Random text",
+            self.font, self.font_size,
+            (0.0, 0.0, 1.0)
+        );
     }
 
     pub fn process_input(&mut self, mut input: &str) {
@@ -348,16 +354,16 @@ impl ShellScreen {
             self.update();
             self.draw();
 
-            if self.rl.is_key_pressed(raylib::consts::KeyboardKey::KEY_Y) {
+            if self.rl.is_key_pressed(KeyboardKey::KEY_Y) {
                 self.active_prompt = None;
                 // self.output_lines.push(format!("{} [y/N] yes", message));
                 print_deemak(format!("{} [y/N] yes", message));
                 return true;
             }
-            if self.rl.is_key_pressed(raylib::consts::KeyboardKey::KEY_N)
+            if self.rl.is_key_pressed(KeyboardKey::KEY_N)
                 || self
                     .rl
-                    .is_key_pressed(raylib::consts::KeyboardKey::KEY_ENTER)
+                    .is_key_pressed(KeyboardKey::KEY_ENTER)
             {
                 self.active_prompt = None;
                 // self.output_lines.push(format!("{} [y/N] no", message));
