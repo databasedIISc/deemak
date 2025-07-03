@@ -1,7 +1,8 @@
-use std::ffi::{c_char, CString};
+use std::ffi::{c_char, CString, c_int};
 use std::sync::Mutex;
 use once_cell::sync::OnceCell;
-use raylib::ffi::{ColorFromHSV, DrawTextEx, Font, Vector2};
+use raylib::ffi::{ColorFromHSV, DrawTextEx, Vector2, LoadFontEx};
+use raylib::prelude::get_monitor_width;
 
 pub static GLOBAL_OUTPUT_LINES: OnceCell<Mutex<Vec<String>>> = OnceCell::new();
 
@@ -33,9 +34,20 @@ pub fn deemak_clear() {
     }
 }
 
-pub fn print_deemak_at(x: f32, y: f32, text: &str, font: Font, font_size: f32, hsv_color: (f32, f32, f32)) {
+pub fn print_deemak_at(x: f32, y: f32, text: &str) {
     let content = CString::new(text).unwrap();
     let pos = Vector2 { x, y };
+    let font = unsafe {
+        let path = CString::new("fontbook/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();
+
+        LoadFontEx(
+            path.as_ptr() as *const c_char,
+            600.0 as c_int,
+            std::ptr::null_mut::<c_int>(),
+            0,
+        )
+    };
+    let font_size = get_monitor_width(0) as f32 / 73.5;
 
     unsafe {
         DrawTextEx(
@@ -44,7 +56,7 @@ pub fn print_deemak_at(x: f32, y: f32, text: &str, font: Font, font_size: f32, h
             pos,
             font_size,
             1.2,
-            ColorFromHSV(hsv_color.0, hsv_color.1, hsv_color.2),
+            ColorFromHSV(0.0, 0.0, 1.0),
         )
     }
 }

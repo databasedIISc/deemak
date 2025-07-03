@@ -295,12 +295,7 @@ impl ShellScreen {
         }
 
         // Random text
-        print_deemak_at(
-            350.0, 350.0,
-            "Random text",
-            self.font, self.font_size,
-            (0.0, 0.0, 1.0)
-        );
+        print_deemak_at(350.0, 350.0, "Random text");
     }
 
     pub fn process_input(&mut self, mut input: &str) {
