@@ -52,7 +52,7 @@ pub fn create_directory(destination: &str, current_dir: &PathBuf, root_dir: &Pat
     match std::fs::create_dir(new_path) {
         Ok(_) => {
             // create .dir_info automatically
-            if !create_dir_info(new_path) {
+            if !create_dir_info(new_path, false) {
                 return format!(
                     "tap: Failed to create .dir_info: {}",
                     display_relative_path(new_path, root_dir)

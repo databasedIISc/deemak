@@ -1,3 +1,4 @@
+#![allow(unused_variables, unused_mut, dead_code, unused_imports)]
 mod gui_shell;
 mod keys;
 mod server;
@@ -49,10 +50,19 @@ fn main() {
             );
             return;
         } else {
+            // sekai is valid
             log::log_info("SEKAI", &format!("Sekai is Valid {:?}", sekai_path));
-
-            let root_dir =
-                find_root::find_home(&sekai_path).expect("Failed to find root directory");
+            let root_dir = find_root::find_home(&sekai_path);
+            if root_dir.is_some() {
+                log::log_info(
+                    "SEKAI",
+                    &format!("Found root directory for Sekai: {:?}", root_dir),
+                );
+            } else {
+                log::log_error("SEKAI", "Failed to find root directory for Sekai. Exiting.");
+                eprintln!("Error: Failed to find root directory for Sekai. Exiting.");
+                return;
+            }
 
             // Create the restore file if it doesn't exist, since it is required for restoring. The
             // progress will be saved as `save_me` and will be recreated every run.
@@ -64,10 +74,14 @@ fn main() {
                 ),
             );
             // restore_me should be made initially if it doesnt exist, else it will not be created
-            match restore_comp::backup_sekai("restore", &root_dir) {
+            match restore_comp::backup_sekai("restore", root_dir.as_ref().unwrap()) {
                 Err(e) => {
                     log::log_error("SEKAI", &format!("Failed to create restore file: {}", e));
-                    eprintln!("Error: Failed to create restore file: {}\nContinuing...", e);
+                    eprintln!(
+                        "Error: Failed to create restore file: {}
+Continuing...",
+                        e
+                    );
                     return;
                 }
                 Ok(msg) => {
@@ -83,10 +97,14 @@ fn main() {
                     sekai_path.join(".dir_info/save_me")
                 ),
             );
-            match restore_comp::backup_sekai("save", &root_dir) {
+            match restore_comp::backup_sekai("save", root_dir.as_ref().unwrap()) {
                 Err(e) => {
                     log::log_error("SEKAI", &format!("Failed to create save file: {}", e));
-                    eprintln!("Error: Failed to create save file: {}\nContinuing...", e);
+                    eprintln!(
+                        "Error: Failed to create save file: {}
+Continuing...",
+                        e
+                    );
                     return;
                 }
                 Ok(msg) => {
@@ -111,7 +129,8 @@ fn main() {
                 &format!("Failed to restore Sekai from save file: {}", err),
             );
             eprintln!(
-                "Error: Failed to restore Sekai from save file at {:?}\nContinuing...",
+                "Error: Failed to restore Sekai from save file at {:?}
+Continuing...",
                 sekai_dir
             );
         }

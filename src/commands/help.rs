@@ -37,7 +37,7 @@ Welcome to DBD Deemak Help. You can use the following commands:
 - help: Displays this help message.
 - exit: Exits the program.
 - clear: Clears the screen.
-- restore: Restores the Sekai from starting point.
+- restore: Restores the Sekai to last saved version or to starting point( if forced)
 - save: Saves your current progress of the Sekai.
 
 Try `help command` to get help on a specific command.

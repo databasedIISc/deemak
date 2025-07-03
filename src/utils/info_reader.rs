@@ -27,11 +27,15 @@ pub enum InfoError {
 
 impl Info {
     /// Creates default Info values for a path
-    pub fn default_for_path(path: &PathBuf) -> Self {
-        let dir_name = path
+    pub fn default_for_path(path: &PathBuf, home_dir: bool) -> Self {
+        let mut dir_name = path
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("unknown");
+
+        if home_dir {
+            dir_name = "home";
+        }
 
         Info {
             location: if path.ends_with("sekai") {
@@ -59,7 +63,6 @@ impl Info {
 }
 
 pub fn read_validate_info(info_path: &PathBuf) -> Result<Info, InfoError> {
-
     if !info_path.exists() {
         return Err(InfoError::NotFound(info_path.display().to_string()));
     }
