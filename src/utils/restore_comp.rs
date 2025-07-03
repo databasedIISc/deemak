@@ -90,10 +90,11 @@ pub fn restore_sekai(usage: &str, root_path: &PathBuf) -> std::io::Result<()> {
         // Preserve .dir_info but clean contents appropriately
         if path == root_path.join(".dir_info") {
             if usage == "restore" {
-                // Remove save_me when doing full restore
+                // Remove save_me when doing full restore and copy restore_me to it
+                // This has an inbuilt assumption that we never change restore_me, which we do not.
                 let save_path = path.join(SAVE_FILE);
                 if save_path.exists() {
-                    fs::remove_file(save_path)?;
+                    fs::copy(root_path.join(".dir_info").join(RESTORE_FILE), save_path)?;
                 }
             }
             continue;
