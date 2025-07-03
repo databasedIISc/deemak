@@ -15,12 +15,14 @@ use std::ffi::CString;
 use std::os::raw::c_char;
 use std::{mem::take, os::raw::c_int, path::PathBuf, process::exit};
 use textwrap::wrap;
+use crate::utils::print_deemak::{
+    init_output_lines, GLOBAL_OUTPUT_LINES, print_deemak, print_deemak_extend, deemak_clear
+};
 
 pub struct ShellScreen {
     rl: RaylibHandle,
     thread: RaylibThread,
     input_buffer: String,
-    output_lines: Vec<String>,
     current_dir: PathBuf,
     root_dir: PathBuf,
     font: ffi::Font,
@@ -80,12 +82,12 @@ impl ShellScreen {
         };
         let root_dir =
             find_root::find_home(&sekai_dir).expect("Could not find sekai home directory");
+        init_output_lines(Vec::<String>::new());
 
         Self {
             rl,
             thread,
             input_buffer: String::new(),
-            output_lines: Vec::<String>::new(),
             root_dir: root_dir.clone(),
             current_dir: root_dir, // Both point to same path initially
             font,
@@ -106,10 +108,12 @@ impl ShellScreen {
             .floor() as usize;
         let wrapped_banner = wrap(DEEMAK_BANNER, limit);
         let wrapped_initial = wrap(INITIAL_MSG, limit);
-        self.output_lines
-            .extend(wrapped_banner.into_iter().map(|c| c.into_owned()));
-        self.output_lines
-            .extend(wrapped_initial.into_iter().map(|c| c.into_owned()));
+        // self.output_lines
+        //     .extend(wrapped_banner.into_iter().map(|c| c.into_owned()));
+        print_deemak_extend(wrapped_banner.into_iter().map(|c| c.into_owned()));
+        // self.output_lines
+        //     .extend(wrapped_initial.into_iter().map(|c| c.into_owned()));
+        print_deemak_extend(wrapped_initial.into_iter().map(|c| c.into_owned()));
 
         while !self.window_should_close() {
             self.update();
@@ -169,7 +173,8 @@ impl ShellScreen {
         let max_lines_on_screen = self.window_height / self.font_size as i32;
 
         let mut visible_lines = Vec::<String>::new();
-        for line in self.output_lines.iter() {
+        let lines = GLOBAL_OUTPUT_LINES.get().unwrap().lock().unwrap();
+        for line in lines.iter() {
             let lines = if line.len() > limit {
                 wrapit(line, limit)
             } else {
@@ -208,7 +213,7 @@ impl ShellScreen {
         let length_input: usize = input_lines.len();
         visible_lines.extend(input_lines.into_iter());
 
-        let mut index: usize = 0;
+        let mut index: usize;
 
         index = min(
             max(
@@ -298,7 +303,8 @@ impl ShellScreen {
         }
 
         // Add input to output
-        self.output_lines.push(format!("> {}", input));
+        // self.output_lines.push(format!("> {}", input));
+        print_deemak(format!("> {}", input));
 
         // Parse and execute command
         let mut current_dir = self.current_dir.clone();
@@ -307,23 +313,28 @@ impl ShellScreen {
         match commands::cmd_manager(&parts, &mut current_dir, &root_dir, self) {
             CommandResult::ChangeDirectory(new_dir, message) => {
                 self.current_dir = new_dir;
-                self.output_lines
-                    .extend(message.split("\n").map(|s| s.to_string()));
+                // self.output_lines
+                //     .extend(message.split("\n").map(|s| s.to_string()));
+                print_deemak_extend(message.split("\n").map(|s| s.to_string()));
             }
             CommandResult::Output(output) => {
-                self.output_lines
-                    .extend(output.split("\n").map(|s| s.to_string()));
+                // self.output_lines
+                //     .extend(output.split("\n").map(|s| s.to_string()));
+                print_deemak_extend(output.split("\n").map(|s| s.to_string()));
             }
             CommandResult::Clear => {
-                self.output_lines.clear();
-                self.output_lines.push(INITIAL_MSG.to_string());
+                // self.output_lines.clear();
+                deemak_clear();
+                // self.output_lines.push(INITIAL_MSG.to_string());
+                print_deemak(INITIAL_MSG.to_string());
             }
             CommandResult::Exit => {
                 exit(1);
             }
             CommandResult::NotFound => {
-                self.output_lines
-                    .push("Command not found. Try `help`.".to_string());
+                // self.output_lines
+                // .push("Command not found. Try `help`.".to_string());
+                print_deemak("Command not found. Try `help`.".to_string());
             }
         }
     }
@@ -339,7 +350,8 @@ impl ShellScreen {
 
             if self.rl.is_key_pressed(raylib::consts::KeyboardKey::KEY_Y) {
                 self.active_prompt = None;
-                self.output_lines.push(format!("{} [y/N] yes", message));
+                // self.output_lines.push(format!("{} [y/N] yes", message));
+                print_deemak(format!("{} [y/N] yes", message));
                 return true;
             }
             if self.rl.is_key_pressed(raylib::consts::KeyboardKey::KEY_N)
@@ -348,7 +360,8 @@ impl ShellScreen {
                     .is_key_pressed(raylib::consts::KeyboardKey::KEY_ENTER)
             {
                 self.active_prompt = None;
-                self.output_lines.push(format!("{} [y/N] no", message));
+                // self.output_lines.push(format!("{} [y/N] no", message));
+                print_deemak(format!("{} [y/N] no", message));
                 return false;
             }
         }
