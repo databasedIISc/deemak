@@ -13,3 +13,4 @@ pub mod wrapit;
 
 pub mod prompt;
 pub mod print_deemak;
+pub mod global_font;

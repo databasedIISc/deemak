@@ -9,6 +9,7 @@ use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
 use utils::{debug_mode, find_root, globals, log, restore_comp, valid_sekai};
 use valid_sekai::validate_or_create_sekai;
+use crate::utils::global_font::GLOBAL_FONT_SIZE;
 
 pub const HELP_TXT: &str = r#"
 Usage: deemak <sekai_directory> [--debug] [--web]
@@ -176,6 +177,7 @@ Continuing...",
         .title("DEEMAK Shell")
         .build();
     let font_size = get_monitor_width(0) as f32 / 73.5;
+    GLOBAL_FONT_SIZE.set(font_size).unwrap();
     rl.set_trace_log(loglevel);
     log::log_info("Application", "DEEMAK initialized successfully");
 

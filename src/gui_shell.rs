@@ -15,6 +15,7 @@ use std::ffi::CString;
 use std::os::raw::c_char;
 use std::{mem::take, os::raw::c_int, path::PathBuf, process::exit};
 use textwrap::wrap;
+use crate::utils::global_font::{GlobalFont, GLOBAL_FONT};
 use crate::utils::print_deemak::*;
 
 pub struct ShellScreen {
@@ -71,6 +72,8 @@ impl ShellScreen {
                 0,
             )
         };
+        GLOBAL_FONT.set(GlobalFont(font)).unwrap();
+        let global_font = &GLOBAL_FONT.get().unwrap().0;
 
         let window_width = rl.get_screen_width();
         let window_height = rl.get_screen_height();
@@ -88,7 +91,7 @@ impl ShellScreen {
             input_buffer: String::new(),
             root_dir: root_dir.clone(),
             current_dir: root_dir, // Both point to same path initially
-            font,
+            font: *global_font,
             font_size,
             window_width,
             window_height,
