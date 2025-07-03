@@ -296,9 +296,6 @@ impl ShellScreen {
                 ColorFromHSV(0.0, 0.0, 0.3),
             );
         }
-
-        // Random text
-        print_deemak_at(350.0, 350.0, "Random text");
     }
 
     pub fn process_input(&mut self, mut input: &str) {
