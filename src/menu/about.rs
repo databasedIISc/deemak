@@ -1,4 +1,4 @@
-use raylib::ffi::{ColorFromHSV, DrawTextEx, LoadFontEx, MeasureTextEx, Vector2};
+use raylib::ffi::{ColorFromHSV, DrawTextEx, LoadFontEx, MeasureTextEx, Vector2, GetScreenHeight, GetScreenWidth};
 use raylib::prelude::*;
 use std::ffi::CString;
 use std::os::raw::{c_char, c_int};
@@ -107,8 +107,8 @@ pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread) {
                 let prompt_width = MeasureTextEx(font, c_prompt.as_ptr(), 20.0, 1.0).x;
                 let content = CString::new(prompt).unwrap();
                 let pos = Vector2 {
-                    x: (800.0 - prompt_width) / 2.0,
-                    y: 550.0,
+                    x: (GetScreenWidth() as f32 - prompt_width) / 2.0,
+                    y: GetScreenHeight() as f32 - 50.0,
                 };
                 DrawTextEx(
                     font,
@@ -126,8 +126,8 @@ pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread) {
                 let skip_width = MeasureTextEx(font, c_skip.as_ptr(), 20.0, 1.0).x;
                 let content = CString::new(skip_prompt).unwrap();
                 let pos = Vector2 {
-                    x: (600.0 - skip_width) / 2.0,
-                    y: 550.0,
+                    x: (GetScreenWidth() as f32 - skip_width) / 2.0,
+                    y: GetScreenHeight() as f32 - 50.0,
                 };
                 DrawTextEx(
                     font,
