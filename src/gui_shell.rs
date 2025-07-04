@@ -20,6 +20,7 @@ pub struct ShellScreen {
     rl: RaylibHandle,
     thread: RaylibThread,
     input_buffer: String,
+    working_buffer: Option<String>,
     output_lines: Vec<String>,
     current_dir: PathBuf,
     root_dir: PathBuf,
@@ -87,6 +88,7 @@ impl ShellScreen {
             thread,
             input_buffer: String::new(),
             output_lines: Vec::<String>::new(),
+            working_buffer: None,
             root_dir: root_dir.clone(),
             current_dir: root_dir, // Both point to same path initially
             font,
@@ -133,6 +135,7 @@ impl ShellScreen {
                     self.scroll_offset = 0;
                     shell_history::add_to_history(&input);
                     self.history_index = None;
+                    self.working_buffer = None; // Clear working buffer after command execution
                 }
             }
             Some(KeyboardKey::KEY_BACKSPACE) => {
@@ -277,12 +280,17 @@ impl ShellScreen {
                 }
             }
             Some(KeyboardKey::KEY_UP) => {
+                // Save current buffer if we're starting history navigation
+                if self.history_index.is_none() && !self.input_buffer.is_empty() {
+                    self.working_buffer = Some(self.input_buffer.clone());
+                }
+
                 let history = shell_history::get_history();
                 if !history.is_empty() {
                     let new_index = match self.history_index {
                         Some(index) if index > 0 => index - 1,
-                        Some(index) => index,
-                        None => history.len() - 1,
+                        Some(index) => index,      // already at first item
+                        None => history.len() - 1, // start from most recent
                     };
                     self.input_buffer = history[new_index].clone();
                     self.history_index = Some(new_index);
@@ -292,11 +300,13 @@ impl ShellScreen {
                 if let Some(index) = self.history_index {
                     let history = shell_history::get_history();
                     if index < history.len() - 1 {
+                        // Move to next item in history
                         let new_index = index + 1;
                         self.input_buffer = history[new_index].clone();
                         self.history_index = Some(new_index);
                     } else {
-                        self.input_buffer.clear();
+                        // Reached the end of history - restore working buffer
+                        self.input_buffer = self.working_buffer.take().unwrap_or_default();
                         self.history_index = None;
                     }
                 }
