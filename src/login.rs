@@ -119,7 +119,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
             if stream_index > 0 {
                 d.draw_text(
                     &displayed_text,
-                    d.get_screen_width() / 2 - 200,
+                    200,
                     top_y as i32,
                     20,
                     Color::alpha(&Color::GRAY, 1.0),
@@ -132,7 +132,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     &font_d,
                     "DEEMAK SHELL",
                     Vector2 {
-                        x: d.get_screen_width() as f32 / 2.0 - 200.0,
+                        x: 200.0,
                         y: y_offset,
                     },
                     60.0,
@@ -142,7 +142,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
             }
 
             if show_input {
-                let base_x = d.get_screen_width() as f32 / 2.0 - 200.0;
+                let base_x = 200.0;
                 let user_y = top_y + 120.0;
                 let pass_y = user_y + 100.0;
                 let box_width = 320.0;
@@ -265,7 +265,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                 );
 
                 // Footer note aligned to
-                let footer_note = "Created by Databased Club, IISc Bengaluru.
+                let footer_note = "Created by DataBased Club, IISc Bengaluru.
                 Enter your username and password to log in. Use up/down keys to switch input.";
                 let max_width = screen_width as f32 - 40.0;
                 let font_size = 20.0;
