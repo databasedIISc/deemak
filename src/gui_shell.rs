@@ -191,6 +191,13 @@ impl ShellScreen {
                             new_input.push_str(&common_prefix);
                             self.input_buffer = new_input;
                         } else {
+                            // Redraw the current command line
+                            let current_line = if let Some(ref prompt) = self.active_prompt {
+                                format!("{} {}", prompt, self.input_buffer)
+                            } else {
+                                format!("> {}", self.input_buffer)
+                            };
+                            self.output_lines.push(current_line);
                             // Calculate terminal dimensions
                             let term_width = ((self.window_width as f32
                                 * (self.term_split_ratio - 0.12))
@@ -204,7 +211,7 @@ impl ShellScreen {
                             let rows = (matches.len() + cols - 1) / cols;
 
                             // If too many items for one screen, display in pages
-                            if rows > term_height.saturating_sub(3) {
+                            if rows > term_height.saturating_sub(4) {
                                 let msg = format!(
                                     "Display all {} possibilities? (y or n)",
                                     matches.len()
@@ -263,15 +270,6 @@ impl ShellScreen {
                                 }
                                 self.output_lines.extend(completion_lines);
                             }
-
-                            // Redraw the current command line
-                            let current_line = if let Some(ref prompt) = self.active_prompt {
-                                format!("{} {}", prompt, self.input_buffer)
-                            } else {
-                                format!("> {}", self.input_buffer)
-                            };
-                            self.output_lines.push(current_line);
-
                             // Adjust scroll to keep the prompt visible
                             self.scroll_offset = 0;
                         }
