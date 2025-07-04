@@ -3,6 +3,7 @@ use crate::keys::key_to_char;
 use crate::utils::{find_root, shell_history, wrapit::wrapit};
 use deemak::commands;
 use deemak::commands::CommandResult;
+use deemak::commands::list_directory_entries;
 use deemak::utils::prompt::UserPrompter;
 use raylib::ffi::{
     ColorFromHSV, DrawLineEx, DrawRectangle, DrawTextEx, LoadFontEx, MeasureTextEx, Vector2,
@@ -128,13 +129,10 @@ impl ShellScreen {
             Some(KeyboardKey::KEY_ENTER) => {
                 let input = take(&mut self.input_buffer);
                 if !input.is_empty() {
-                    // Only add non-empty inputs to history
                     self.process_shell_input(&input);
                     self.scroll_offset = 0;
-
-                    // Add input to shell history
                     shell_history::add_to_history(&input);
-                    self.history_index = None; // Reset history navigation after submitting
+                    self.history_index = None;
                 }
             }
             Some(KeyboardKey::KEY_BACKSPACE) => {
@@ -142,13 +140,151 @@ impl ShellScreen {
                     self.input_buffer.pop();
                 }
             }
+
+            Some(KeyboardKey::KEY_TAB) => {
+                // Get current command parts
+                let parts: Vec<&str> = self.input_buffer.split_whitespace().collect();
+
+                if parts.len() > 1 {
+                    // Get the last part (what we're trying to complete)
+                    let last_part = parts.last().unwrap();
+
+                    // List directory contents (excluding .dir_info and info.json)
+                    let (files, dirs) = list_directory_entries(&self.current_dir, &self.root_dir);
+                    let all_matches = [dirs, files].concat();
+
+                    // Find all matches that start with current input
+                    let matches: Vec<String> = all_matches
+                        .iter()
+                        .filter(|&name| name.starts_with(last_part))
+                        .cloned()
+                        .collect();
+
+                    if matches.len() == 1 {
+                        // Single match - complete it
+                        let mut new_input = parts[..parts.len() - 1].join(" ");
+                        if !new_input.is_empty() {
+                            new_input.push(' ');
+                        }
+                        new_input.push_str(&matches[0]);
+                        self.input_buffer = new_input;
+                    } else if !matches.is_empty() {
+                        // Multiple matches - find common prefix
+                        let mut common_prefix = matches[0].clone();
+                        for m in &matches[1..] {
+                            common_prefix = common_prefix
+                                .chars()
+                                .zip(m.chars())
+                                .take_while(|(a, b)| a == b)
+                                .map(|(c, _)| c)
+                                .collect();
+                            if common_prefix.is_empty() {
+                                break;
+                            }
+                        }
+
+                        if common_prefix.len() > last_part.len() {
+                            let mut new_input = parts[..parts.len() - 1].join(" ");
+                            if !new_input.is_empty() {
+                                new_input.push(' ');
+                            }
+                            new_input.push_str(&common_prefix);
+                            self.input_buffer = new_input;
+                        } else {
+                            // Calculate terminal dimensions
+                            let term_width = ((self.window_width as f32
+                                * (self.term_split_ratio - 0.12))
+                                / self.char_width)
+                                .floor() as usize;
+                            let term_height = (self.window_height / self.font_size as i32) as usize;
+
+                            // Calculate optimal column display
+                            let max_len = matches.iter().map(|s| s.len()).max().unwrap_or(0) + 2;
+                            let cols = max(1, term_width / max_len);
+                            let rows = (matches.len() + cols - 1) / cols;
+
+                            // If too many items for one screen, display in pages
+                            if rows > term_height.saturating_sub(3) {
+                                let msg = format!(
+                                    "Display all {} possibilities? (y or n)",
+                                    matches.len()
+                                );
+                                if self.prompt_yes_no(&msg) {
+                                    // Display in pages
+                                    for chunk in
+                                        matches.chunks(term_width * (term_height - 3) / max_len)
+                                    {
+                                        let mut completion_lines = Vec::new();
+                                        for row in 0..(term_height - 3) {
+                                            let mut line = String::new();
+                                            for col in 0..cols {
+                                                let idx = row * cols + col;
+                                                if idx < chunk.len() {
+                                                    line.push_str(&format!(
+                                                        "{:width$}",
+                                                        chunk[idx],
+                                                        width = max_len
+                                                    ));
+                                                }
+                                            }
+                                            if !line.is_empty() {
+                                                completion_lines.push(line);
+                                            }
+                                        }
+                                        self.output_lines.extend(completion_lines);
+                                        // Wait for user to press space/enter
+                                        while !self.rl.is_key_pressed(KeyboardKey::KEY_SPACE)
+                                            && !self.rl.is_key_pressed(KeyboardKey::KEY_ENTER)
+                                            && !self.rl.is_key_pressed(KeyboardKey::KEY_Q)
+                                        {
+                                            self.draw();
+                                        }
+                                        if self.rl.is_key_pressed(KeyboardKey::KEY_Q) {
+                                            break;
+                                        }
+                                    }
+                                }
+                            } else {
+                                // Display all completions at once
+                                let mut completion_lines = Vec::new();
+                                for row in 0..rows {
+                                    let mut line = String::new();
+                                    for col in 0..cols {
+                                        let idx = row * cols + col;
+                                        if idx < matches.len() {
+                                            line.push_str(&format!(
+                                                "{:width$}",
+                                                matches[idx],
+                                                width = max_len
+                                            ));
+                                        }
+                                    }
+                                    completion_lines.push(line);
+                                }
+                                self.output_lines.extend(completion_lines);
+                            }
+
+                            // Redraw the current command line
+                            let current_line = if let Some(ref prompt) = self.active_prompt {
+                                format!("{} {}", prompt, self.input_buffer)
+                            } else {
+                                format!("> {}", self.input_buffer)
+                            };
+                            self.output_lines.push(current_line);
+
+                            // Adjust scroll to keep the prompt visible
+                            self.scroll_offset = 0;
+                        }
+                    }
+                }
+            }
             Some(KeyboardKey::KEY_UP) => {
                 let history = shell_history::get_history();
                 if !history.is_empty() {
                     let new_index = match self.history_index {
                         Some(index) if index > 0 => index - 1,
-                        Some(index) => index,      // already at first item
-                        None => history.len() - 1, // start from most recent
+                        Some(index) => index,
+                        None => history.len() - 1,
                     };
                     self.input_buffer = history[new_index].clone();
                     self.history_index = Some(new_index);
@@ -158,25 +294,21 @@ impl ShellScreen {
                 if let Some(index) = self.history_index {
                     let history = shell_history::get_history();
                     if index < history.len() - 1 {
-                        // Move to next item in history
                         let new_index = index + 1;
                         self.input_buffer = history[new_index].clone();
                         self.history_index = Some(new_index);
                     } else {
-                        // Reached the end of history - clear the input
                         self.input_buffer.clear();
                         self.history_index = None;
                     }
                 }
             }
             Some(key) => {
-                // Only accept printable ASCII characters
                 let shift = self.rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT)
                     || self.rl.is_key_down(KeyboardKey::KEY_RIGHT_SHIFT);
 
                 if let Some(c) = key_to_char(key, shift) {
                     self.input_buffer.push(c);
-                    // When typing, reset history navigation
                     self.history_index = None;
                 }
             }

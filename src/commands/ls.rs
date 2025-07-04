@@ -9,6 +9,34 @@ Usage: ls [directory]
 Lists the objects and places you can go to in the specified(current by default) directory.
 "#;
 
+/// Lists all files and directories in the given path, excluding .dir_info and info.json
+/// Returns a tuple of (files, directories) as String vectors
+pub fn list_directory_entries(target_path: &Path, root_dir: &Path) -> (Vec<String>, Vec<String>) {
+    let entries = match std::fs::read_dir(target_path) {
+        Ok(entries) => entries,
+        Err(_) => return (Vec::new(), Vec::new()), // Error handling remains in main function
+    };
+
+    let mut files = Vec::new();
+    let mut directories = Vec::new();
+
+    for entry in entries {
+        let Ok(entry) = entry else { continue };
+        let path = entry.path();
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if name == ".dir_info" || name == "info.json" {
+            continue;
+        }
+        if path.is_dir() {
+            directories.push(format!("{}/", name));
+        } else {
+            files.push(name);
+        }
+    }
+
+    (files, directories)
+}
+
 pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
     // Create parser with no flags (since ls doesn't need any) and our help text
     let args_string: Vec<String> = args.iter().map(|s| s.to_string()).collect();
@@ -43,9 +71,10 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
             };
 
             // Read directory entries
-            let entries = match std::fs::read_dir(&target_path) {
-                Ok(entries) => entries,
-                Err(e) => {
+            let (files_vec, directories_vec) = list_directory_entries(&target_path, root_dir);
+
+            if files_vec.is_empty() && directories_vec.is_empty() {
+                if let Err(e) = std::fs::read_dir(&target_path) {
                     let mut error_msg = e.to_string();
                     if e.kind() == std::io::ErrorKind::NotFound {
                         error_msg = "No such file or directory".to_string();
@@ -56,37 +85,23 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
                         error_msg
                     );
                 }
+            }
+
+            // Format the output strings
+            let files = if files_vec.is_empty() {
+                "   (none)\n".to_string()
+            } else {
+                files_vec.iter().map(|f| format!("   {}\n", f)).collect()
             };
 
-            let mut files = String::new();
-            let mut directories = String::new();
-
-            for entry in entries {
-                match entry {
-                    Ok(entry) => {
-                        let path = entry.path();
-                        let name = entry.file_name().to_string_lossy().into_owned();
-
-                        if name == ".dir_info" || name == "info.json" {
-                            continue; // Skip info.json
-                        }
-
-                        if path.is_dir() {
-                            directories.push_str(&format!("   {}/\n", name));
-                        } else {
-                            files.push_str(&format!("   {}\n", name));
-                        }
-                    }
-                    Err(e) => {
-                        return format!("Error reading entry: {}\n", e);
-                    }
-                }
-            }
-
-            // Use (none) for no files or directories
-            if directories.is_empty() {
-                directories = "   (none)\n".to_string();
-            }
+            let directories = if directories_vec.is_empty() {
+                "   (none)\n".to_string()
+            } else {
+                directories_vec
+                    .iter()
+                    .map(|d| format!("   {}\n", d))
+                    .collect()
+            };
 
             // Displaying files and directories
             // Format output with relative path header

@@ -8,7 +8,7 @@ mod help;
 pub use help::{get_command_help, help};
 
 mod ls;
-pub use ls::ls;
+pub use ls::{list_directory_entries, ls};
 
 mod tap;
 pub use tap::tap;
