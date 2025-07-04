@@ -1,7 +1,6 @@
 use crate::globals;
 use crate::keys::key_to_char;
-use crate::utils::find_root;
-use crate::utils::wrapit::wrapit;
+use crate::utils::{find_root, shell_history, wrapit::wrapit};
 use deemak::commands;
 use deemak::commands::CommandResult;
 use deemak::utils::prompt::UserPrompter;
@@ -31,6 +30,7 @@ pub struct ShellScreen {
     font_size: f32,
     scroll_offset: i32,
     active_prompt: Option<String>,
+    history_index: Option<usize>,
 }
 
 impl UserPrompter for ShellScreen {
@@ -96,6 +96,7 @@ impl ShellScreen {
             term_split_ratio: 2.0 / 3.0,
             scroll_offset: 0,
             active_prompt: None,
+            history_index: None,
         }
     }
 
@@ -126,12 +127,46 @@ impl ShellScreen {
         match self.rl.get_key_pressed() {
             Some(KeyboardKey::KEY_ENTER) => {
                 let input = take(&mut self.input_buffer);
-                self.process_input(&input);
-                self.scroll_offset = 0;
+                if !input.is_empty() {
+                    // Only add non-empty inputs to history
+                    self.process_shell_input(&input);
+                    self.scroll_offset = 0;
+
+                    // Add input to shell history
+                    shell_history::add_to_history(&input);
+                    self.history_index = None; // Reset history navigation after submitting
+                }
             }
             Some(KeyboardKey::KEY_BACKSPACE) => {
                 if !self.input_buffer.is_empty() {
                     self.input_buffer.pop();
+                }
+            }
+            Some(KeyboardKey::KEY_UP) => {
+                let history = shell_history::get_history();
+                if !history.is_empty() {
+                    let new_index = match self.history_index {
+                        Some(index) if index > 0 => index - 1,
+                        Some(index) => index,      // already at first item
+                        None => history.len() - 1, // start from most recent
+                    };
+                    self.input_buffer = history[new_index].clone();
+                    self.history_index = Some(new_index);
+                }
+            }
+            Some(KeyboardKey::KEY_DOWN) => {
+                if let Some(index) = self.history_index {
+                    let history = shell_history::get_history();
+                    if index < history.len() - 1 {
+                        // Move to next item in history
+                        let new_index = index + 1;
+                        self.input_buffer = history[new_index].clone();
+                        self.history_index = Some(new_index);
+                    } else {
+                        // Reached the end of history - clear the input
+                        self.input_buffer.clear();
+                        self.history_index = None;
+                    }
                 }
             }
             Some(key) => {
@@ -141,6 +176,8 @@ impl ShellScreen {
 
                 if let Some(c) = key_to_char(key, shift) {
                     self.input_buffer.push(c);
+                    // When typing, reset history navigation
+                    self.history_index = None;
                 }
             }
             None => {}
@@ -157,7 +194,6 @@ impl ShellScreen {
             self.scroll_offset -= (scroll_y / 2.00) as i32;
         }
     }
-
     pub fn draw(&mut self) {
         // Draw output lines
         let char_width = unsafe {
@@ -206,7 +242,7 @@ impl ShellScreen {
         };
 
         let length_input: usize = input_lines.len();
-        visible_lines.extend(input_lines.into_iter());
+        visible_lines.extend(input_lines);
 
         let mut index: usize = 0;
 
@@ -217,7 +253,7 @@ impl ShellScreen {
             ),
             visible_lines.len() as i32 - 1,
         ) as usize;
-        let display_lines = &visible_lines[index as usize..];
+        let display_lines = &visible_lines[index..];
 
         for (i, line) in display_lines.iter().enumerate() {
             unsafe {
@@ -292,19 +328,30 @@ impl ShellScreen {
         }
     }
 
-    pub fn process_input(&mut self, mut input: &str) {
+    pub fn process_input(&mut self, mut input: &str, prefix: Option<&str>) -> Vec<String> {
         if input.is_empty() {
-            return;
+            return self.output_lines.clone();
         }
 
         // Add input to output
-        self.output_lines.push(format!("> {}", input));
+        self.output_lines
+            .push(format!("{} {}", prefix.unwrap_or(""), input));
+
+        self.output_lines.clone()
+    }
+
+    pub fn process_shell_input(&mut self, input: &str) {
+        // If input is empty, do nothing
+        if input.trim().is_empty() {
+            return;
+        }
+        self.output_lines = self.process_input(input, Some(">"));
 
         // Parse and execute command
         let mut current_dir = self.current_dir.clone();
         let root_dir = self.root_dir.clone();
         let parts: Vec<&str> = input.split_whitespace().collect();
-        match commands::cmd_manager(&parts, &mut current_dir, &root_dir, self) {
+        match commands::cmd_manager(&parts, &current_dir, &root_dir, self) {
             CommandResult::ChangeDirectory(new_dir, message) => {
                 self.current_dir = new_dir;
                 self.output_lines
