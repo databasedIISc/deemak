@@ -1,3 +1,4 @@
+use crate::keys::key_to_char;
 use raylib::ffi::{ColorFromHSV, DrawTextEx, LoadFontEx, MeasureTextEx, Vector2};
 use raylib::prelude::*;
 use std::ffi::CString;
@@ -76,9 +77,13 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                         }
                     }
                     KeyboardKey::KEY_SPACE => {
-                        warning = true;
+                        if entering_username {
+                            username.push(' ');
+                        } else {
+                            password.push(' ');
+                        }
                     }
-                    KeyboardKey::KEY_DOWN | KeyboardKey::KEY_UP => {
+                    KeyboardKey::KEY_DOWN | KeyboardKey::KEY_UP | KeyboardKey::KEY_TAB => {
                         entering_username = !entering_username;
                     }
                     _ => {
@@ -112,7 +117,13 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
             }
 
             if stream_index > 0 {
-                d.draw_text(&displayed_text, 200, top_y as i32, 20, Color::fade(&Color::GRAY, 1.0));
+                d.draw_text(
+                    &displayed_text,
+                    d.get_screen_width() / 2 - 200,
+                    top_y as i32,
+                    20,
+                    Color::alpha(&Color::GRAY, 1.0),
+                );
             }
 
             // Shell Title
@@ -120,7 +131,10 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                 d.draw_text_ex(
                     &font_d,
                     "DEEMAK SHELL",
-                    Vector2 { x: 200.0, y: y_offset },
+                    Vector2 {
+                        x: d.get_screen_width() as f32 / 2.0 - 200.0,
+                        y: y_offset,
+                    },
                     60.0,
                     2.0,
                     Color::WHITE,
@@ -128,23 +142,33 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
             }
 
             if show_input {
-                let base_x = 200.0;
+                let base_x = d.get_screen_width() as f32 / 2.0 - 200.0;
                 let user_y = top_y + 120.0;
                 let pass_y = user_y + 100.0;
                 let box_width = 320.0;
                 let box_height = 40.0;
 
                 // Username
-                d.draw_text("Username :", base_x as i32, (user_y + 5.0) as i32, 30, Color::fade(&Color::WHITE, 0.9));
+                d.draw_text(
+                    "Username :",
+                    base_x as i32,
+                    (user_y + 5.0) as i32,
+                    30,
+                    Color::alpha(&Color::WHITE, 0.9),
+                );
                 d.draw_rectangle_lines(
                     base_x as i32,
                     (user_y + 40.0) as i32,
                     box_width as i32,
                     box_height as i32,
-                    if entering_username { highlight_color } else { Color::GRAY },
+                    if entering_username {
+                        highlight_color
+                    } else {
+                        Color::GRAY
+                    },
                 );
 
-                // Draw username 
+                // Draw username
                 let mut total_width = 0.0;
                 let mut visible = String::new();
                 for ch in username.chars().rev() {
@@ -157,7 +181,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     visible.insert(0, ch);
                 }
                 let user_display = if entering_username {
-                    format!("{}_", visible)
+                    format!("{}|", visible)
                 } else {
                     visible.clone()
                 };
@@ -166,24 +190,37 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     DrawTextEx(
                         font,
                         user_c.as_ptr(),
-                        Vector2 { x: base_x + 5.0, y: user_y + 45.0 },
+                        Vector2 {
+                            x: base_x + 5.0,
+                            y: user_y + 45.0,
+                        },
                         30.0,
                         0.1,
-                        highlight_color.into());
+                        highlight_color.into(),
+                    );
                 }
 
-
                 // Password
-                d.draw_text("Password :", base_x as i32, (pass_y + 5.0) as i32, 30, Color::fade(&Color::WHITE, 0.9));
+                d.draw_text(
+                    "Password :",
+                    base_x as i32,
+                    (pass_y + 5.0) as i32,
+                    30,
+                    Color::alpha(&Color::WHITE, 0.9),
+                );
                 d.draw_rectangle_lines(
                     base_x as i32,
                     (pass_y + 40.0) as i32,
                     box_width as i32,
                     box_height as i32,
-                    if !entering_username { highlight_color } else { Color::GRAY },
+                    if !entering_username {
+                        highlight_color
+                    } else {
+                        Color::GRAY
+                    },
                 );
 
-                // Draw masked password 
+                // Draw masked password
                 let masked = "*".repeat(password.len());
                 let mut total_width = 0.0;
                 let mut visible_masked = String::new();
@@ -197,7 +234,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     visible_masked.insert(0, ch);
                 }
                 let pass_display = if !entering_username {
-                    format!("{}_", visible_masked)
+                    format!("{}|", visible_masked)
                 } else {
                     visible_masked.clone()
                 };
@@ -206,7 +243,10 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     DrawTextEx(
                         font,
                         pass_c.as_ptr(),
-                        Vector2 { x: base_x + 5.0, y: pass_y + 45.0 },
+                        Vector2 {
+                            x: base_x + 5.0,
+                            y: pass_y + 45.0,
+                        },
                         30.0,
                         0.1,
                         highlight_color.into(),
@@ -217,21 +257,21 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                 let screen_width = d.get_screen_width();
                 let divider_y = pass_y + 150.0;
                 d.draw_line(
-                    0,
+                    30,
                     divider_y as i32,
-                    screen_width,
+                    screen_width - 30,
                     divider_y as i32,
-                    Color::fade(&Color::GRAY, 0.5),
+                    Color::alpha(&Color::GRAY, 0.5),
                 );
 
-                // Footer note aligned to 
-                let footer_note = "Created by IISc DataBased Club using Rust and Raylib.
-                Enter your username and password to log in. Use up/down keys to switch input";
-                let max_width = screen_width as f32 - 20.0; 
+                // Footer note aligned to
+                let footer_note = "Created by Databased Club, IISc Bengaluru.
+                Enter your username and password to log in. Use up/down keys to switch input.";
+                let max_width = screen_width as f32 - 40.0;
                 let font_size = 20.0;
                 let spacing = 0.1;
-                let mut x = 10.0;
-                let mut y = divider_y + 20.0;
+                let mut x = 40.0;
+                let mut y = divider_y + 10.0;
 
                 let words: Vec<&str> = footer_note.split_whitespace().collect();
                 let mut line = String::new();
@@ -243,7 +283,8 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                         format!("{} {}", line, word)
                     };
                     let trial_c = CString::new(trial.clone()).unwrap();
-                    let width = unsafe { MeasureTextEx(font, trial_c.as_ptr(), font_size, spacing).x };
+                    let width =
+                        unsafe { MeasureTextEx(font, trial_c.as_ptr(), font_size, spacing).x };
 
                     if width > max_width {
                         // Draw current line
@@ -255,7 +296,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                                 Vector2 { x, y },
                                 font_size,
                                 spacing,
-                                Color::fade(&Color::GRAY, 0.5).into(),
+                                Color::alpha(&Color::GRAY, 0.5).into(),
                             );
                         }
                         // Start new line
@@ -276,13 +317,10 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                             Vector2 { x, y },
                             font_size,
                             spacing,
-                            Color::fade(&Color::GRAY, 0.5).into(),
+                            Color::alpha(&Color::GRAY, 0.5).into(),
                         );
                     }
                 }
-
-
-                
 
                 // Version text
                 let version = "Version 1.0";
@@ -291,36 +329,11 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     10,
                     d.get_screen_height() - 30,
                     16,
-                    Color::fade(&Color::GRAY, 0.4),
+                    Color::alpha(&Color::GRAY, 0.4),
                 );
             }
         }
     }
 
     false
-}
-
-fn key_to_char(key: KeyboardKey, shift: bool) -> Option<char> {
-    use KeyboardKey::*;
-    let ch = match key {
-        KEY_A => 'a', KEY_B => 'b', KEY_C => 'c', KEY_D => 'd',
-        KEY_E => 'e', KEY_F => 'f', KEY_G => 'g', KEY_H => 'h',
-        KEY_I => 'i', KEY_J => 'j', KEY_K => 'k', KEY_L => 'l',
-        KEY_M => 'm', KEY_N => 'n', KEY_O => 'o', KEY_P => 'p',
-        KEY_Q => 'q', KEY_R => 'r', KEY_S => 's', KEY_T => 't',
-        KEY_U => 'u', KEY_V => 'v', KEY_W => 'w', KEY_X => 'x',
-        KEY_Y => 'y', KEY_Z => 'z',
-        KEY_ZERO => '0', KEY_ONE => '1', KEY_TWO => '2', KEY_THREE => '3',
-        KEY_FOUR => '4', KEY_FIVE => '5', KEY_SIX => '6', KEY_SEVEN => '7',
-        KEY_EIGHT => '8', KEY_NINE => '9',
-        KEY_PERIOD => '.',
-        KEY_MINUS => if shift { '_' } else { '-' },
-        _ => return None,
-    };
-
-    Some(if shift && ch.is_ascii_alphabetic() {
-        ch.to_ascii_uppercase()
-    } else {
-        ch
-    })
 }
