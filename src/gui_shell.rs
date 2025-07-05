@@ -1,5 +1,6 @@
 use crate::globals;
 use crate::keys::key_to_char;
+use crate::utils::tab_completion::{TabCompletionResult, process_tab_completion};
 use crate::utils::{find_root, shell_history, wrapit::wrapit};
 use deemak::commands;
 use deemak::commands::CommandResult;
@@ -160,130 +161,59 @@ impl ShellScreen {
                     // Get the last part (what we're trying to complete)
                     let last_part = parts.last().unwrap();
 
-                    // List directory contents (excluding .dir_info and info.json)
+                    // List directory contents
                     let (files, dirs) = list_directory_entries(&self.current_dir, &self.root_dir);
                     let all_matches = [dirs, files].concat();
 
-                    // Find all matches that start with current input
+                    // Find matches
                     let matches: Vec<String> = all_matches
                         .iter()
                         .filter(|&name| name.starts_with(last_part))
                         .cloned()
                         .collect();
 
-                    if matches.len() == 1 {
-                        // Single match - complete it
-                        let mut new_input = parts[..parts.len() - 1].join(" ");
-                        if !new_input.is_empty() {
-                            new_input.push(' ');
-                        }
-                        new_input.push_str(&matches[0]);
-                        self.input_buffer = new_input;
-                    } else if !matches.is_empty() {
-                        // Multiple matches - find common prefix
-                        let mut common_prefix = matches[0].clone();
-                        for m in &matches[1..] {
-                            common_prefix = common_prefix
-                                .chars()
-                                .zip(m.chars())
-                                .take_while(|(a, b)| a == b)
-                                .map(|(c, _)| c)
-                                .collect();
-                            if common_prefix.is_empty() {
-                                break;
-                            }
-                        }
+                    // Calculate terminal dimensions
+                    let term_width = ((self.window_width as f32 * (self.term_split_ratio - 0.12))
+                        / self.char_width)
+                        .floor() as usize;
+                    let term_height = (self.window_height / self.font_size as i32) as usize;
 
-                        if common_prefix.len() > last_part.len() {
-                            let mut new_input = parts[..parts.len() - 1].join(" ");
-                            if !new_input.is_empty() {
-                                new_input.push(' ');
-                            }
-                            new_input.push_str(&common_prefix);
+                    // Process tab completion
+                    let result = process_tab_completion(
+                        parts,
+                        matches,
+                        term_width,
+                        term_height,
+                        &self.input_buffer,
+                        self.active_prompt.as_deref(),
+                    );
+
+                    match result {
+                        TabCompletionResult::SingleMatch(new_input) => {
                             self.input_buffer = new_input;
-                        } else {
-                            // Redraw the current command line
-                            let current_line = if let Some(ref prompt) = self.active_prompt {
-                                format!("{} {}", prompt, self.input_buffer)
-                            } else {
-                                format!("> {}", self.input_buffer)
-                            };
+                        }
+                        TabCompletionResult::CommonPrefix(new_input) => {
+                            self.input_buffer = new_input;
+                        }
+                        TabCompletionResult::DisplayCompletions {
+                            current_line,
+                            completion_lines,
+                            should_display_all,
+                        } => {
                             self.output_lines.push(current_line);
-                            // Calculate terminal dimensions
-                            let term_width = ((self.window_width as f32
-                                * (self.term_split_ratio - 0.12))
-                                / self.char_width)
-                                .floor() as usize;
-                            let term_height = (self.window_height / self.font_size as i32) as usize;
-
-                            // Calculate optimal column display
-                            let max_len = matches.iter().map(|s| s.len()).max().unwrap_or(0) + 2;
-                            let cols = max(1, term_width / max_len);
-                            let rows = matches.len().div_ceil(cols);
-
-                            // If too many items for one screen, display in pages
-                            if rows > term_height.saturating_sub(4) {
-                                let msg = format!(
+                            if should_display_all {
+                                if self.prompt_yes_no(&format!(
                                     "Display all {} possibilities? (y or n)",
-                                    matches.len()
-                                );
-                                if self.prompt_yes_no(&msg) {
-                                    // Display in pages
-                                    for chunk in
-                                        matches.chunks(term_width * (term_height - 3) / max_len)
-                                    {
-                                        let mut completion_lines = Vec::new();
-                                        for row in 0..(term_height - 3) {
-                                            let mut line = String::new();
-                                            for col in 0..cols {
-                                                let idx = row * cols + col;
-                                                if idx < chunk.len() {
-                                                    line.push_str(&format!(
-                                                        "{:width$}",
-                                                        chunk[idx],
-                                                        width = max_len
-                                                    ));
-                                                }
-                                            }
-                                            if !line.is_empty() {
-                                                completion_lines.push(line);
-                                            }
-                                        }
-                                        self.output_lines.extend(completion_lines);
-                                        // Wait for user to press space/enter
-                                        while !self.rl.is_key_pressed(KeyboardKey::KEY_SPACE)
-                                            && !self.rl.is_key_pressed(KeyboardKey::KEY_ENTER)
-                                            && !self.rl.is_key_pressed(KeyboardKey::KEY_Q)
-                                        {
-                                            self.draw();
-                                        }
-                                        if self.rl.is_key_pressed(KeyboardKey::KEY_Q) {
-                                            break;
-                                        }
-                                    }
+                                    completion_lines.len()
+                                )) {
+                                    self.output_lines.extend(completion_lines);
                                 }
                             } else {
-                                // Display all completions at once
-                                let mut completion_lines = Vec::new();
-                                for row in 0..rows {
-                                    let mut line = String::new();
-                                    for col in 0..cols {
-                                        let idx = row * cols + col;
-                                        if idx < matches.len() {
-                                            line.push_str(&format!(
-                                                "{:width$}",
-                                                matches[idx],
-                                                width = max_len
-                                            ));
-                                        }
-                                    }
-                                    completion_lines.push(line);
-                                }
                                 self.output_lines.extend(completion_lines);
                             }
-                            // Adjust scroll to keep the prompt visible
                             self.scroll_offset = 0;
                         }
+                        TabCompletionResult::NoAction => {}
                     }
                 }
             }
