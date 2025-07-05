@@ -384,7 +384,7 @@ impl ShellScreen {
         let length_input: usize = input_lines.len();
         visible_lines.extend(input_lines);
 
-        let mut index: usize = 0;
+        let mut index: usize;
 
         index = min(
             max(

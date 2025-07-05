@@ -33,6 +33,9 @@ pub fn list_directory_entries(target_path: &Path, root_dir: &Path) -> (Vec<Strin
             files.push(name);
         }
     }
+    // Sort files and directories
+    files.sort();
+    directories.sort();
 
     (files, directories)
 }

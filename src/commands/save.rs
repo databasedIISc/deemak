@@ -1,6 +1,6 @@
 use super::argparser::ArgParser;
 use crate::utils::log;
-use crate::utils::restore_comp::{backup_sekai, can_save, restore_sekai};
+use crate::utils::restore_comp::backup_sekai;
 use std::path::PathBuf;
 
 pub const HELP_TEXT: &str = r#"
@@ -33,7 +33,7 @@ pub fn save(args: &[&str], root_path: &PathBuf) -> String {
         }
         Err(e) => match &e[..] {
             "help" => HELP_TEXT.to_string(),
-            
+
             _ => "Error parsing arguments. Try 'help save' for more information.".to_string(),
         },
     }

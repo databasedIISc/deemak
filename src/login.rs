@@ -95,7 +95,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                             } else {
                                 password.push(c);
                             }
-                            warning = false;
+                            // warning = false;
                         }
                     }
                 }

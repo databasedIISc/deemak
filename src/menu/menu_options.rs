@@ -43,7 +43,7 @@ pub fn show_menu(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<usize> 
             &font,
             "DEEMAK SHELL",
             Vector2::new(200.0, y_offset),
-            60.0,   
+            60.0,
             2.0,
             Color::new(255, 255, 255, 255.0 as u8),
         );
@@ -76,29 +76,26 @@ pub fn show_menu(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<usize> 
         );
 
         // Footer text
-        let initials  = "IISc DataBased Club";
+        let initials = "IISc DataBased Club";
         let size = d.measure_text(initials, 16);
         d.draw_text(
             initials,
             d.get_screen_width() - size - 10,
             d.get_screen_height() - 30,
             16,
-            Color::fade(&Color::GRAY, 0.4),
+            Color::alpha(&Color::GRAY, 0.4),
         );
 
         let version = "Version 1.0";
         let version_size = d.measure_text(version, 16);
         d.draw_text(
             version,
-            10, // 10 pixels from the left edge
+            10,                         // 10 pixels from the left edge
             d.get_screen_height() - 30, // 30 pixels from the bottom
             16,
-            Color::fade(&Color::GRAY, 0.4),
+            Color::alpha(&Color::GRAY, 0.4),
         );
     }
 
-    
-
     None
 }
-
