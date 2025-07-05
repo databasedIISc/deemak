@@ -41,6 +41,7 @@ impl UserPrompter for ShellScreen {
     }
 }
 
+static mut FIRST_RUN: bool = true;
 pub const DEEMAK_BANNER: &str = r#"
  _____                            _
 |  __ \                          | |
@@ -136,6 +137,13 @@ impl ShellScreen {
                     shell_history::add_to_history(&input);
                     self.history_index = None;
                     self.working_buffer = None; // Clear working buffer after command execution
+                } else {
+                    // If input is empty, just add a new line
+                    if !unsafe { FIRST_RUN } {
+                        self.output_lines.push("> ".to_string());
+                    } else {
+                        unsafe { FIRST_RUN = false };
+                    }
                 }
             }
             Some(KeyboardKey::KEY_BACKSPACE) => {
