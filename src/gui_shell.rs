@@ -219,7 +219,7 @@ impl ShellScreen {
                             // Calculate optimal column display
                             let max_len = matches.iter().map(|s| s.len()).max().unwrap_or(0) + 2;
                             let cols = max(1, term_width / max_len);
-                            let rows = (matches.len() + cols - 1) / cols;
+                            let rows = matches.len().div_ceil(cols);
 
                             // If too many items for one screen, display in pages
                             if rows > term_height.saturating_sub(4) {
