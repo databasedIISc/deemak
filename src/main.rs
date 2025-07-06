@@ -4,6 +4,7 @@ mod keys;
 mod server;
 mod utils;
 mod login;
+mod auth;
 use deemak::DEBUG_MODE;
 use deemak::menu;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};

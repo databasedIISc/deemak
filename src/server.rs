@@ -1,35 +1,38 @@
-use deemak::commands;
-use deemak::utils::find_root;
-use rocket::Config;
-use rocket::fairing::{Fairing, Info, Kind};
-use rocket::fs::{FileServer, relative};
-use rocket::http::Header;
-use rocket::serde::Serialize;
-use rocket::serde::json::Json;
-use rocket::{Request, Response, get, options, routes};
-use std::path::PathBuf;
-use crate::globals::WORLD_DIR;
-use deemak::utils::prompt::DummyPrompter;
-
-use dotenvy::dotenv;
+use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::Write;
+use std::path::PathBuf;
+use std::sync::Mutex;
 
+// === External Crates ===
+use rocket::{get, post, options, routes, Request, Response, Config, State};
+use rocket::fairing::{Fairing, Info, Kind};
+use rocket::fs::{FileServer, relative};
+use rocket::http::Header;
+use rocket::serde::{Deserialize, Serialize, json::Json};
+use dotenvy::dotenv;
+
+// === Local Modules ===
+use crate::auth;
+use deemak::commands::{self, CommandResult, cmd_manager};
+use deemak::utils::find_root;
+use deemak::utils::prompt::DummyPrompter;
+use crate::globals::WORLD_DIR;
+
+// === Data Structures ===
 #[derive(Serialize)]
 struct CommandResponse {
     output: String,
     new_current_dir: Option<String>,
 }
 
-// === Main GET endpoint ===
+// GET endpoint for command execution
 #[get("/run?<command>&<current_dir>")]
-fn response(command: &str, current_dir: &str ) -> Json<CommandResponse> {
-    use commands::{CommandResult, cmd_manager};
-
+fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
     let world_dir = WORLD_DIR.get().expect("WORLD_DIR not initialized");
-    let parts: Vec<&str> = command.split_whitespace().collect();
     let root_dir = find_root::find_home(&world_dir).expect("Could not find sekai home directory");
+
     let mut current_dir = if current_dir.is_empty() {
         root_dir.clone()
     } else {
@@ -37,11 +40,8 @@ fn response(command: &str, current_dir: &str ) -> Json<CommandResponse> {
     };
 
     let mut prompter = DummyPrompter;
-    match cmd_manager(&parts, &mut current_dir, &root_dir, &mut prompter) {
-        CommandResult::Output(output) => Json(CommandResponse {
-            output,
-            new_current_dir: None,
-        }),
+    match cmd_manager(&command.split_whitespace().collect::<Vec<_>>(), &mut current_dir, &root_dir, &mut prompter) {
+        CommandResult::Output(output) => Json(CommandResponse { output, new_current_dir: None }),
         CommandResult::ChangeDirectory(new_dir, message) => Json(CommandResponse {
             output: message,
             new_current_dir: Some(new_dir.display().to_string()),
@@ -61,13 +61,12 @@ fn response(command: &str, current_dir: &str ) -> Json<CommandResponse> {
     }
 }
 
-// === CORS preflight handler ===
+// CORS Preflight
 #[options("/<_..>")]
 fn cors_preflight() -> &'static str {
     ""
 }
-
-// === Add CORS headers ===
+// === CORS Fairing ===
 pub struct CORS;
 
 #[rocket::async_trait]
@@ -81,10 +80,7 @@ impl Fairing for CORS {
 
     async fn on_response<'r>(&self, _req: &'r Request<'_>, res: &mut Response<'r>) {
         res.set_header(Header::new("Access-Control-Allow-Origin", "*"));
-        res.set_header(Header::new(
-            "Access-Control-Allow-Methods",
-            "POST, GET, OPTIONS",
-        ));
+        res.set_header(Header::new("Access-Control-Allow-Methods", "POST, GET, OPTIONS"));
         res.set_header(Header::new("Access-Control-Allow-Headers", "*"));
         res.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
     }
@@ -104,6 +100,7 @@ fn generate_config_js(port: u16) {
     println!("Generated static/config.js with port {}", port);
 }
 
+// === Rocket Entry Point ===
 #[rocket::main]
 pub async fn server() -> Result<(), rocket::Error> {
     dotenv().ok();
@@ -123,10 +120,8 @@ pub async fn server() -> Result<(), rocket::Error> {
     let _rocket = rocket::custom(config)
         .attach(CORS)
         .mount("/", FileServer::from(relative!("static")))
-        .mount("/backend", routes![response, cors_preflight])
+        .mount("/backend", routes![response, cors_preflight,auth::register,auth::login])
         .launch()
-        .await
-        .expect("failed to launch Rocket server");
-
+        .await?;
     Ok(())
 }
