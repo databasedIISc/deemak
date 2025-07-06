@@ -1,64 +1,70 @@
 <!DOCTYPE html>
-<html lang="en"><head>
+<html lang="en">
+<head>
   <meta charset="utf-8">
   <title>Deemak</title>
   <link rel="stylesheet" href="./index.css">
 </head>
-
 <body>
+  <div id="loading" class="loading">Loading...</div>
 
-  <div id="authContainer" style="display: none;">
-    <div id="loginContainer">
-      <div id="login_title">Login</div>
-      <div id="login_username">Username</div>
-      <input type="text" id="login_username_input">
-      <div id="login_password">Password</div>
-      <input type="password" id="login_password_input">
-      <div id="login_button">Login</div>
+  <div id="auth_container">
+    <!-- Login Form -->
+    <div id="login_container">
+      <div class="auth_card">
+        <h1 class="auth_title">Welcome Back</h1>
+        <div id="login_message" class="auth_message"></div>
+        <label>Username</label>
+        <input type="text" id="login_username_input" placeholder="Enter username">
+        <label>Password</label>
+        <input type="password" id="login_password_input" placeholder="Enter password">
+        <button class="auth_button" onclick="login()">Login</button>
+        <p class="auth_link" onclick="showRegister()">Don't have an account? Register</p>
+      </div>
     </div>
 
-    <div id="registerContainer">
-      <div id="register_title">Register</div>
-      <div id="register_username">Username</div>
-      <input type="text" id="register_username_input">
-      <div id="register_password">Password</div>
-      <input type="password" id="register_password_input">
-      <div id="register_button">Register</div>
-      <div id="register_message"></div>
-      <div id="register_back_button" onclick="backToLogin()">Back to Login</div>
+    <!-- Register Form -->
+    <div id="register_container">
+      <div class="auth_card">
+        <h1 class="auth_title">Create Account</h1>
+        <div id="register_message" class="auth_message"></div>
+        <label>Username</label>
+        <input type="text" id="register_username_input" placeholder="Choose a username">
+        <label>Password</label>
+        <input type="password" id="register_password_input" placeholder="Create a password">
+        <button class="auth_button" onclick="register()">Register</button>
+        <p class="auth_link" onclick="showLogin()">Already have an account? Login</p>
+      </div>
     </div>
   </div>
 
-  <div id="menu_container" style="display: none;">
+  <div id="menu_container">
     <div class="menu_card">
       <div id="menu_title">DEEMAK SHELL</div>
       <div class="menu_item"><button class="menu_button" onclick="startTerminal()">Start Shell</button></div>
       <div class="menu_item"><button class="menu_button" onclick="about()">About</button></div>
-      <div class="menu_item"><button class="menu_button" onclick="exitShell()">Exit</button></div>
+      <div class="menu_item"><button class="menu_button" onclick="logout()">Log Out</button></div>
     </div>
   </div>
 
-  <div id="exit_container">
-    <div id="exit_title">Thanks For Visiting</div>
-  </div>
-
-  <div id="terminal_container" style="display: none;">
+  <div id="terminal_container">
     <div class="terminal_card">
-      <div id="terminal" onclick="focusTerminal()">        
-    <div class="terminal_line">
-      <h4>Type commands and press Enter. Try <code>help</code> for more info.</h4>
-    </div><div class="terminal_line"><div class="dollor">$</div><input type="text" id="terminal_input" autocomplete="off"></div></div>
+      <div id="terminal" onclick="focusTerminal()">
+        <div class="terminal_line">
+          <h4>Type commands and press Enter. Try <code>help</code> for more info.</h4>
+        </div>
+        <div class="terminal_line">
+          <div class="dollor">$</div><input type="text" id="terminal_input" autocomplete="off">
+        </div>
+      </div>
     </div>
-    <div class="terminal_ascii_art">
-      <!-- hi there! I'm <strong>DEEMAK</strong>, a modern terminal shell. -->
-    </div>
+    <div class="terminal_ascii_art"></div>
   </div>
 
-  <div id="about_container" style="display: flex;">
+  <div id="about_container">
     <div class="about_card">
       <h2>DEEMAK Shell - Version 1.0</h2>
       <p>A modern terminal shell built with <strong>Rust</strong> and <strong>Raylib</strong>.</p>
-
       <h3>Features</h3>
       <ul>
         <li>Command parsing</li>
@@ -66,10 +72,8 @@
         <li>File operations</li>
         <li>Customizable interface</li>
       </ul>
-
       <p><strong>Created by:</strong> IISc Databased Club</p>
       <p><strong>License:</strong> MIT License</p>
-
       <button class="back_button" onclick="backToMenu()">Back</button>
     </div>
   </div>
@@ -79,7 +83,5 @@
     window.BACKEND_URL = BACKEND_URL;
   </script>
   <script type="module" src="./index.js"></script>
-
-
-
-</body></html>
+</body>
+</html>

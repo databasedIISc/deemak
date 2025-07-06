@@ -1,5 +1,7 @@
+use rocket::form::Form;
+use rocket::serde::json;
 use rocket::serde::{json::Json, Deserialize, Serialize};
-use rocket::post;
+use rocket::{post, FromForm};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -17,13 +19,17 @@ pub struct User {
     pub salt: String,
     pub password_hash: String,
 }
-
-#[derive(Deserialize)]
+#[derive(FromForm, Deserialize, Serialize)]
 pub struct AuthInput {
     pub username: String,
     pub password: String,
 }
 
+#[derive(Serialize)]
+pub struct AuthResponse {
+    status: bool,
+    message: String,
+}
 // File-based DB
 fn load_users() -> Vec<User> {
     if !Path::new(USER_FILE).exists() {
@@ -83,19 +89,25 @@ fn verify_password(password: &str, salt_hex: &str, hash_hex: &str) -> bool {
         &expected_hash,
     ).is_ok()
 }
-
-// Register route
 #[post("/register", data = "<input>")]
-pub fn register(input: Json<AuthInput>) -> &'static str {
+pub fn register(input: Form<AuthInput>) -> Json<AuthResponse> {
     let mut users = load_users();
 
     if users.iter().any(|u| u.username == input.username) {
-        return "Username already exists";
+        return Json(AuthResponse {
+            status: false,
+            message: "Username already exists".into(),
+        });
     }
 
     let (salt, hash) = match hash_password(&input.password) {
         Ok(res) => res,
-        Err(_) => return "Failed to hash password",
+        Err(_) => {
+            return Json(AuthResponse {
+                status: false,
+                message: "Failed to hash password".into(),
+            })
+        }
     };
 
     users.push(User {
@@ -105,21 +117,33 @@ pub fn register(input: Json<AuthInput>) -> &'static str {
     });
 
     save_users(&users);
-    "User registered"
+
+    Json(AuthResponse {
+        status: true,
+        message: "User registered successfully".into(),
+    })
 }
 
-// Login route
 #[post("/login", data = "<input>")]
-pub fn login(input: Json<AuthInput>) -> &'static str {
+pub fn login(input: Form<AuthInput>) -> Json<AuthResponse> {
     let users = load_users();
 
     if let Some(user) = users.iter().find(|u| u.username == input.username) {
         if verify_password(&input.password, &user.salt, &user.password_hash) {
-            return "Login successful";
+            return Json(AuthResponse {
+                status: true,
+                message: "Login successful".into(),
+            });
         } else {
-            return "Invalid password";
+            return Json(AuthResponse {
+                status: false,
+                message: "Invalid password".into(),
+            });
         }
     }
 
-    "User not found"
+    Json(AuthResponse {
+        status: false,
+        message: "User not found".into(),
+    })
 }

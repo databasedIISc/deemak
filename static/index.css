@@ -1,4 +1,4 @@
-/* index.css */
+/* Reset and Base Styles */
 * {
   margin: 0;
   padding: 0;
@@ -13,9 +13,12 @@ body {
   overflow: hidden;
 }
 
+/* AUTH & MENU Containers */
 #menu_container,
-#exit_container,
-#about_container {
+#auth_container,
+#login_container,
+#about_container,
+.auth_container {
   position: absolute;
   top: 0;
   left: 0;
@@ -28,28 +31,43 @@ body {
   z-index: 10;
 }
 
-#exit_container {
+#auth_container,
+#about_container {
   display: none;
 }
 
+/* Cards */
 .menu_card,
 .exit_card,
+.auth_card,
 .about_card {
-  padding: 2rem;
-  border: 1px solid #333;
   background-color: #111;
+  padding: 2rem;
+  border-radius: 10px;
+  border: 1px solid #333;
   width: 90%;
-  max-width: 600px;
+  max-width: 400px;
+  text-align: center;
+  animation: fadeIn 0.4s ease;
 }
 
+.auth_card input {
+  width: 100%;
+  margin: 0.5rem 0 1rem;
+}
+
+/* Titles */
 #menu_title,
-#exit_title {
-  font-size: 3rem;
+#exit_title,
+#login_title,
+.auth_title {
+  font-size: 2rem;
   text-align: center;
   color: #00ffaa;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
+/* Menu */
 .menu_item {
   margin: 1rem 0;
   text-align: center;
@@ -70,8 +88,70 @@ body {
   color: #000;
 }
 
+/* Auth Form Elements */
+input[type="text"],
+input[type="password"] {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border: 1px solid #444;
+  padding: 0.5rem;
+  font-size: 1rem;
+  font-family: inherit;
+  border-radius: 4px;
+}
+
+.auth_message {
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.auth_link {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #00cc88;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.auth_link:hover {
+  color: #00ffaa;
+}
+.auth_button {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: #00ffaa;
+  color: #000;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.auth_button:hover {
+  background-color: #00cc88;
+}
+
+.auth_button:active {
+  transform: scale(0.98);
+}
+
+/* Responsive Auth Layout */
+@media (max-width: 600px) {
+  .auth_card {
+    padding: 1rem;
+  }
+
+  .auth_title {
+    font-size: 1.5rem;
+  }
+}
+
+/* Terminal Container (unchanged) */
 #terminal_container {
-  display: flex;
+  display: none;
   width: 100vw;
   height: 100vh;
   background-color: #0f0f0f;
@@ -81,7 +161,6 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  /* padding: 2rem; */
   overflow-y: auto;
 }
 
@@ -114,12 +193,12 @@ body {
 }
 
 .terminal_ascii_art {
-    width: 35%;
-    border-left: white solid 1px;
+  width: 35%;
+  border-left: white solid 1px;
 }
+
 .previous_input {
   color: #66ccff;
-  /* padding-left: 1.2rem; */
 }
 
 .response {
@@ -127,7 +206,6 @@ body {
   padding-left: 1.5rem;
   white-space: pre-wrap;
   line-height: 1.4;
-  /* padding: 1rem 1.5rem; */
 }
 
 .ascii_art {
@@ -141,11 +219,13 @@ body {
   font-size: 0.9rem;
 }
 
+/* About Section */
 .about_card h2,
 .about_card h3 {
   color: #00ffaa;
 }
 
+/* Back Button */
 .back_button {
   margin-top: 1rem;
   padding: 0.75rem 1.5rem;
@@ -162,7 +242,7 @@ body {
   background-color: #00cc88;
 }
 
-/* Scrollbar aesthetic improvement */
+/* Terminal Scrollbar */
 #terminal::-webkit-scrollbar {
   width: 6px;
   background: transparent;
@@ -178,6 +258,7 @@ body {
   background: #777;
 }
 
+/* Terminal Responsive */
 @media (max-width: 768px) {
   .terminal_card {
     padding: 1rem;
@@ -185,5 +266,33 @@ body {
 
   #terminal {
     font-size: 0.9rem;
+  }
+}
+
+/* Loading Overlay */
+.loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: #000a;
+  color: #00ffaa;
+  font-size: 2rem;
+  width: 100vw;
+  height: 100vh;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

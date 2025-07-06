@@ -1,14 +1,37 @@
 // index.js
 const menuContainer = document.getElementById('menu_container');
 const terminalContainer = document.getElementById('terminal_container');
-const exitContainer = document.getElementById('exit_container');
+const authContainer = document.getElementById('auth_container');
 const aboutContainer = document.getElementById('about_container');
+const loginContainer = document.getElementById('login_container');
+const registerContainer = document.getElementById('register_container');
 const terminal = document.getElementById('terminal');
-const authenticated = window.AUTHENTICATED || false;
+const loading = document.getElementById('loading');
+const loginMessage = document.getElementById('login_message');
+const registerMessage = document.getElementById('register_message');
+
+let authenticated = window.AUTHENTICATED || false;
+let registered = window.REGISTERED || false;
 
 let currentDir = "";
 let commandHistory = [];
 let historyIndex = -1;
+
+if (authenticated) {
+  authContainer.style.display = "none";
+  menuContainer.style.display = "flex";
+} else {
+  authContainer.style.display = "flex";
+  menuContainer.style.display = "none";
+}
+
+if (registered) {
+  loginContainer.style.display = "none";
+  registerContainer.style.display = "none";
+} else {
+  loginContainer.style.display = "flex";
+  registerContainer.style.display = "none";
+}
 
 function focusTerminal() {
   const input = document.getElementById("terminal_input");
@@ -27,7 +50,6 @@ function startTerminal() {
 | |  | |/ _ \\/ _ \\ '_ \` _ \\ / _\` | |/ /
 | |__| |  __/  __/ | | | | | (_| |   <
 |_____/ \\___|\\___|_| |_| |_|\\__,_|_|\\_\\
-
           </pre>
     </div>
     <p class="startup_msg">
@@ -37,16 +59,120 @@ function startTerminal() {
   addNewInput();
 }
 
+async function login() {
+  const username = document.getElementById('login_username_input').value.trim();
+  const password = document.getElementById('login_password_input').value.trim();
+  const message = document.getElementById('login_message');
+
+  if (!username || !password) {
+    message.textContent = 'Please enter both username and password.';
+    return;
+  }
+
+  loading.style.display = "flex";
+  authContainer.style.display = "none";
+
+  try {
+    const response = await fetch(`${window.BACKEND_URL}/backend/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+    });
+
+    const result = await response.json();
+    // console.log("Login result:", result);
+
+    if (result.status) {
+      authenticated = true;
+      message.textContent = '';
+      menuContainer.style.display = "flex";
+    } else {
+      authenticated = false;
+      authContainer.style.display = "flex";
+      loginContainer.style.display = "flex";
+      message.textContent = result.message;
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    authenticated = false;
+    authContainer.style.display = "flex";
+    loginContainer.style.display = "flex";
+    message.textContent = "Server error. Please try again.";
+  } finally {
+    loading.style.display = "none";
+  }
+}
+
+async function register() {
+  const username = document.getElementById('register_username_input').value.trim();
+  const password = document.getElementById('register_password_input').value.trim();
+  const message = document.getElementById('register_message');
+
+  if (!username || !password) {
+    message.textContent = 'Please enter both username and password.';
+    return;
+  }
+
+  loading.style.display = "flex";
+  authContainer.style.display = "none";
+
+  try {
+    const response = await fetch(`${window.BACKEND_URL}/backend/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+    });
+
+    const result = await response.json();
+
+    if (result.status) {
+      message.textContent = result.message;
+      authenticated = true;
+      authContainer.style.display = "none";
+      menuContainer.style.display = "flex";
+    } else {
+      message.textContent = result.message;
+      authContainer.style.display = "flex";
+      registerContainer.style.display = "flex";
+    }
+  } catch (error) {
+    console.error("Registration error:", error);
+    authenticated = false;
+    authContainer.style.display = "flex";
+    registerContainer.style.display = "flex";
+    message.textContent = "Server error. Please try again.";
+  } finally {
+    loading.style.display = "none";
+  }
+}
+
+function showRegister() {
+  registered = true;
+  registerContainer.style.display = "flex";
+  loginContainer.style.display = "none";
+}
+
+function showLogin() {
+  registered = false;
+  registerContainer.style.display = "none";
+  loginContainer.style.display = "flex";
+}
+
 function stopTerminal() {
   terminalContainer.style.display = "none";
   menuContainer.style.display = "flex";
   clearTerminal();
 }
 
-function exitShell() {
-  exitContainer.style.display = "flex";
+function logout() {
+  authContainer.style.display = "flex";
+  loginContainer.style.display = "flex";
+  registerContainer.style.display = "none";
   terminalContainer.style.display = "none";
   menuContainer.style.display = "none";
+  aboutContainer.style.display = "none";
+  authenticated = false;
+  registered = false;
 }
 
 function about() {
@@ -157,9 +283,13 @@ window.onload = () => {
 };
 
 window.startTerminal = startTerminal;
-window.exitShell = exitShell;
 window.about = about;
 window.backToMenu = backToMenu;
 window.focusTerminal = focusTerminal;
 window.stopTerminal = stopTerminal;
-window.clearTerminal = clearTerminal;   
+window.clearTerminal = clearTerminal;
+window.showRegister = showRegister;
+window.showLogin = showLogin;
+window.login = login;
+window.register = register;
+window.logout = logout;
