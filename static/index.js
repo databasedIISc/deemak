@@ -12,6 +12,7 @@ const registerMessage = document.getElementById('register_message');
 
 let authenticated = window.AUTHENTICATED || false;
 let registered = window.REGISTERED || false;
+let exitConfirmationPending = false;
 
 let currentDir = "";
 let commandHistory = [];
@@ -60,9 +61,12 @@ function startTerminal() {
 }
 
 async function login() {
-  const username = document.getElementById('login_username_input').value.trim();
-  const password = document.getElementById('login_password_input').value.trim();
+  const usernameInput = document.getElementById('login_username_input');
+  const passwordInput = document.getElementById('login_password_input');
   const message = document.getElementById('login_message');
+
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
 
   if (!username || !password) {
     message.textContent = 'Please enter both username and password.';
@@ -80,11 +84,12 @@ async function login() {
     });
 
     const result = await response.json();
-    // console.log("Login result:", result);
 
     if (result.status) {
       authenticated = true;
       message.textContent = '';
+      usernameInput.value = '';
+      passwordInput.value = '';
       menuContainer.style.display = "flex";
     } else {
       authenticated = false;
@@ -104,9 +109,12 @@ async function login() {
 }
 
 async function register() {
-  const username = document.getElementById('register_username_input').value.trim();
-  const password = document.getElementById('register_password_input').value.trim();
+  const usernameInput = document.getElementById('register_username_input');
+  const passwordInput = document.getElementById('register_password_input');
   const message = document.getElementById('register_message');
+
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value.trim();
 
   if (!username || !password) {
     message.textContent = 'Please enter both username and password.';
@@ -126,7 +134,9 @@ async function register() {
     const result = await response.json();
 
     if (result.status) {
-      message.textContent = result.message;
+      message.textContent = '';
+      usernameInput.value = '';
+      passwordInput.value = '';
       authenticated = true;
       authContainer.style.display = "none";
       menuContainer.style.display = "flex";
@@ -210,9 +220,33 @@ async function processCommand(input) {
   if (command === "clear") {
     clearTerminal();
     return;
-  } else if (command === "exit") {
-    stopTerminal();
+  } else if (command.startsWith("clear ")) {
+    output.innerText = "Command not found. Try `help`.";
+    terminal.appendChild(output);
+    addNewInput();
     return;
+  }
+
+  if (command === "exit") {
+    if (exitConfirmationPending) {
+      output.innerText = "Exiting terminal...";
+      terminal.appendChild(output);
+      stopTerminal();
+      exitConfirmationPending = false;
+    } else {
+      output.innerText = "Are you sure you want to exit? Make sure you have saved your progress first? Type `exit` again to confirm.";
+      terminal.appendChild(output);
+      exitConfirmationPending = true;
+      addNewInput();
+    }
+    return;
+  } else if (command.startsWith("exit ")) {
+    output.innerText = "Command not found. Try `help`.";
+    terminal.appendChild(output);
+    addNewInput();
+    return;
+  } else {
+    exitConfirmationPending = false;
   }
 
   try {

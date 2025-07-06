@@ -74,13 +74,16 @@ body {
 }
 
 .menu_button {
-  font-size: 1.2rem;
-  padding: 0.75rem 1.5rem;
-  color: #00ffaa;
-  background: none;
-  border: 1px solid #00ffaa;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: #00ffaa;
+  color: #000;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 .menu_button:hover {
