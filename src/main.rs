@@ -7,7 +7,7 @@ mod server;
 mod utils;
 use crate::rns::restore_comp;
 use crate::utils::valid_sekai::validate_or_create_sekai;
-use crate::utils::{debug_mode, find_root, globals, log, valid_sekai};
+use crate::utils::{debug_mode, find_root, globals, log};
 use deemak::DEBUG_MODE;
 use deemak::menu;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};

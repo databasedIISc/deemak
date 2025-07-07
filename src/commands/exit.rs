@@ -1,3 +1,4 @@
+use crate::utils::log;
 use crate::utils::prompt::UserPrompter;
 
 pub fn exit(prompter: &mut dyn UserPrompter) -> (bool, String) {
@@ -9,6 +10,7 @@ pub fn exit(prompter: &mut dyn UserPrompter) -> (bool, String) {
         // Perform any necessary cleanup here
         // For example, saving state, closing files, etc.
         // This is a placeholder for any cleanup logic you might need.
+        log::log_info("exit", "User confirmed exit. Exiting Application.");
         (true, "Exiting the application. Goodbye!".to_string())
     }
 }

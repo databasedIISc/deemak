@@ -1,4 +1,3 @@
-use crate::globals;
 use crate::keys::key_to_char;
 use crate::utils::tab_completion::{TabCompletionResult, process_tab_completion};
 use crate::utils::{find_root, shell_history, wrapit::wrapit};

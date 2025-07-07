@@ -1,4 +1,5 @@
 use super::argparser::ArgParser;
+use super::cmds::check_dir_info;
 use super::whereami::display_relative_path;
 use crate::utils::log;
 use std::path::Path;
@@ -46,7 +47,7 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
     let mut parser = ArgParser::new(&[]);
 
     // Parse arguments
-    match parser.parse(&args_string) {
+    match parser.parse(&args_string, "ls") {
         Ok(_) => {
             let positional_args = parser.get_positional_args();
 
@@ -59,10 +60,15 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
                         .to_string();
                 }
 
-                if positional_args[0] == ".dir_info" {
-                    log::log_warning("ls", "Attempted to read .dir_info directory.");
-                    return "ls: cannot list .dir_info directory. Access now allowed to ANY user"
-                        .to_string();
+                if check_dir_info(Path::new(positional_args[0])) {
+                    log::log_warning(
+                        "ls",
+                        format!("Attempted to list/refer restricted directory: {} Operation Not Permitted", positional_args[0]).as_str(),
+                    );
+                    return format!(
+                        "Attempted to list/refer restricted directory: {} Operation Not Permitted",
+                        positional_args[0]
+                    );
                 }
 
                 let joined = current_dir.join(positional_args[0]);

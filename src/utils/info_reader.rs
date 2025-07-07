@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::PathBuf;
+use std::path::Path;
 use thiserror::Error;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -26,7 +26,7 @@ pub enum InfoError {
 
 impl Info {
     /// Creates default Info values for a path
-    pub fn default_for_path(path: &PathBuf, home_dir: bool) -> Self {
+    pub fn default_for_path(path: &Path, home_dir: bool) -> Self {
         let mut dir_name = path
             .file_name()
             .and_then(|n| n.to_str())
@@ -61,7 +61,7 @@ impl Info {
     }
 }
 
-pub fn read_validate_info(info_path: &PathBuf) -> Result<Info, InfoError> {
+pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
     if !info_path.exists() {
         return Err(InfoError::NotFound(info_path.display().to_string()));
     }

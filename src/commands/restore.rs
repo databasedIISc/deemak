@@ -16,7 +16,7 @@ pub fn restore(args: &[&str], root_path: &PathBuf, prompter: &mut dyn UserPrompt
     let args_string: Vec<String> = args.iter().map(|s| s.to_string()).collect();
 
     let mut err_msg: String = "restore: ".to_string();
-    match parser.parse(&args_string) {
+    match parser.parse(&args_string, "restore") {
         Ok(_) => {
             let pos_args = parser.get_positional_args();
             if !pos_args.is_empty() {

@@ -1,8 +1,7 @@
 use crate::keys::key_to_char;
-use raylib::ffi::{ColorFromHSV, DrawTextEx, LoadFontEx, MeasureTextEx, Vector2};
+use raylib::ffi::{DrawTextEx, LoadFontEx, MeasureTextEx, Vector2};
 use raylib::prelude::*;
 use std::ffi::CString;
-use std::os::raw::{c_char, c_int};
 use std::time::{Duration, Instant};
 
 use crate::utils::globals::{USER_ID, USER_PASSWORD};

@@ -1,8 +1,8 @@
 use super::{log, read_validate_info};
-use std::path::PathBuf;
+use std::path::Path;
 
 /// Creates properly formatted .dir_info with valid JSON info.json
-pub fn create_dir_info(dir: &PathBuf, home_dir: bool) -> bool {
+pub fn create_dir_info(dir: &Path, home_dir: bool) -> bool {
     // Skip if this is a .dir_info directory
     if dir.file_name().and_then(|n| n.to_str()) == Some(".dir_info") {
         return true;
@@ -64,7 +64,7 @@ pub fn create_dir_info(dir: &PathBuf, home_dir: bool) -> bool {
 }
 
 /// Checks if .dir_info/info.json exists and is valid (updated for PathBuf)
-pub fn check_dir_info_exists(dir: &PathBuf) -> bool {
+pub fn check_dir_info_exists(dir: &Path) -> bool {
     let info_path = dir.join(".dir_info/info.json");
     if !info_path.exists() {
         log::log_warning(
@@ -77,7 +77,7 @@ pub fn check_dir_info_exists(dir: &PathBuf) -> bool {
 }
 
 /// Validates an info.json file at the given path (updated for PathBuf)
-fn validate_info_file(info_path: &PathBuf) -> bool {
+fn validate_info_file(info_path: &Path) -> bool {
     match read_validate_info(info_path) {
         Ok(info) => info.validate().is_ok(),
         Err(e) => {
@@ -91,7 +91,7 @@ fn validate_info_file(info_path: &PathBuf) -> bool {
 }
 
 /// Recursively checks directory structure (updated for PathBuf)
-fn check_subdirectories(path: &PathBuf) -> bool {
+fn check_subdirectories(path: &Path) -> bool {
     let mut all_valid = true;
     let entries = match std::fs::read_dir(path) {
         Ok(entries) => entries,
@@ -130,7 +130,7 @@ fn check_subdirectories(path: &PathBuf) -> bool {
 }
 
 /// Main validation function with auto-creation
-pub fn validate_or_create_sekai(sekai_path: &PathBuf) -> bool {
+pub fn validate_or_create_sekai(sekai_path: &Path) -> bool {
     // Initial validation checks
     if !sekai_path.exists() {
         log::log_error(
@@ -188,7 +188,7 @@ pub fn validate_or_create_sekai(sekai_path: &PathBuf) -> bool {
 }
 
 /// Helper function for recursive directory processing
-fn process_directory_recursively(dir: &PathBuf) -> bool {
+fn process_directory_recursively(dir: &Path) -> bool {
     let mut all_valid = true;
 
     if let Ok(entries) = std::fs::read_dir(dir) {

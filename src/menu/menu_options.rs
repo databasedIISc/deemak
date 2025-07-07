@@ -70,7 +70,7 @@ pub fn show_menu(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<usize> 
         d.draw_text(
             ">",
             175,
-            (280 + selected as i32 * 50) as i32, // Convert usize to i32
+            280 + selected as i32 * 50, // Convert usize to i32
             30,
             Color::new(255, 255, 255, ((alpha * 0.5).sin().abs() * 255.0) as u8),
         );
