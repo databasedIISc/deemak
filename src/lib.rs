@@ -1,6 +1,7 @@
 #![allow(unused_variables, unused_mut, dead_code)]
 pub mod commands;
 pub mod menu;
+pub mod rns;
 pub mod utils;
 
 use std::sync::OnceLock;

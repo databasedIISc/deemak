@@ -1,6 +1,6 @@
 use super::argparser::ArgParser;
+use crate::rns::restore_comp::backup_sekai;
 use crate::utils::log;
-use crate::utils::restore_comp::backup_sekai;
 use std::path::PathBuf;
 
 pub const HELP_TEXT: &str = r#"
