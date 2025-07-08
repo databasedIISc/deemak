@@ -2,7 +2,7 @@ pub struct DummyPrompter;
 pub trait UserPrompter {
     /// Returns true if user confirms (yes), false otherwise.
     fn confirm(&mut self, message: &str) -> bool;
-    /// Returnns a prompt message for the user.
+    /// Returns a prompt message for the user.
     fn input(&mut self, message: &str) -> String;
 }
 impl UserPrompter for DummyPrompter {
@@ -15,4 +15,3 @@ impl UserPrompter for DummyPrompter {
         String::new()
     }
 }
-

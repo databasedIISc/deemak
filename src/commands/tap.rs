@@ -20,7 +20,7 @@ Examples:
 "#;
 
 pub fn create_file(destination: &str, current_dir: &Path, root_dir: &Path) -> String {
-    let new_path: &PathBuf = &current_dir.join(destination);
+    let new_path: &Path = &current_dir.join(destination);
 
     // Check if the path already exists
     if new_path.exists() {
