@@ -32,7 +32,7 @@ pub fn normalize_path(path: &Path) -> PathBuf {
     normalized
 }
 
-/// Check existance of `.dir_info` or `info.json` in the given Path
+/// Check existence of `.dir_info` or `info.json` in the given Path
 pub fn check_dir_info(path: &Path) -> bool {
     let restricted_files = [".dir_info", "info.json"];
     let path_str = path.to_string_lossy();
