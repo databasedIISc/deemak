@@ -35,7 +35,7 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
                     "go",
                     &format!(
                         "Attempted to go to/refers a restricted directory: {}. Operation Not Permitted.",
-                        current_dir.display()
+                        destination
                     ),
                 );
                 return (
