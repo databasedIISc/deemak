@@ -38,6 +38,9 @@ impl UserPrompter for ShellScreen {
     fn confirm(&mut self, message: &str) -> bool {
         self.prompt_yes_no(message)
     }
+    fn input(&mut self, message: &str) -> String {
+        self.prompt_input_text(message)
+    }
 }
 
 static mut FIRST_RUN: bool = true;
@@ -494,6 +497,34 @@ impl ShellScreen {
                 self.active_prompt = None;
                 self.output_lines.push(format!("{} [y/N] no", message));
                 return false;
+            }
+        }
+    }
+    pub fn prompt_input_text(&mut self, message: &str) -> String {
+        self.active_prompt = Some(message.to_string());
+        self.input_buffer.clear();
+        self.draw();
+
+        loop {
+            self.update();
+            self.draw();
+
+            if self
+                .rl
+                .is_key_pressed(raylib::consts::KeyboardKey::KEY_ENTER)
+            {
+                let input = take(&mut self.input_buffer);
+                self.active_prompt = None;
+                if !input.is_empty() {
+                    self.output_lines.push(format!("{}: {}", message, input));
+                    return input;
+                }
+            } else if self
+                .rl
+                .is_key_pressed(raylib::consts::KeyboardKey::KEY_BACKSPACE)
+                && !self.input_buffer.is_empty()
+            {
+                self.input_buffer.pop();
             }
         }
     }
