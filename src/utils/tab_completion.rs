@@ -1,3 +1,6 @@
+use crate::commands::cmds::normalize_path;
+use std::path::Path;
+
 // Helper types and functions
 pub enum TabCompletionResult {
     SingleMatch(String),
@@ -18,7 +21,13 @@ pub fn process_tab_completion(
     current_input: &str,
     prompt: Option<&str>,
 ) -> TabCompletionResult {
-    let last_part = parts.last().unwrap();
+    let last_part_str = parts.last().unwrap();
+
+    // Convert to normalized path and back to String
+    let last_part = normalize_path(Path::new(last_part_str))
+        .to_string_lossy()
+        .into_owned();
+
     if matches.len() == 1 {
         // Single match - complete it
         let mut new_input = parts[..parts.len() - 1].join(" ");

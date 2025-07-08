@@ -1,4 +1,5 @@
 #![allow(unused_variables, unused_mut, dead_code)]
+mod commands;
 mod gui_shell;
 mod keys;
 mod login;

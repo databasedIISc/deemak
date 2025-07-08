@@ -38,7 +38,8 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
         if stream_index >= full_text.len() {
             alpha = (alpha + 0.02).min(1.0);
             y_offset += (target_y - y_offset) * 0.1;
-            if (y_offset - target_y as f32).abs() < 1.0 && !animation_done {
+            let _y: f32 = y_offset - target_y;
+            if _y.abs() < 1.0 && !animation_done {
                 animation_done = true;
                 pause_start = Some(Instant::now());
             }

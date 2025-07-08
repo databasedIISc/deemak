@@ -1,5 +1,5 @@
 use crate::globals::WORLD_DIR;
-use deemak::commands;
+use deemak::commands::cmds;
 use deemak::utils::find_root;
 use deemak::utils::prompt::DummyPrompter;
 use rocket::Config;
@@ -25,7 +25,7 @@ struct CommandResponse {
 // === Main GET endpoint ===
 #[get("/run?<command>&<current_dir>")]
 fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
-    use commands::{CommandResult, cmd_manager};
+    use cmds::{CommandResult, cmd_manager};
 
     let world_dir = WORLD_DIR.get().expect("WORLD_DIR not initialized");
     let parts: Vec<&str> = command.split_whitespace().collect();
@@ -127,4 +127,3 @@ pub async fn server() -> Option<Result<(), rocket::Error>> {
 
     Some(Ok(()))
 }
-
