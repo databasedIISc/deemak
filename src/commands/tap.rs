@@ -1,5 +1,5 @@
 use super::argparser::ArgParser;
-use super::cmds::normalize_path;
+use super::cmds::{check_dir_info, normalize_path};
 use super::display_relative_path;
 use crate::utils::log;
 use crate::utils::valid_sekai::create_dir_info;
@@ -19,8 +19,8 @@ Examples:
 - tap new_dir/    # usage of trailing slash to create a directory
 "#;
 
-pub fn create_file(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> String {
-    let new_path: &PathBuf = &current_dir.join(destination);
+pub fn create_file(destination: &str, current_dir: &Path, root_dir: &Path) -> String {
+    let new_path: &Path = &current_dir.join(destination);
 
     // Check if the path already exists
     if new_path.exists() {
@@ -37,7 +37,7 @@ pub fn create_file(destination: &str, current_dir: &PathBuf, root_dir: &Path) ->
     }
 }
 
-pub fn create_directory(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> String {
+pub fn create_directory(destination: &str, current_dir: &Path, root_dir: &Path) -> String {
     let new_path: &PathBuf = &current_dir.join(destination);
 
     // Check if the path already exists
@@ -70,7 +70,7 @@ pub fn create_directory(destination: &str, current_dir: &PathBuf, root_dir: &Pat
 /// Checks the validity of the destination path based on root_dir and current_dir.
 fn handle_destination(
     destination: &Path,
-    current_dir: &PathBuf,
+    current_dir: &Path,
     root_dir: &Path,
 ) -> Result<PathBuf, String> {
     // Get absolute path by joining with current_dir and normalizing
@@ -99,7 +99,7 @@ fn handle_destination(
 }
 
 // Check if the destination is within the root directory
-pub fn tap(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> String {
+pub fn tap(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
     let valid_flags = ["-d", "--dir", "-h", "--help"];
     let mut parser = ArgParser::new(&valid_flags);
 
@@ -113,7 +113,7 @@ pub fn tap(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> String {
             current_dir.display(),
         ),
     );
-    match parser.parse(&args_string) {
+    match parser.parse(&args_string, "tap") {
         Ok(_) => {
             let mut destination = args
                 .iter()
@@ -123,8 +123,8 @@ pub fn tap(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> String {
             if destination.is_empty() {
                 return "tap: No destination specified. Use 'tap --help' for usage.".to_string();
             }
-            if destination.contains(".dir_info") {
-                return "tap: Cannot create .dir_info file or directory. Operation Not Allowed."
+            if check_dir_info(Path::new(destination)) {
+                return "tap: Cannot create/refer restricted files or directory. Operation Not Allowed."
                     .to_string();
             }
             // handle destination path

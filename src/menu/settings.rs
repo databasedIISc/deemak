@@ -21,11 +21,8 @@ pub fn show_settings(rl: &mut RaylibHandle, thread: &RaylibThread) {
             } else if rl.is_key_pressed(KeyboardKey::KEY_DOWN) {
                 selected = (selected + 1).min(SETTINGS_OPTIONS.len() - 1);
                 last_change = Instant::now();
-            } else if rl.is_key_pressed(KeyboardKey::KEY_ENTER) {
-                match selected {
-                    0 => return, // Go back
-                    _ => {}
-                }
+            } else if rl.is_key_pressed(KeyboardKey::KEY_ENTER) && selected == 0 {
+                return;
             }
         }
 
@@ -69,10 +66,9 @@ pub fn show_settings(rl: &mut RaylibHandle, thread: &RaylibThread) {
         d.draw_text(
             ">",
             175,
-            (300 + selected as i32 * 50) as i32,
+            300 + selected as i32 * 50,
             30,
             Color::new(255, 255, 255, ((alpha * 0.5).sin().abs() * 255.0) as u8),
         );
-
     }
 }

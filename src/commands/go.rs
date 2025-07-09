@@ -1,4 +1,5 @@
 use super::argparser::ArgParser;
+use super::cmds::check_dir_info;
 use super::whereami::display_relative_path;
 use crate::utils::info_reader;
 use crate::utils::log;
@@ -28,17 +29,26 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
             }
             current_dir.parent().unwrap().to_path_buf()
         }
-        ".dir_info" => {
-            log::log_warning(
-                "go",
-                "Attempted to go to .dir_info directory, which is not allowed",
-            );
-            return (
-                current_dir.clone(),
-                "go: Access to .dir_info directory is not allowed for ANY user".to_string(),
-            );
+        _ => {
+            if check_dir_info(Path::new(destination)) {
+                log::log_warning(
+                    "go",
+                    &format!(
+                        "Attempted to go to/refers a restricted directory: {}. Operation Not Permitted.",
+                        destination
+                    ),
+                );
+                return (
+                    current_dir.clone(),
+                    format!(
+                        "go: Attempted to go to/refers a restricted directory: {}. Operation Not Permitted",
+                        destination
+                    ),
+                );
+            } else {
+                current_dir.join(destination)
+            }
         }
-        _ => current_dir.join(destination),
     };
 
     // Normalize path and verify it exists
@@ -134,7 +144,7 @@ pub fn go(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, St
         ),
     );
     // Parse arguments
-    match parser.parse(&args_string) {
+    match parser.parse(&args_string, "go") {
         Ok(_) => {
             let pos_args = parser.get_positional_args();
 

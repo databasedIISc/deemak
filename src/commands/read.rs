@@ -1,3 +1,4 @@
+use super::cmds::check_dir_info;
 use super::whereami::display_relative_path;
 use std::fs;
 use std::path::Path;
@@ -16,6 +17,14 @@ pub fn read(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
 
     let file_path = current_dir.join(args[0]);
 
+    // Check if file is doesn't refer a restricted one
+    if check_dir_info(&file_path) {
+        return format!(
+            "read: Attempted to read/refer restricted files: {} Operation Not Permitted",
+            display_relative_path(&file_path, root_dir)
+        );
+    }
+
     // Security check - must stay within root directory
     if !file_path.starts_with(root_dir) {
         return "read: Access denied outside root directory".to_string();
@@ -25,13 +34,6 @@ pub fn read(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
     if file_path.is_dir() {
         return format!(
             "read: {}: Is a directory",
-            display_relative_path(&file_path, root_dir)
-        );
-    }
-    // Check if file is info.json
-    if file_path.ends_with("info.json") {
-        return format!(
-            "read: {}: Access denied to read info.json",
             display_relative_path(&file_path, root_dir)
         );
     }

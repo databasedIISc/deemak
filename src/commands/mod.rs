@@ -1,14 +1,13 @@
-mod cmds;
-pub use cmds::{CommandResult, cmd_manager};
+pub mod cmds;
 
 mod echo;
 pub use echo::echo;
 
-mod help;
-pub use help::{get_command_help, help};
+pub mod help;
+pub use help::help;
 
-mod ls;
-pub use ls::{list_directory_entries, ls};
+pub mod ls;
+pub use ls::ls;
 
 mod tap;
 pub use tap::tap;
@@ -20,7 +19,6 @@ mod go;
 pub use go::go;
 
 mod copy;
-pub use copy::copy;
 
 mod exit;
 pub use exit::exit;

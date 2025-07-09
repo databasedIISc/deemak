@@ -182,7 +182,7 @@ Continuing...",
     let font_size = get_monitor_width(0) as f32 / 73.5;
     rl.set_trace_log(loglevel);
     log::log_info("Application", "DEEMAK initialized successfully");
-    
+
     // Show login screen before menu
     if !login::show_login(&mut rl, &thread, font_size) {
         log::log_info("Application", "Login aborted by user.");

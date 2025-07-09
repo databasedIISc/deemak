@@ -8,7 +8,6 @@ pub use log::debug_mode;
 pub mod tab_completion;
 
 pub mod globals;
-pub mod restore_comp;
 pub mod valid_sekai;
 
 pub mod shell_history;

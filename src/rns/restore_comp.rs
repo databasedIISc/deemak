@@ -4,7 +4,7 @@ use flate2::write::ZlibEncoder;
 use std::collections::hash_map::DefaultHasher;
 use std::fs::{self, File};
 use std::hash::{Hash, Hasher};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 const RESTORE_FILE: &str = "restore_me";
@@ -118,10 +118,10 @@ pub fn restore_sekai(usage: &str, root_path: &PathBuf) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn can_restore(root_path: &PathBuf) -> bool {
+pub fn can_restore(root_path: &Path) -> bool {
     root_path.join(".dir_info").join(RESTORE_FILE).exists()
 }
 
-pub fn can_save(root_path: &PathBuf) -> bool {
+pub fn can_save(root_path: &Path) -> bool {
     root_path.join(".dir_info").join(SAVE_FILE).exists()
 }

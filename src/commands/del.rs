@@ -1,5 +1,5 @@
 use super::argparser::ArgParser;
-use super::cmds::normalize_path;
+use super::cmds::{check_dir_info, normalize_path};
 use super::display_relative_path;
 use crate::utils::log;
 use crate::utils::prompt::UserPrompter;
@@ -67,7 +67,7 @@ pub fn delete_directory(path: &Path, root_dir: &Path, force: bool) -> String {
         }
     };
 
-    // Handle special case for .dir_info
+    // Handle special case for just .dir_info
     if only_has_dir_info() {
         let _ = fs::remove_dir_all(path.join(".dir_info"));
         return match fs::remove_dir(path) {
@@ -98,7 +98,7 @@ pub fn delete_directory(path: &Path, root_dir: &Path, force: bool) -> String {
 /// Checks the validity of the deletion path
 fn validate_deletion_path(
     path: &Path,
-    current_dir: &PathBuf,
+    current_dir: &Path,
     root_dir: &Path,
 ) -> Result<PathBuf, String> {
     let mut full_path = current_dir.join(path);
@@ -130,7 +130,7 @@ fn validate_deletion_path(
 /// Main delete command function
 pub fn del(
     args: &[&str],
-    current_dir: &PathBuf,
+    current_dir: &Path,
     root_dir: &Path,
     prompter: &mut dyn UserPrompter,
 ) -> String {
@@ -147,7 +147,7 @@ pub fn del(
         ),
     );
 
-    match parser.parse(&args_string) {
+    match parser.parse(&args_string, "del") {
         Ok(_) => {
             let destination = args
                 .iter()
@@ -157,8 +157,8 @@ pub fn del(
             if destination.is_empty() {
                 return "del: No destination specified. Use 'del --help' for usage.".to_string();
             }
-            if destination.contains(".dir_info") {
-                return "del: Cannot delete .dir_info file or directory. Operation Not Allowed."
+            if check_dir_info(Path::new(destination)) {
+                return "del: Cannot delete/refer restricted file or directory. Operation Not Allowed."
                     .to_string();
             }
 

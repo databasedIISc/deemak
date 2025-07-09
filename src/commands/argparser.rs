@@ -17,10 +17,13 @@ impl ArgParser {
     }
 
     /// Get the flag arguments
-    pub fn parse(&mut self, input_args: &[String]) -> Result<(), String> {
+    pub fn parse(&mut self, input_args: &[String], cmd: &str) -> Result<(), String> {
         self.args.clear();
 
-        log::log_debug("Argparse", &format!("Input arguments: {:?}", input_args));
+        log::log_debug(
+            "Argparse",
+            &format!("Input arguments: {} {:?}", cmd, input_args),
+        );
         for arg in input_args {
             // Check for help flags first
             if arg == "-h".trim() || arg == "--help".trim() {

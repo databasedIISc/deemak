@@ -1,6 +1,6 @@
 use super::argparser::ArgParser;
+use crate::rns::restore_comp::backup_sekai;
 use crate::utils::log;
-use crate::utils::restore_comp::backup_sekai;
 use std::path::PathBuf;
 
 pub const HELP_TEXT: &str = r#"
@@ -16,7 +16,7 @@ pub fn save(args: &[&str], root_path: &PathBuf) -> String {
 
     let mut err_msg: String = "save: ".to_string();
 
-    match parser.parse(&args_string) {
+    match parser.parse(&args_string, "save") {
         Ok(_) => {
             let pos_args = parser.get_positional_args();
             if !pos_args.is_empty() {

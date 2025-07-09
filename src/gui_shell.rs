@@ -1,10 +1,8 @@
-use crate::globals;
 use crate::keys::key_to_char;
 use crate::utils::tab_completion::{TabCompletionResult, process_tab_completion};
 use crate::utils::{find_root, shell_history, wrapit::wrapit};
-use deemak::commands;
-use deemak::commands::CommandResult;
-use deemak::commands::list_directory_entries;
+use deemak::commands::cmds::{CommandResult, cmd_manager};
+use deemak::commands::ls::list_directory_entries;
 use deemak::utils::prompt::UserPrompter;
 use raylib::ffi::{
     ColorFromHSV, DrawLineEx, DrawRectangle, DrawTextEx, LoadFontEx, MeasureTextEx, Vector2,
@@ -39,6 +37,9 @@ pub struct ShellScreen {
 impl UserPrompter for ShellScreen {
     fn confirm(&mut self, message: &str) -> bool {
         self.prompt_yes_no(message)
+    }
+    fn input(&mut self, message: &str) -> String {
+        self.prompt_input_text(message)
     }
 }
 
@@ -136,7 +137,6 @@ impl ShellScreen {
                     self.process_shell_input(&input);
                     self.scroll_offset = 0;
                     shell_history::add_to_history(&input);
-                    self.history_index = None;
                     self.working_buffer = None; // Clear working buffer after command execution
                 } else {
                     // If input is empty, just add a new line
@@ -250,12 +250,34 @@ impl ShellScreen {
                 }
             }
             Some(key) => {
-                let shift = self.rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT)
-                    || self.rl.is_key_down(KeyboardKey::KEY_RIGHT_SHIFT);
+                let ctrl_pressed = self.rl.is_key_down(KeyboardKey::KEY_LEFT_CONTROL)
+                    || self.rl.is_key_down(KeyboardKey::KEY_RIGHT_CONTROL);
 
-                if let Some(c) = key_to_char(key, shift) {
-                    self.input_buffer.push(c);
-                    self.history_index = None;
+                if ctrl_pressed {
+                    match key {
+                        KeyboardKey::KEY_K => {
+                            // Clear input buffer and reset history index
+                            self.output_lines.clear();
+                            self.output_lines.push(INITIAL_MSG.to_string());
+                            self.working_buffer = None;
+                        }
+                        KeyboardKey::KEY_C => {
+                            // Next prompt
+                            self.output_lines.push(format!("> {}", self.input_buffer));
+                            self.working_buffer = None;
+                            self.input_buffer.clear();
+                            self.scroll_offset = 0;
+                        }
+                        _ => {}
+                    }
+                } else {
+                    // Handle regular key input when Ctrl is not pressed
+                    let shift = self.rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT)
+                        || self.rl.is_key_down(KeyboardKey::KEY_RIGHT_SHIFT);
+
+                    if let Some(c) = key_to_char(key, shift) {
+                        self.input_buffer.push(c);
+                    }
                 }
             }
             None => {}
@@ -429,7 +451,7 @@ impl ShellScreen {
         let mut current_dir = self.current_dir.clone();
         let root_dir = self.root_dir.clone();
         let parts: Vec<&str> = input.split_whitespace().collect();
-        match commands::cmd_manager(&parts, &current_dir, &root_dir, self) {
+        match cmd_manager(&parts, &current_dir, &root_dir, self) {
             CommandResult::ChangeDirectory(new_dir, message) => {
                 self.current_dir = new_dir;
                 self.output_lines
@@ -475,6 +497,34 @@ impl ShellScreen {
                 self.active_prompt = None;
                 self.output_lines.push(format!("{} [y/N] no", message));
                 return false;
+            }
+        }
+    }
+    pub fn prompt_input_text(&mut self, message: &str) -> String {
+        self.active_prompt = Some(message.to_string());
+        self.input_buffer.clear();
+        self.draw();
+
+        loop {
+            self.update();
+            self.draw();
+
+            if self
+                .rl
+                .is_key_pressed(raylib::consts::KeyboardKey::KEY_ENTER)
+            {
+                let input = take(&mut self.input_buffer);
+                self.active_prompt = None;
+                if !input.is_empty() {
+                    self.output_lines.push(format!("{}: {}", message, input));
+                    return input;
+                }
+            } else if self
+                .rl
+                .is_key_pressed(raylib::consts::KeyboardKey::KEY_BACKSPACE)
+                && !self.input_buffer.is_empty()
+            {
+                self.input_buffer.pop();
             }
         }
     }

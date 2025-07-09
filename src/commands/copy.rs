@@ -30,7 +30,7 @@ Examples:
 fn validate_paths(
     src: &Path,
     dest: &Path,
-    current_dir: &PathBuf,
+    current_dir: &Path,
     root_dir: &Path,
 ) -> Result<(PathBuf, PathBuf), String> {
     let src_path = current_dir.join(src);
@@ -124,7 +124,7 @@ fn copy_directory(src: &Path, dest: &Path, root_dir: &Path, force: bool) -> io::
     }
 
     // Create new .dir_info in destination
-    if !create_dir_info(&dest.to_path_buf(), false) {
+    if !create_dir_info(dest, false) {
         return Err(io::Error::other(format!(
             "Failed to create .dir_info in {}",
             display_relative_path(dest, root_dir)
@@ -185,7 +185,7 @@ fn move_item(
             })?;
 
         fs::remove_dir(src)?;
-        if !create_dir_info(&dest.to_path_buf(), false) {
+        if !create_dir_info(dest, false) {
             return Err(io::Error::other(format!(
                 "Failed to create .dir_info in {}",
                 display_relative_path(dest, root_dir)
@@ -236,7 +236,7 @@ fn delete_directory_contents(path: &Path) -> io::Result<()> {
 /// Main copy command function
 pub fn copy(
     args: &[&str],
-    current_dir: &PathBuf,
+    current_dir: &Path,
     root_dir: &Path,
     prompter: &mut dyn UserPrompter,
 ) -> String {
@@ -263,7 +263,7 @@ pub fn copy(
         ),
     );
 
-    match parser.parse(&args_string) {
+    match parser.parse(&args_string, "copy") {
         Ok(_) => {
             // Get source and destination arguments
             let paths: Vec<&str> = args

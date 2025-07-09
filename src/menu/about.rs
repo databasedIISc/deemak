@@ -1,4 +1,6 @@
-use raylib::ffi::{ColorFromHSV, DrawTextEx, LoadFontEx, MeasureTextEx, Vector2, GetScreenHeight, GetScreenWidth};
+use raylib::ffi::{
+    ColorFromHSV, DrawTextEx, GetScreenHeight, GetScreenWidth, LoadFontEx, MeasureTextEx, Vector2,
+};
 use raylib::prelude::*;
 use std::ffi::CString;
 use std::os::raw::{c_char, c_int};
@@ -33,7 +35,7 @@ pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread) {
         LoadFontEx(
             path.as_ptr() as *const c_char,
             600.0 as c_int,
-            0 as *mut c_int,
+            std::ptr::null_mut::<c_int>(),
             0,
         )
     };
