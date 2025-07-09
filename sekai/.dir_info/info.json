@@ -1,45 +1,45 @@
 {
   "location": "HOME",
-  "about": "You are in 'HOME'. Look around and explore!",
+  "about": "Home Sweet Home",
   "objects": {
     "room_1": {
-      "locked": false
-    },
-    "room_10": {
-      "locked": false
-    },
-    "room_5": {
-      "locked": false
-    },
-    "room_9": {
-      "locked": false
-    },
-    "room_2": {
-      "locked": false
-    },
-    "room_3": {
-      "locked": false
+      "locked": "00"
     },
     "cat.txt": {
-      "locked": false
+      "locked": "00"
     },
     "room_6": {
-      "locked": false
+      "locked": "00"
     },
-    "room_8": {
-      "locked": false
-    },
-    "README": {
-      "locked": false
+    "room_2": {
+      "locked": "00"
     },
     "dog.txt": {
-      "locked": false
+      "locked": "00"
     },
-    "room_4": {
-      "locked": false
+    "room_8": {
+      "locked": "00"
+    },
+    "README": {
+      "locked": "00"
+    },
+    "room_5": {
+      "locked": "00"
+    },
+    "room_9": {
+      "locked": "00"
+    },
+    "room_3": {
+      "locked": "00"
     },
     "room_7": {
-      "locked": false
+      "locked": "00"
+    },
+    "room_4": {
+      "locked": "00"
+    },
+    "room_10": {
+      "locked": "00"
     }
   }
 }

@@ -3,7 +3,7 @@
   "about": "You are in 'HOME/room_9'. Look around and explore!",
   "objects": {
     "shit.txt": {
-      "locked": false
+      "locked": "00"
     }
   }
 }

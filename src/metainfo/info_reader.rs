@@ -13,6 +13,8 @@ pub struct ObjectInfo {
     pub properties: HashMap<String, Value>,
 }
 
+pub static DEFAULT_PERMISSIONS: &str = "00";
+
 impl ObjectInfo {
     pub fn new() -> Self {
         Self {
@@ -20,10 +22,10 @@ impl ObjectInfo {
         }
     }
 
-    pub fn with_locked(locked: bool) -> Self {
+    pub fn with_locked(locked: String) -> Self {
         let mut obj = Self::new();
         obj.properties
-            .insert("locked".to_string(), Value::Bool(locked));
+            .insert("locked".to_string(), Value::String(locked));
         obj
     }
 }
@@ -86,7 +88,10 @@ impl Info {
                 for entry in entries.filter_map(|e| e.ok()) {
                     if let Some(name) = entry.file_name().to_str() {
                         if name != ".dir_info" {
-                            objects.insert(name.to_string(), ObjectInfo::with_locked(false));
+                            objects.insert(
+                                name.to_string(),
+                                ObjectInfo::with_locked(DEFAULT_PERMISSIONS.to_string()),
+                            );
                         }
                     }
                 }
@@ -126,17 +131,15 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
 
     // Validate and normalize object properties
     for obj_info in info.objects.values_mut() {
-        // Convert any string "true"/"false" to proper booleans for locked status
+        // Check if "locked" is a string of 2 bits
         if let Some(Value::String(s)) = obj_info.properties.get("locked") {
-            match s.to_lowercase().as_str() {
-                "true" => obj_info
-                    .properties
-                    .insert("locked".to_string(), Value::Bool(true)),
-                "false" => obj_info
-                    .properties
-                    .insert("locked".to_string(), Value::Bool(false)),
-                _ => None,
-            };
+            if s.len() == 2 && s.chars().all(|c| c == '0' || c == '1') {
+                // Valid locked value, do nothing
+            } else {
+                return Err(InfoError::ValidationError(
+                    "Invalid 'locked' value, must be a 2-bit string".to_string(),
+                ));
+            }
         }
 
         // Trim any string values in properties
@@ -165,7 +168,7 @@ pub fn add_obj_to_info(
         let obj_info = if let Some(props) = initial_props {
             ObjectInfo { properties: props }
         } else {
-            ObjectInfo::with_locked(false) // Default to locked=false if no props provided
+            ObjectInfo::with_locked(DEFAULT_PERMISSIONS.to_string()) // Default to locked=false if no props provided
         };
 
         info.objects.insert(obj_name.to_string(), obj_info);
