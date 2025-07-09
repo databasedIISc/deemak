@@ -1,9 +1,8 @@
-use std::collections::HashMap;
+use deemak::commands::cmds;
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
-use std::sync::Mutex;
 
 // === External Crates ===
 use rocket::{get, post, options, routes, Request, Response, Config, State};

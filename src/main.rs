@@ -1,16 +1,18 @@
-#![allow(unused_variables, unused_mut, dead_code, unused_imports)]
+#![allow(unused_variables, unused_mut, dead_code)]
+mod commands;
 mod gui_shell;
 mod keys;
+mod login;
+mod rns;
 mod server;
 mod utils;
-mod login;
-mod auth;
+use crate::rns::restore_comp;
+use crate::utils::valid_sekai::validate_or_create_sekai;
+use crate::utils::{debug_mode, find_root, globals, log};
 use deemak::DEBUG_MODE;
 use deemak::menu;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
-use utils::{debug_mode, find_root, globals, log, restore_comp, valid_sekai};
-use valid_sekai::validate_or_create_sekai;
 
 pub const HELP_TXT: &str = r#"
 Usage: deemak <sekai_directory> [--debug] [--web]
