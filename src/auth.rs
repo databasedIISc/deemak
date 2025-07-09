@@ -31,7 +31,7 @@ pub struct AuthResponse {
     message: String,
 }
 // File-based DB
-fn load_users() -> Vec<User> {
+pub fn load_users() -> Vec<User> {
     if !Path::new(USER_FILE).exists() {
         return vec![];
     }
@@ -70,7 +70,7 @@ fn hash_password(password: &str) -> Result<(String, String), ring::error::Unspec
 }
 
 // Password verification
-fn verify_password(password: &str, salt_hex: &str, hash_hex: &str) -> bool {
+pub fn verify_password(password: &String, salt_hex: &str, hash_hex: &str) -> bool {
     let salt = match HEXUPPER.decode(salt_hex.as_bytes()) {
         Ok(s) => s,
         Err(_) => return false,
