@@ -5,7 +5,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 // === External Crates ===
-use rocket::{get, post, options, routes, Request, Response, Config, State};
+use rocket::{Request, Response, get, options, routes};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::fs::{FileServer, relative};
 use rocket::http::Header;
@@ -29,8 +29,9 @@ struct CommandResponse {
 // GET endpoint for command execution
 #[get("/run?<command>&<current_dir>")]
 fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
+    use cmds::{CommandResult, cmd_manager}
     let world_dir = WORLD_DIR.get().expect("WORLD_DIR not initialized");
-    let root_dir = find_root::find_home(&world_dir).expect("Could not find sekai home directory");
+    let root_dir = find_root::find_home(world_dir).expect("Could not find sekai home directory");
 
     let mut current_dir = if current_dir.is_empty() {
         root_dir.clone()
@@ -40,7 +41,6 @@ fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
 
     let mut prompter = DummyPrompter;
     match cmd_manager(&command.split_whitespace().collect::<Vec<_>>(), &mut current_dir, &root_dir, &mut prompter) {
-        CommandResult::Output(output) => Json(CommandResponse { output, new_current_dir: None }),
         CommandResult::ChangeDirectory(new_dir, message) => Json(CommandResponse {
             output: message,
             new_current_dir: Some(new_dir.display().to_string()),
@@ -65,7 +65,7 @@ fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
 fn cors_preflight() -> &'static str {
     ""
 }
-// === CORS Fairing ===
+// === Add CORS headers ===
 pub struct CORS;
 
 #[rocket::async_trait]
@@ -121,6 +121,8 @@ pub async fn server() -> Result<(), rocket::Error> {
         .mount("/", FileServer::from(relative!("static")))
         .mount("/backend", routes![response, cors_preflight,auth::register,auth::login])
         .launch()
-        .await?;
-    Ok(())
+        .await
+        .expect("failed to launch Rocket server");
+
+    Some(Ok(()))
 }
