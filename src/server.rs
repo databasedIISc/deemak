@@ -39,7 +39,6 @@ fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
     let world_dir = WORLD_DIR.get().expect("WORLD_DIR not initialized");
     let parts: Vec<&str> = command.split_whitespace().collect();
     let root_dir = find_root::find_home(world_dir).expect("Could not find sekai home directory");
-
     let mut current_dir = if current_dir.is_empty() {
         root_dir.clone()
     } else {
@@ -47,7 +46,6 @@ fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
     };
 
     let mut prompter = DummyPrompter;
-
     match cmd_manager(&parts, &current_dir, &root_dir, &mut prompter) {
         CommandResult::Output(output) => Json(CommandResponse {
             output,
