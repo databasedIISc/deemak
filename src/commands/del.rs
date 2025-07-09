@@ -1,6 +1,7 @@
 use super::argparser::ArgParser;
 use super::cmds::{check_dir_info, normalize_path};
 use super::display_relative_path;
+use crate::metainfo::info_reader::del_obj_from_info;
 use crate::metainfo::lock_perm;
 use crate::utils::{log, prompt::UserPrompter};
 use std::fs;
@@ -38,7 +39,14 @@ pub fn delete_file(path: &Path, root_dir: &Path) -> String {
     }
 
     match std::fs::remove_file(path) {
-        Ok(_) => format!("Deleted file: {}", display_relative_path(path, root_dir)),
+        Ok(_) => {
+            // Delete the object from info.json
+            let obj_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            let result = del_obj_from_info(path, obj_name).map_err(|e| e.to_string()); // Convert InfoError to String
+
+            log::log_result("del", result, "Deleting object from info.json");
+            format!("Deleted file: {}", display_relative_path(path, root_dir))
+        }
         Err(e) => format!("del: {}: {}", display_relative_path(path, root_dir), e),
     }
 }
@@ -71,10 +79,17 @@ pub fn delete_directory(path: &Path, root_dir: &Path, force: bool) -> String {
     if only_has_dir_info() {
         let _ = fs::remove_dir_all(path.join(".dir_info"));
         return match fs::remove_dir(path) {
-            Ok(_) => format!(
-                "Deleted directory: {}",
-                display_relative_path(path, root_dir)
-            ),
+            Ok(_) => {
+                // Delete the object from info.json
+                let obj_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                let result = del_obj_from_info(path, obj_name).map_err(|e| e.to_string()); // Convert InfoError to String
+
+                log::log_result("del", result, "Deleting object from info.json");
+                format!(
+                    "Deleted directory: {}",
+                    display_relative_path(path, root_dir)
+                )
+            }
             Err(e) => format!("del: {}: {}", display_relative_path(path, root_dir), e),
         };
     }

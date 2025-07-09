@@ -158,10 +158,15 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
 /// Example:
 ///     add_obj_to_info(&info_path, "file.txt", None);
 pub fn add_obj_to_info(
-    info_path: &Path,
+    obj_path: &Path,
     obj_name: &str,
     initial_props: Option<HashMap<String, Value>>,
 ) -> Result<(), InfoError> {
+    let info_path = &obj_path
+        .parent()
+        .unwrap()
+        .join(".dir_info")
+        .join("info.json");
     let mut info = read_validate_info(info_path)?;
 
     if !info.objects.contains_key(obj_name) {
@@ -181,7 +186,12 @@ pub fn add_obj_to_info(
 }
 
 /// Delete an object from info.json
-pub fn del_obj_from_info(info_path: &Path, obj_name: &str) -> Result<(), InfoError> {
+pub fn del_obj_from_info(obj_path: &Path, obj_name: &str) -> Result<(), InfoError> {
+    let info_path = &obj_path
+        .parent()
+        .unwrap()
+        .join(".dir_info")
+        .join("info.json");
     let mut info = read_validate_info(info_path)?;
 
     if info.objects.remove(obj_name).is_some() {
@@ -206,11 +216,16 @@ pub fn del_obj_from_info(info_path: &Path, obj_name: &str) -> Result<(), InfoErr
 /// ```
 /// Update or add a status property for an object
 pub fn update_obj_status(
-    info_path: &Path,
+    obj_path: &Path,
     obj_name: &str,
     status: &str,
     st_value: Value,
 ) -> Result<(), InfoError> {
+    let info_path = &obj_path
+        .parent()
+        .unwrap()
+        .join(".dir_info")
+        .join("info.json");
     let mut info = read_validate_info(info_path)?;
 
     // Get or create the object entry

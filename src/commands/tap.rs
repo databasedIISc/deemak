@@ -27,18 +27,20 @@ pub fn create_file(destination: &str, current_dir: &Path, root_dir: &Path) -> St
     if new_path.exists() {
         return format!("tap: {}: File or directory already exists", destination);
     }
-    // Add the object to info.json
-    let obj_name = new_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-    let result = add_obj_to_info(new_path, obj_name, None).map_err(|e| e.to_string()); // Convert InfoError to String
-
-    log::log_result("tap", result, "adding object to info.json");
 
     // Create the file or directory
     match std::fs::File::create(new_path) {
-        Ok(_) => format!(
-            "Created file: {}",
-            display_relative_path(new_path, root_dir)
-        ),
+        Ok(_) => {
+            // Add the object to info.json
+            let obj_name = new_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            let result = add_obj_to_info(new_path, obj_name, None).map_err(|e| e.to_string()); // Convert InfoError to String
+
+            log::log_result("tap", result, "Adding object to info.json");
+            format!(
+                "Created file: {}",
+                display_relative_path(new_path, root_dir)
+            )
+        }
         Err(e) => format!("tap: {}: {}", destination, e),
     }
 }
@@ -54,12 +56,6 @@ pub fn create_directory(destination: &str, current_dir: &Path, root_dir: &Path) 
         );
     }
 
-    // Add the object to info.json
-    let obj_name = new_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-    let result = add_obj_to_info(new_path, obj_name, None).map_err(|e| e.to_string()); // Convert InfoError to String
-
-    log::log_result("tap", result, "adding object to info.json");
-
     // Create the directory
     match std::fs::create_dir(new_path) {
         Ok(_) => {
@@ -70,6 +66,12 @@ pub fn create_directory(destination: &str, current_dir: &Path, root_dir: &Path) 
                     display_relative_path(new_path, root_dir)
                 );
             }
+
+            // Add the object to info.json
+            let obj_name = new_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            let result = add_obj_to_info(new_path, obj_name, None).map_err(|e| e.to_string()); // Convert InfoError to String
+
+            log::log_result("tap", result, "Adding object to info.json");
             format!(
                 "Created directory: {}",
                 display_relative_path(new_path, root_dir)
