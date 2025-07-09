@@ -2,7 +2,7 @@ use super::info_reader::read_validate_info;
 use std::path::Path;
 
 /// Reads the lock permissions from an object.
-/// Returns: (bool, bool) => (is_locked, is_level_locked)
+/// Returns: (bool, bool) => (is_level_locked, is_locked)
 ///
 /// The lock corresponsds as below:
 ///     1st bit: Locked/Unlocked bit.
@@ -46,5 +46,5 @@ pub fn read_lock_perm(obj_path: &Path) -> Result<(bool, bool), String> {
         _ => return Err("Invalid lock string format".to_string()),
     };
 
-    Ok((first_bit, second_bit))
+    Ok((second_bit, first_bit))
 }

@@ -13,7 +13,7 @@ pub fn create_dir_info(dir: &Path, home_dir: bool) -> bool {
     let info_path = dir_info.join("info.json");
 
     // Try to read existing info if present
-    let existing_info = if info_path.exists() {
+    let mut existing_info = if info_path.exists() {
         read_validate_info(&info_path).ok()
     } else {
         None
@@ -28,29 +28,36 @@ pub fn create_dir_info(dir: &Path, home_dir: bool) -> bool {
         return false;
     }
 
-    // Get default values, preserving existing valid fields
-    let mut default_info = super::info_reader::Info::default_for_path(dir, home_dir);
+    // Get default values
+    let default_info = super::info_reader::Info::default_for_path(dir, home_dir);
 
-    if let Some(existing) = existing_info {
-        // Preserve existing valid fields
-        if !existing.location.trim().is_empty() {
-            default_info.location = existing.location;
+    // Merge defaults into existing info (or create new from defaults)
+    let info_to_write = if let Some(existing) = &mut existing_info {
+        // Fill in missing default fields
+        if existing.location.trim().is_empty() {
+            existing.location = default_info.location;
         }
-        if !existing.about.trim().is_empty() {
-            default_info.about = existing.about;
+        if existing.about.trim().is_empty() {
+            existing.about = default_info.about;
         }
 
-        // Merge objects maps, preserving existing entries
-        for (key, val) in existing.objects {
-            default_info.objects.entry(key).or_insert(val);
+        let mut merged_objects = existing.objects.clone(); // Start with existing objects
+
+        // Only add default objects that don't already exist
+        for (key, default_val) in default_info.objects {
+            merged_objects.entry(key).or_insert(default_val);
         }
+        existing.objects = merged_objects;
+        existing
     } else {
-        println!("No existing info found, using defaults");
-    }
+        // No existing info - use defaults
+        &default_info
+    };
+
     // Write the merged info
     match std::fs::write(
         &info_path,
-        match serde_json::to_string_pretty(&default_info) {
+        match serde_json::to_string_pretty(&info_to_write) {
             Ok(json) => json,
             Err(e) => {
                 log::log_error(
@@ -61,13 +68,7 @@ pub fn create_dir_info(dir: &Path, home_dir: bool) -> bool {
             }
         },
     ) {
-        Ok(_) => {
-            log::log_info(
-                "SEKAI",
-                &format!("Updated info.json for: {}", dir.display()),
-            );
-            true
-        }
+        Ok(_) => true,
         Err(e) => {
             log::log_error(
                 "SEKAI",
@@ -78,7 +79,7 @@ pub fn create_dir_info(dir: &Path, home_dir: bool) -> bool {
     }
 }
 
-/// Checks if .dir_info/info.json exists and is valid (updated for PathBuf)
+/// Checks if .dir_info/info.json exists and is valid
 pub fn check_dir_info_exists_valid(dir: &Path) -> bool {
     let info_path = dir.join(".dir_info/info.json");
     if !info_path.exists() {
@@ -91,7 +92,7 @@ pub fn check_dir_info_exists_valid(dir: &Path) -> bool {
     validate_info_file(&info_path)
 }
 
-/// Validates an info.json file at the given path (updated for PathBuf)
+/// Validates an info.json file at the given path
 fn validate_info_file(info_path: &Path) -> bool {
     match read_validate_info(info_path) {
         Ok(info) => info.validate().is_ok(),
@@ -106,14 +107,14 @@ fn validate_info_file(info_path: &Path) -> bool {
 }
 
 /// Recursively checks directory structure (updated for PathBuf)
-fn check_subdirectories(path: &Path) -> bool {
+fn check_subdirectories(dir_path: &Path) -> bool {
     let mut all_valid = true;
-    let entries = match std::fs::read_dir(path) {
+    let entries = match std::fs::read_dir(dir_path) {
         Ok(entries) => entries,
         Err(e) => {
             log::log_error(
                 "SEKAI",
-                &format!("Failed to read directory {}: {}", path.display(), e),
+                &format!("Failed to read directory {}: {}", dir_path.display(), e),
             );
             return false;
         }

@@ -1,6 +1,7 @@
 use super::argparser::ArgParser;
 use super::cmds::check_dir_info;
 use super::whereami::display_relative_path;
+use crate::metainfo::lock_perm;
 use crate::utils::log;
 use std::path::Path;
 
@@ -8,14 +9,17 @@ pub const HELP_TXT: &str = r#"
 Usage: ls [directory]
 
 Lists the objects and places you can go to in the specified(current by default) directory.
+Example:
+- ls                        : Lists the contents of the current directory. 
+- ls directory_name         : Lists the contents of specified directory
 "#;
 
 /// Lists all files and directories in the given path, excluding .dir_info and info.json
-/// Returns a tuple of (files, directories) as String vectors
+/// Returns a tuple of (files, directories) as String vectors with lock status
 pub fn list_directory_entries(target_path: &Path, root_dir: &Path) -> (Vec<String>, Vec<String>) {
     let entries = match std::fs::read_dir(target_path) {
         Ok(entries) => entries,
-        Err(_) => return (Vec::new(), Vec::new()), // Error handling remains in main function
+        Err(_) => return (Vec::new(), Vec::new()),
     };
 
     let mut files = Vec::new();
@@ -25,53 +29,83 @@ pub fn list_directory_entries(target_path: &Path, root_dir: &Path) -> (Vec<Strin
         let Ok(entry) = entry else { continue };
         let path = entry.path();
         let name = entry.file_name().to_string_lossy().into_owned();
+
         if name == ".dir_info" || name == "info.json" {
             continue;
         }
-        if path.is_dir() {
-            directories.push(format!("{}/", name));
+
+        // Check lock status
+        let lock_status = match lock_perm::read_lock_perm(&path) {
+            Ok((first_bit, _)) => first_bit,
+            Err(_) => false, // Default to not locked if can't read status
+        };
+
+        let display_name = if lock_status {
+            if path.is_dir() {
+                format!("{}/ (locked)", name)
+            } else {
+                format!("{} (locked)", name)
+            }
         } else {
-            files.push(name);
+            name
+        };
+
+        if path.is_dir() {
+            directories.push(display_name.to_string());
+        } else {
+            files.push(display_name);
         }
     }
-    // Sort files and directories
+
     files.sort();
     directories.sort();
-
     (files, directories)
 }
 
 pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
-    // Create parser with no flags (since ls doesn't need any) and our help text
     let args_string: Vec<String> = args.iter().map(|s| s.to_string()).collect();
     let mut parser = ArgParser::new(&[]);
 
-    // Parse arguments
     match parser.parse(&args_string, "ls") {
         Ok(_) => {
             let positional_args = parser.get_positional_args();
 
-            // Determine target path with security checks
+            // Handle directory argument
+            if positional_args.len() > 1 {
+                return "ls: too many arguments\nTry 'help ls' for more information.".to_string();
+            }
+
             let target_path = if positional_args.is_empty() {
                 current_dir.to_path_buf()
             } else {
-                if positional_args.len() > 1 {
-                    return "ls: too many arguments\nTry 'help ls' for more information."
-                        .to_string();
+                let dir_name = positional_args[0];
+
+                // Check if directory is locked
+                let dir_path = current_dir.join(dir_name);
+                if let Ok((is_locked, _)) = lock_perm::read_lock_perm(&dir_path) {
+                    if is_locked {
+                        return format!(
+                            "{} is locked. To list contents, unlock it first.",
+                            dir_name
+                        );
+                    }
                 }
 
-                if check_dir_info(Path::new(positional_args[0])) {
+                if check_dir_info(Path::new(dir_name)) {
                     log::log_warning(
                         "ls",
-                        format!("Attempted to list/refer restricted directory: {} Operation Not Permitted", positional_args[0]).as_str(),
+                        &format!(
+                            "Attempted to list restricted directory: {} Operation Not Permitted",
+                            dir_name
+                        ),
                     );
                     return format!(
-                        "Attempted to list/refer restricted directory: {} Operation Not Permitted",
-                        positional_args[0]
+                        "Attempted to list restricted directory: {} Operation Not Permitted",
+                        dir_name
                     );
                 }
 
-                let joined = current_dir.join(positional_args[0]);
+                let joined = current_dir.join(dir_name);
                 if joined.starts_with(root_dir) {
                     joined
                 } else {
@@ -79,15 +113,15 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
                 }
             };
 
-            // Read directory entries
             let (files_vec, directories_vec) = list_directory_entries(&target_path, root_dir);
 
             if files_vec.is_empty() && directories_vec.is_empty() {
                 if let Err(e) = std::fs::read_dir(&target_path) {
-                    let mut error_msg = e.to_string();
-                    if e.kind() == std::io::ErrorKind::NotFound {
-                        error_msg = "No such file or directory".to_string();
-                    }
+                    let error_msg = if e.kind() == std::io::ErrorKind::NotFound {
+                        "No such file or directory".to_string()
+                    } else {
+                        e.to_string()
+                    };
                     return format!(
                         "ls: cannot access '{}': {}",
                         display_relative_path(&target_path, root_dir),
@@ -96,7 +130,6 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
                 }
             }
 
-            // Format the output strings
             let files = if files_vec.is_empty() {
                 "   (none)\n".to_string()
             } else {
@@ -112,8 +145,6 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
                     .collect()
             };
 
-            // Displaying files and directories
-            // Format output with relative path header
             format!(
                 "\nObjects:\n{files}\nFrom inside here, you can go to:\n{directories}",
                 files = files,
