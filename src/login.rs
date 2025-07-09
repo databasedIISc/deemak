@@ -1,3 +1,4 @@
+use crate::auth::{load_users, verify_password};
 use crate::keys::key_to_char;
 use raylib::ffi::{DrawTextEx, LoadFontEx, MeasureTextEx, Vector2};
 use raylib::prelude::*;
@@ -10,6 +11,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
     let mut username = String::new();
     let mut password = String::new();
     let mut entering_username = true;
+    let mut warning_text = String::new();
     let mut warning = false;
     let mut alpha = 0.0f32;
     let top_y = 100.0;
@@ -62,11 +64,25 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                         if entering_username {
                             if !username.is_empty() {
                                 entering_username = false;
+                                warning = false; 
                             }
                         } else if !password.is_empty() {
                             USER_ID.set(username.clone()).ok();
                             USER_PASSWORD.set(password.clone()).ok();
-                            return true;
+                            let users: Vec<crate::auth::User> = load_users();
+                            let username: String = username.trim().to_string();
+                            let password: String = password.trim().to_string();
+                            if let Some(user) = users.iter().find(|u| u.username == username) {
+                                if verify_password(&password, &user.salt, &user.password_hash) {
+                                    return true;
+                                } else {
+                                    warning = true;
+                                    warning_text = "Invalid password!".to_string();
+                                }
+                            } else {
+                                warning = true;
+                                warning_text = "Username not found!".to_string();
+                            }
                         }
                     }
                     KeyboardKey::KEY_BACKSPACE => {
@@ -147,6 +163,17 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                 let pass_y = user_y + 100.0;
                 let box_width = 320.0;
                 let box_height = 40.0;
+                
+                // Draw warning if any
+                if warning {
+                    d.draw_text(                    
+                        &warning_text,
+                        base_x as i32,
+                        (pass_y + 90.0) as i32,
+                        20,
+                        Color::RED,
+                    );
+                }
 
                 // Username
                 d.draw_text(
@@ -157,16 +184,12 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     Color::alpha(&Color::WHITE, 0.9),
                 );
                 d.draw_rectangle_lines(
-                    base_x as i32,
+                    (base_x) as i32,
                     (user_y + 40.0) as i32,
                     box_width as i32,
                     box_height as i32,
-                    if entering_username {
-                        highlight_color
-                    } else {
-                        Color::GRAY
-                    },
-                );
+                    if entering_username { highlight_color } else { Color::GRAY },
+    );
 
                 // Draw username
                 let mut total_width = 0.0;

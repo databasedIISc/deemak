@@ -1,47 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8">
   <title>Deemak</title>
-  <link rel="stylesheet" href="./index.css" />
+  <link rel="stylesheet" href="./index.css">
 </head>
-
 <body>
-  <div id="menu_container">
+  <div id="loading" class="loading">Loading...</div>
+
+  <div id="auth_container" style="display: flex;">
+    <!-- Login Form -->
+    <div id="login_container">
+      <div class="auth_card">
+        <h1 class="auth_title">Welcome to Deemak</h1>
+        <div id="login_message" class="auth_message"></div>
+        <label>Username</label>
+        <input type="text" id="login_username_input" placeholder="Enter username" autocomplete="off">
+        <label>Password</label>
+        <input type="password" id="login_password_input" placeholder="Enter password">
+        <button class="auth_button" onclick="login()">Login</button>
+        <p class="auth_link" onclick="showRegister()">Don't have an account? Register</p>
+      </div>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register_container">
+      <div class="auth_card">
+        <h1 class="auth_title">Create Account</h1>
+        <div id="register_message" class="auth_message"></div>
+        <label>Username</label>
+        <input type="text" id="register_username_input" placeholder="Choose a username" autocomplete="off">
+        <label>Password</label>
+        <input type="password" id="register_password_input" placeholder="Create a password">
+        <button class="auth_button" onclick="register()">Register</button>
+        <p class="auth_link" onclick="showLogin()">Already have an account? Login</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="menu_container" style="display: none;">
     <div class="menu_card">
       <div id="menu_title">DEEMAK SHELL</div>
       <div class="menu_item"><button class="menu_button" onclick="startTerminal()">Start Shell</button></div>
       <div class="menu_item"><button class="menu_button" onclick="about()">About</button></div>
-      <div class="menu_item"><button class="menu_button" onclick="exitShell()">Exit</button></div>
+      <div class="menu_item"><button class="menu_button" onclick="logout()">Log Out</button></div>
     </div>
   </div>
 
-  <div id="exit_container">
-    <div id="exit_title">Thanks For Visiting</div>
-  </div>
   <div id="terminal_container" style="display: none;">
-
     <div class="terminal_card">
       <div id="terminal" onclick="focusTerminal()">
         <div class="terminal_line">
-          <h2>Type commands and press Enter. Try <code>help</code> for more info.</h2>
+          <h4>Type commands and press Enter. Try <code>help</code> for more info.</h4>
         </div>
         <div class="terminal_line">
-          <div class="dollor">$</div><input id="terminal_input" type="text" autofocus autocomplete="off">
+          <div class="dollor">$</div><input type="text" id="terminal_input" autocomplete="off">
         </div>
       </div>
-      <div class="terminal_display">
-
-      </div>
     </div>
-
+    <div class="terminal_ascii_art"></div>
   </div>
+
   <div id="about_container" style="display: none;">
     <div class="about_card">
       <h2>DEEMAK Shell - Version 1.0</h2>
       <p>A modern terminal shell built with <strong>Rust</strong> and <strong>Raylib</strong>.</p>
-
       <h3>Features</h3>
       <ul>
         <li>Command parsing</li>
@@ -49,10 +72,8 @@
         <li>File operations</li>
         <li>Customizable interface</li>
       </ul>
-
       <p><strong>Created by:</strong> IISc Databased Club</p>
       <p><strong>License:</strong> MIT License</p>
-
       <button class="back_button" onclick="backToMenu()">Back</button>
     </div>
   </div>
@@ -61,172 +82,6 @@
     import { BACKEND_URL } from './config.js';
     window.BACKEND_URL = BACKEND_URL;
   </script>
-  <script>
-    const menuContainer = document.getElementById('menu_container');
-    const terminalContainer = document.getElementById('terminal_container');
-    const exitContainer = document.getElementById('exit_container');
-    const aboutContainer = document.getElementById('about_container');
-    const terminal = document.getElementById('terminal');
-
-    // const ternimalFocus = false;
-    let currentDir = "";
-
-    function focusTerminal() {
-      // ternimalFocus = true;
-      console.log("focus")
-    }
-
-    function startTerminal() {
-      const terminalInput = document.getElementById('terminal_input');
-      terminalContainer.style.display = "flex";
-      menuContainer.style.display = "none";
-      terminalInput.focus();
-      terminal.innerHTML = `        
-        <div>
-          <pre>
- _____                            _
-|  __ \\                          | |
-| |  | | ___  ___ _ __ ___   __ _| | __
-| |  | |/ _ \\/ _ \\ '_ \` _ \\ / _\` | |/ /
-| |__| |  __/  __/ | | | | | (_| |   <
-|_____/ \\___|\\___|_| |_| |_|\\__,_|_|\\_\\
-
-          </pre>
-          <p>
-          Developed by Databased Club, Indian Institute of Science, Bangalore.
-          Official Github Repo: https://github.com/databasedIISc/deemak
-          </p>
-          <p>Type commands and press Enter. Try <code>help</code> for more info.</p>
-        </div>`;
-
-        addNewInput();
-    }
-
-    function stopTerminal() {
-      terminalContainer.style.display = "none";
-      menuContainer.style.display = "flex";
-      clearTerminal()
-    }
-
-    function exitShell() {
-      const terminalInput = document.getElementById('terminal_input');
-      exitContainer.style.display = "flex";
-      terminalContainer.style.display = "none";
-      menuContainer.style.display = "none";
-      terminalInput.value = "";
-      terminalInput.disabled = true;
-    }
-
-    function about() {
-      const terminalInput = document.getElementById('terminal_input');
-      aboutContainer.style.display = "flex";
-      terminalContainer.style.display = "none";
-      menuContainer.style.display = "none";
-      terminalInput.value = "";
-      terminalInput.disabled = true;
-    }
-
-    function backToMenu() {
-      aboutContainer.style.display = "none";
-      terminalContainer.style.display = "none";
-      menuContainer.style.display = "flex";
-      clearTerminal()
-    }
-    function clearTerminal(){
-        terminal.innerHTML = `        
-        <div class="terminal_line">
-          <h4>Type commands and press Enter. Try <code>help</code> for more info.</h4>
-        </div>`;
-        addNewInput();
-        return;
-    }
-
-    async function processCommand(input) {
-      const command = input.value.trim();
-      const currentInput = document.createElement('div')
-      // currentInput.classList.add("previous_input")
-      // currentInput.innerHTML = `${command}`
-      input.insertAdjacentHTML('afterend', `<div class="previous_input">${command}</div>`);
-      document.getElementById("terminal_input").remove()
-      const output = document.createElement('div');
-      output.classList.add("response");
-
-      if (command== "clear") {
-        clearTerminal()
-        return;
-      }else if(command.split(" ")[0] == "clear"){
-         output.innerText = "Command not found. Try `help`."
-          terminal.appendChild(output);
-          addNewInput();
-          return
-      }
-
-      if (command === "exit") {
-        stopTerminal();
-        // input.disabled = true;
-        return;
-      } else if(command.split(" ")[0] == "exit"){
-         output.innerText = "Command not found. Try `help`."
-          terminal.appendChild(output);
-          addNewInput();
-          return
-      }
-      
-      try {
-        const response = await fetch(
-          `${window.BACKEND_URL}/backend/run?command=${encodeURIComponent(command)}&current_dir=${encodeURIComponent(currentDir)}`
-        );
-        const result = await response.json();
-        output.innerText = result.output;
-        if (result.new_current_dir) {
-          currentDir = result.new_current_dir;
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        output.innerText = "Error: Could not reach server.";
-      }
-
-      terminal.appendChild(output);
-      // input.disabled = true;
-      addNewInput();
-    }
-
-    function addNewInput() {
-      const line = document.createElement('div');
-      line.className = 'terminal_line';
-
-      const prompt = document.createElement('div');
-      prompt.textContent = '$';
-      prompt.classList.add('dollor')
-
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.id = 'terminal_input';
-
-      input.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-          processCommand(input);
-        }
-      });
-
-      line.appendChild(prompt);
-      line.appendChild(input);
-      terminal.appendChild(line);
-
-      input.focus();
-      input.autocomplete = 'off';
-    }
-
-    // Initial input setup
-    window.onload = () => {
-      const initialInput = document.querySelector('#terminal_input');
-      initialInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-          processCommand(e.target);
-        }
-      });
-    };
-  </script>
+  <script type="module" src="./index.js"></script>
 </body>
-
 </html>
