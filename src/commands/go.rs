@@ -1,7 +1,7 @@
 use super::argparser::ArgParser;
 use super::cmds::check_dir_info;
 use super::whereami::display_relative_path;
-use crate::metainfo::info_reader;
+use crate::metainfo::{info_reader, lock_perm};
 use crate::utils::log;
 use std::path::{Path, PathBuf};
 
@@ -110,6 +110,15 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
             current_dir.clone(),
             format!("go: {}: Not a directory", destination),
         );
+    }
+
+    // Check if directory is locked
+    if let Err(e) = lock_perm::operation_locked_perm(
+        &canonical_path,
+        "go",
+        "Cannot enter locked directory. Unlock it first",
+    ) {
+        return (current_dir.clone(), e);
     }
 
     // Get directory info if available

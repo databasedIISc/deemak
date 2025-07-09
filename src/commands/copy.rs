@@ -1,9 +1,9 @@
 use super::argparser::ArgParser;
 use super::cmds::normalize_path;
 use super::display_relative_path;
+use crate::metainfo::lock_perm;
 use crate::metainfo::valid_sekai::create_dir_info;
-use crate::utils::log;
-use crate::utils::prompt::UserPrompter;
+use crate::utils::{log, prompt::UserPrompter};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -291,6 +291,16 @@ pub fn copy(
             // Validate paths and perform operations
             match validate_paths(src, dest, current_dir, root_dir) {
                 Ok((src_path, dest_path)) => {
+                    // Operation allowed only if paths are not locked
+                    for pth in [&src_path, &dest_path] {
+                        if let Err(e) = lock_perm::operation_locked_perm(
+                            pth,
+                            "copy",
+                            "Cannot copy/move locked file/directory. Unlock it first.",
+                        ) {
+                            return e;
+                        }
+                    }
                     let result = if cut {
                         move_item(&src_path, &dest_path, root_dir, recursive, force)
                     } else if src_path.is_dir() && !recursive {

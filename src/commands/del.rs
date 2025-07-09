@@ -1,8 +1,8 @@
 use super::argparser::ArgParser;
 use super::cmds::{check_dir_info, normalize_path};
 use super::display_relative_path;
-use crate::utils::log;
-use crate::utils::prompt::UserPrompter;
+use crate::metainfo::lock_perm;
+use crate::utils::{log, prompt::UserPrompter};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -172,8 +172,16 @@ pub fn del(
             let destination_path = Path::new(destination);
             match validate_deletion_path(destination_path, current_dir, root_dir) {
                 Ok(full_path) => {
-                    let force = args.contains(&"-f") || args.contains(&"--force");
+                    // Operation permitted only if not locked
+                    if let Err(e) = lock_perm::operation_locked_perm(
+                        &full_path,
+                        "read",
+                        "Cannot delete locked file/directory. Unlock it first.",
+                    ) {
+                        return e;
+                    }
 
+                    let force = args.contains(&"-f") || args.contains(&"--force");
                     if args.contains(&"-d") || args.contains(&"--dir") || full_path.is_dir() {
                         delete_directory(&full_path, root_dir, force)
                     } else {

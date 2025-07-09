@@ -1,5 +1,6 @@
 use super::cmds::check_dir_info;
 use super::whereami::display_relative_path;
+use crate::metainfo::lock_perm;
 use std::fs;
 use std::path::Path;
 
@@ -38,6 +39,14 @@ pub fn read(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
         );
     }
 
+    // Check if locked or not
+    if let Err(e) = lock_perm::operation_locked_perm(
+        &file_path,
+        "read",
+        "Cannot read locked file. Unlock it first",
+    ) {
+        return e;
+    }
     match fs::read_to_string(&file_path) {
         Ok(content) => content,
         Err(e) => format!(

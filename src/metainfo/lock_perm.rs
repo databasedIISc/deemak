@@ -1,4 +1,6 @@
 use super::info_reader::read_validate_info;
+use crate::utils::log;
+use crate::utils::relative_deemak_path;
 use std::path::Path;
 
 /// Reads the lock permissions from an object.
@@ -33,18 +35,60 @@ pub fn read_lock_perm(obj_path: &Path) -> Result<(bool, bool), String> {
         return Err("Lock string should be exactly 2 characters".to_string());
     }
 
-    // bit count starts from the right
-    let first_bit = match Iterator::nth(&mut lock_str.chars(), 0) {
-        Some('1') => true,
-        Some('0') => false,
-        _ => return Err("Invalid lock string format".to_string()),
-    };
+    // Collect bits from right to left (LSB first)
+    let mut bits = Vec::new();
+    for c in lock_str.chars() {
+        // Reverse iteration for right-to-left
+        match c {
+            '1' => bits.push(true),
+            '0' => bits.push(false),
+            _ => return Err("Invalid lock string format".to_string()),
+        }
+    }
 
-    let second_bit = match lock_str.chars().nth(1) {
-        Some('1') => true,
-        Some('0') => false,
-        _ => return Err("Invalid lock string format".to_string()),
-    };
+    // Return tuple with first_bit of bits at right end
+    Ok((bits[0], bits[1]))
+}
 
-    Ok((second_bit, first_bit))
+/// Checks if the operation can be performed if object is unlocked.
+/// Returns: Ok if operation can proceed, Err with message if locked. OR Err if lock status cannot
+/// be determined.
+pub fn operation_locked_perm(
+    obj_path: &Path,
+    operation: &str,
+    message: &str,
+) -> Result<(), String> {
+    match read_lock_perm(obj_path) {
+        Ok((_, is_locked)) => {
+            if is_locked {
+                log::log_warning(
+                    operation,
+                    &format!(
+                        "Attempted {} on locked path: {} - {}",
+                        operation,
+                        relative_deemak_path(obj_path).display(),
+                        message
+                    ),
+                );
+                return Err(format!(
+                    "{}: {} is locked. {}",
+                    operation,
+                    relative_deemak_path(obj_path).display(),
+                    message
+                ));
+            }
+            Ok(())
+        }
+        Err(e) => {
+            log::log_warning(
+                operation,
+                &format!(
+                    "Failed to check lock status for {}: {}",
+                    relative_deemak_path(obj_path).display(),
+                    e
+                ),
+            );
+            Ok(()) // Allow operation if we can't determine lock status
+        }
+    }
 }

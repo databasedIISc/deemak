@@ -34,26 +34,10 @@ pub fn list_directory_entries(target_path: &Path, root_dir: &Path) -> (Vec<Strin
             continue;
         }
 
-        // Check lock status
-        let lock_status = match lock_perm::read_lock_perm(&path) {
-            Ok((first_bit, _)) => first_bit,
-            Err(_) => false, // Default to not locked if can't read status
-        };
-
-        let display_name = if lock_status {
-            if path.is_dir() {
-                format!("{}/ (locked)", name)
-            } else {
-                format!("{} (locked)", name)
-            }
-        } else {
-            name
-        };
-
         if path.is_dir() {
-            directories.push(display_name.to_string());
+            directories.push(name.to_string());
         } else {
-            files.push(display_name);
+            files.push(name);
         }
     }
 
@@ -82,7 +66,7 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
 
                 // Check if directory is locked
                 let dir_path = current_dir.join(dir_name);
-                if let Ok((is_locked, _)) = lock_perm::read_lock_perm(&dir_path) {
+                if let Ok((_, is_locked)) = lock_perm::read_lock_perm(&dir_path) {
                     if is_locked {
                         return format!(
                             "{} is locked. To list contents, unlock it first.",
@@ -129,11 +113,21 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
                     );
                 }
             }
-
+            // Check lock status
+            // Check lock status and format display names
             let files = if files_vec.is_empty() {
                 "   (none)\n".to_string()
             } else {
-                files_vec.iter().map(|f| format!("   {}\n", f)).collect()
+                files_vec
+                    .iter()
+                    .map(|f| {
+                        let is_locked = match lock_perm::read_lock_perm(&current_dir.join(f)) {
+                            Ok((_, locked)) => locked,
+                            Err(_) => false,
+                        };
+                        format!("   {}{}\n", f, if is_locked { " (locked)" } else { "" })
+                    })
+                    .collect()
             };
 
             let directories = if directories_vec.is_empty() {
@@ -141,7 +135,15 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
             } else {
                 directories_vec
                     .iter()
-                    .map(|d| format!("   {}\n", d))
+                    .map(|d| {
+                        let dir_name = d.trim_end_matches('/');
+                        let is_locked = match lock_perm::read_lock_perm(&current_dir.join(dir_name))
+                        {
+                            Ok((_, locked)) => locked,
+                            Err(_) => false,
+                        };
+                        format!("   {}{}\n", d, if is_locked { " (locked)" } else { "" })
+                    })
                     .collect()
             };
 
