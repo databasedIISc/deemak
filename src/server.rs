@@ -1,23 +1,21 @@
-use deemak::commands::cmds;
+use dotenvy::dotenv;
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
 // === External Crates ===
-use rocket::{Request, Response, get, options, routes};
+use rocket::{Config, Request, Response, get, options, routes};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::fs::{FileServer, relative};
 use rocket::http::Header;
 use rocket::serde::{Deserialize, Serialize, json::Json};
-use dotenvy::dotenv;
 
 // === Local Modules ===
 use crate::auth;
-use deemak::commands::{self, CommandResult, cmd_manager};
-use deemak::utils::find_root;
-use deemak::utils::prompt::DummyPrompter;
 use crate::globals::WORLD_DIR;
+use deemak::commands::{self, CommandResult, cmd_manager, cmds};
+use deemak::utils::{find_root, prompt::DummyPrompter};
 
 // === Data Structures ===
 #[derive(Serialize)]
@@ -29,9 +27,10 @@ struct CommandResponse {
 // GET endpoint for command execution
 #[get("/run?<command>&<current_dir>")]
 fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
-    use cmds::{CommandResult, cmd_manager}
     let world_dir = WORLD_DIR.get().expect("WORLD_DIR not initialized");
     let root_dir = find_root::find_home(world_dir).expect("Could not find sekai home directory");
+
+    let parts: Vec<&str> = command.split_whitespace().collect();
 
     let mut current_dir = if current_dir.is_empty() {
         root_dir.clone()
@@ -40,7 +39,12 @@ fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
     };
 
     let mut prompter = DummyPrompter;
-    match cmd_manager(&command.split_whitespace().collect::<Vec<_>>(), &mut current_dir, &root_dir, &mut prompter) {
+
+    match cmd_manager(&parts, &mut current_dir, &root_dir, &mut prompter) {
+        CommandResult::Output(output) => Json(CommandResponse {
+            output,
+            new_current_dir: None,
+        }),
         CommandResult::ChangeDirectory(new_dir, message) => Json(CommandResponse {
             output: message,
             new_current_dir: Some(new_dir.display().to_string()),
@@ -65,11 +69,12 @@ fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
 fn cors_preflight() -> &'static str {
     ""
 }
+
 // === Add CORS headers ===
-pub struct CORS;
+pub struct Cors;
 
 #[rocket::async_trait]
-impl Fairing for CORS {
+impl Fairing for Cors {
     fn info(&self) -> Info {
         Info {
             name: "Add CORS headers",
@@ -86,22 +91,17 @@ impl Fairing for CORS {
 }
 
 fn generate_config_js(port: u16) {
-    let js_content = format!(
-        r#"export const BACKEND_URL = "http://localhost:{}";"#,
-        port
-    );
-
+    let js_content = format!(r#"export const BACKEND_URL = "http://localhost:{}";"#, port);
     let path = "static/config.js";
     let mut file = File::create(path).expect("Failed to create config.js");
-    file.write_all(js_content.as_bytes())
-        .expect("Failed to write config.js");
+    file.write_all(js_content.as_bytes()).expect("Failed to write config.js");
 
     println!("Generated static/config.js with port {}", port);
 }
 
 // === Rocket Entry Point ===
 #[rocket::main]
-pub async fn server() -> Result<(), rocket::Error> {
+pub async fn server() -> Option<Result<(), rocket::Error>> {
     dotenv().ok();
 
     let port: u16 = env::var("BACKEND_PORT")
@@ -117,9 +117,14 @@ pub async fn server() -> Result<(), rocket::Error> {
     };
 
     let _rocket = rocket::custom(config)
-        .attach(CORS)
+        .attach(Cors)
         .mount("/", FileServer::from(relative!("static")))
-        .mount("/backend", routes![response, cors_preflight,auth::register,auth::login])
+        .mount("/backend", routes![
+            response,
+            cors_preflight,
+            auth::register,
+            auth::login
+        ])
         .launch()
         .await
         .expect("failed to launch Rocket server");
