@@ -24,7 +24,7 @@ struct CommandResponse {
     new_current_dir: Option<String>,
 }
 
-// GET endpoint for command execution
+// === Command Execution Endpoint ===
 #[get("/run?<command>&<current_dir>")]
 fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
     let world_dir = WORLD_DIR.get().expect("WORLD_DIR not initialized");
@@ -64,7 +64,7 @@ fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
     }
 }
 
-// CORS Preflight
+// === CORS Preflight Handler ===
 #[options("/<_..>")]
 fn cors_preflight() -> &'static str {
     ""
@@ -90,12 +90,12 @@ impl Fairing for Cors {
     }
 }
 
+// === Write Frontend Config ===
 fn generate_config_js(port: u16) {
     let js_content = format!(r#"export const BACKEND_URL = "http://localhost:{}";"#, port);
     let path = "static/config.js";
     let mut file = File::create(path).expect("Failed to create config.js");
     file.write_all(js_content.as_bytes()).expect("Failed to write config.js");
-
     println!("Generated static/config.js with port {}", port);
 }
 
