@@ -25,3 +25,4 @@ rand = "0.8"           # Salt generation
 rocket_cors = "0.6"    # for frontend requests
 ring = "0.17"
 data-encoding = "2.4.0"
+chrono = "0.4"         # for token expiry

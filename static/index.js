@@ -1,75 +1,79 @@
 // index.js
-const menuContainer = document.getElementById('menu_container');
-const terminalContainer = document.getElementById('terminal_container');
-const authContainer = document.getElementById('auth_container');
-const aboutContainer = document.getElementById('about_container');
-const loginContainer = document.getElementById('login_container');
-const registerContainer = document.getElementById('register_container');
-const terminal = document.getElementById('terminal');
-const loading = document.getElementById('loading');
-const loginMessage = document.getElementById('login_message');
-const registerMessage = document.getElementById('register_message');
+const menuContainer      = document.getElementById('menu_container');
+const terminalContainer  = document.getElementById('terminal_container');
+const authContainer      = document.getElementById('auth_container');
+const aboutContainer     = document.getElementById('about_container');
+const loginContainer     = document.getElementById('login_container');
+const registerContainer  = document.getElementById('register_container');
+const terminal           = document.getElementById('terminal');
+const loading            = document.getElementById('loading');
+const loginMessage       = document.getElementById('login_message');
+const registerMessage    = document.getElementById('register_message');
 
-let authenticated = window.AUTHENTICATED || false;
-let registered = window.REGISTERED || false;
+let authenticated           = false;
+let registered              = false;
 let exitConfirmationPending = false;
 
-let currentDir = "";
+let currentDir    = "";
 let commandHistory = [];
-let historyIndex = -1;
+let historyIndex   = -1;
 
-if (authenticated) {
-  authContainer.style.display = "none";
-  menuContainer.style.display = "flex";
-} else {
-  authContainer.style.display = "flex";
-  menuContainer.style.display = "none";
+async function checkSessionOnLoad() {
+  const token = localStorage.getItem('token')
+  if (token) {
+    await verifySession(token);
+  } else {
+    showAuthScreen();
+  }
 }
 
-if (registered) {
-  loginContainer.style.display = "none";
+async function verifySession(existingToken) {
+  loading.style.display = "flex";
+  try {
+    const tokenResponse = await fetch(`${window.BACKEND_URL}/backend/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `token=${encodeURIComponent(existingToken)}&username=&password=`
+    });
+
+    const tokenResult = await tokenResponse.json();
+
+    if (tokenResult.status) {
+      authenticated = true;
+      authContainer.style.display = "none";
+      menuContainer.style.display = "flex";
+    } else {
+      localStorage.removeItem('token');
+      showAuthScreen();
+    }
+  } catch (error) {
+    console.error("Session verify error:", error);
+    localStorage.removeItem('token');
+    showAuthScreen("Server error. Please try again.");
+  } finally {
+    loading.style.display = "none";
+  }
+}
+
+
+function showAuthScreen(errorMsg = "") {
+  authenticated = false;
+  registered    = false;
+  authContainer.style.display     = "flex";
+  loginContainer.style.display    = "flex";
   registerContainer.style.display = "none";
-} else {
-  loginContainer.style.display = "flex";
-  registerContainer.style.display = "none";
-}
-
-function focusTerminal() {
-  const input = document.getElementById("terminal_input");
-  if (input) input.focus();
-}
-
-function startTerminal() {
-  terminalContainer.style.display = "flex";
-  menuContainer.style.display = "none";
-  terminal.innerHTML = `        
-    <div class="ascii_art">
-          <pre>
- _____                            _
-|  __ \\                          | |
-| |  | | ___  ___ _ __ ___   __ _| | __
-| |  | |/ _ \\/ _ \\ '_ \` _ \\ / _\` | |/ /
-| |__| |  __/  __/ | | | | | (_| |   <
-|_____/ \\___|\\___|_| |_| |_|\\__,_|_|\\_\\
-          </pre>
-    </div>
-    <p class="startup_msg">
-      Built by <strong>Databased Club, IISc</strong> · <a href="https://github.com/databasedIISc/deemak" target="_blank">GitHub</a><br>
-      Type <code>help</code> to begin.
-    </p>`;
-  addNewInput();
+  if (errorMsg) loginMessage.textContent = errorMsg;
 }
 
 async function login() {
   const usernameInput = document.getElementById('login_username_input');
   const passwordInput = document.getElementById('login_password_input');
-  const message = document.getElementById('login_message');
 
   const username = usernameInput.value.trim();
   const password = passwordInput.value.trim();
 
   if (!username || !password) {
-    message.textContent = 'Please enter both username and password.';
+    loginMessage.textContent = 'Please enter both username and password.';
     return;
   }
 
@@ -82,27 +86,23 @@ async function login() {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
     });
-
     const result = await response.json();
 
     if (result.status) {
       authenticated = true;
-      message.textContent = '';
+      localStorage.setItem('token', result.token);
+      loginMessage.textContent = '';
       usernameInput.value = '';
       passwordInput.value = '';
+      authContainer.style.display = "none";
       menuContainer.style.display = "flex";
     } else {
-      authenticated = false;
-      authContainer.style.display = "flex";
-      loginContainer.style.display = "flex";
-      message.textContent = result.message;
+      loginMessage.textContent = result.message;
+      showAuthScreen();
     }
   } catch (error) {
     console.error("Login error:", error);
-    authenticated = false;
-    authContainer.style.display = "flex";
-    loginContainer.style.display = "flex";
-    message.textContent = "Server error. Please try again.";
+    showAuthScreen("Server error. Please try again.");
   } finally {
     loading.style.display = "none";
   }
@@ -111,13 +111,12 @@ async function login() {
 async function register() {
   const usernameInput = document.getElementById('register_username_input');
   const passwordInput = document.getElementById('register_password_input');
-  const message = document.getElementById('register_message');
 
   const username = usernameInput.value.trim();
   const password = passwordInput.value.trim();
 
   if (!username || !password) {
-    message.textContent = 'Please enter both username and password.';
+    registerMessage.textContent = 'Please enter both username and password.';
     return;
   }
 
@@ -130,59 +129,93 @@ async function register() {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
     });
-
     const result = await response.json();
 
     if (result.status) {
-      message.textContent = '';
+      localStorage.setItem('token', result.token);
+      authenticated = true;
+      registerMessage.textContent = '';
       usernameInput.value = '';
       passwordInput.value = '';
-      authenticated = true;
       authContainer.style.display = "none";
       menuContainer.style.display = "flex";
     } else {
-      message.textContent = result.message;
+      registerMessage.textContent = result.message;
       authContainer.style.display = "flex";
       registerContainer.style.display = "flex";
     }
   } catch (error) {
     console.error("Registration error:", error);
-    authenticated = false;
     authContainer.style.display = "flex";
     registerContainer.style.display = "flex";
-    message.textContent = "Server error. Please try again.";
+    registerMessage.textContent = "Server error. Please try again.";
   } finally {
     loading.style.display = "none";
   }
+}
+function logout() {
+  localStorage.removeItem('token');
+  authenticated = false
+  showAuthScreen();
+  terminalContainer.style.display  = "none";
+  menuContainer.style.display      = "none";
+  aboutContainer.style.display     = "none";
+}
+
+window.onload = async () => {
+  await checkSessionOnLoad();
+  const initialInput = document.querySelector('#terminal_input');
+  if (initialInput) {
+    initialInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        processCommand(e.target);
+      }
+    });
+  }
+};
+
+function focusTerminal() {
+  const input = document.getElementById("terminal_input");
+  if (input) input.focus();
+}
+
+function startTerminal() {
+  terminalContainer.style.display = "flex";
+  menuContainer.style.display     = "none";
+  terminal.innerHTML = `        
+    <div class="ascii_art">
+      <pre>
+ _____                            _
+|  __ \\                          | |
+| |  | | ___  ___ _ __ ___   __ _| | __
+| |  | |/ _ \\/ _ \\ '_ \` _ \\ / _\` | |/ /
+| |__| |  __/  __/ | | | | | (_| |   <
+|_____/ \\___|\\___|_| |_| |_|\\__,_|_|\\_\\
+      </pre>
+    </div>
+    <p class="startup_msg">
+      Built by <strong>Databased Club, IISc</strong> · <a href="https://github.com/databasedIISc/deemak" target="_blank">GitHub</a><br>
+      Type <code>help</code> to begin.
+    </p>`;
+  addNewInput();
 }
 
 function showRegister() {
   registered = true;
   registerContainer.style.display = "flex";
-  loginContainer.style.display = "none";
+  loginContainer.style.display    = "none";
 }
 
 function showLogin() {
   registered = false;
   registerContainer.style.display = "none";
-  loginContainer.style.display = "flex";
+  loginContainer.style.display    = "flex";
 }
 
 function stopTerminal() {
   terminalContainer.style.display = "none";
-  menuContainer.style.display = "flex";
+  menuContainer.style.display     = "flex";
   clearTerminal();
-}
-
-function logout() {
-  authContainer.style.display = "flex";
-  loginContainer.style.display = "flex";
-  registerContainer.style.display = "none";
-  terminalContainer.style.display = "none";
-  menuContainer.style.display = "none";
-  aboutContainer.style.display = "none";
-  authenticated = false;
-  registered = false;
 }
 
 function about() {
@@ -192,9 +225,9 @@ function about() {
 }
 
 function backToMenu() {
-  aboutContainer.style.display = "none";
+  aboutContainer.style.display    = "none";
   terminalContainer.style.display = "none";
-  menuContainer.style.display = "flex";
+  menuContainer.style.display     = "flex";
   clearTerminal();
 }
 
@@ -277,7 +310,7 @@ function addNewInput() {
 
   const input = document.createElement('input');
   input.type = 'text';
-  input.id = 'terminal_input';
+  input.id   = 'terminal_input';
 
   input.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
@@ -305,25 +338,14 @@ function addNewInput() {
   input.autocomplete = 'off';
 }
 
-window.onload = () => {
-  const initialInput = document.querySelector('#terminal_input');
-  if (initialInput) {
-    initialInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') {
-        processCommand(e.target);
-      }
-    });
-  }
-};
-
-window.startTerminal = startTerminal;
-window.about = about;
-window.backToMenu = backToMenu;
-window.focusTerminal = focusTerminal;
-window.stopTerminal = stopTerminal;
-window.clearTerminal = clearTerminal;
-window.showRegister = showRegister;
-window.showLogin = showLogin;
-window.login = login;
-window.register = register;
-window.logout = logout;
+window.startTerminal  = startTerminal;
+window.about          = about;
+window.backToMenu     = backToMenu;
+window.focusTerminal  = focusTerminal;
+window.stopTerminal   = stopTerminal;
+window.clearTerminal  = clearTerminal;
+window.showRegister   = showRegister;
+window.showLogin      = showLogin;
+window.login          = login;
+window.register       = register;
+window.logout         = logout;

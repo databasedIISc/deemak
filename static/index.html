@@ -8,11 +8,11 @@
 <body>
   <div id="loading" class="loading">Loading...</div>
 
-  <div id="auth_container">
+  <div id="auth_container" style="display: flex;">
     <!-- Login Form -->
     <div id="login_container">
       <div class="auth_card">
-        <h1 class="auth_title">Welcome Back</h1>
+        <h1 class="auth_title">Welcome to Deemak</h1>
         <div id="login_message" class="auth_message"></div>
         <label>Username</label>
         <input type="text" id="login_username_input" placeholder="Enter username" autocomplete="off">
@@ -38,7 +38,7 @@
     </div>
   </div>
 
-  <div id="menu_container">
+  <div id="menu_container" style="display: none;">
     <div class="menu_card">
       <div id="menu_title">DEEMAK SHELL</div>
       <div class="menu_item"><button class="menu_button" onclick="startTerminal()">Start Shell</button></div>
@@ -47,7 +47,7 @@
     </div>
   </div>
 
-  <div id="terminal_container">
+  <div id="terminal_container" style="display: none;">
     <div class="terminal_card">
       <div id="terminal" onclick="focusTerminal()">
         <div class="terminal_line">
@@ -61,7 +61,7 @@
     <div class="terminal_ascii_art"></div>
   </div>
 
-  <div id="about_container">
+  <div id="about_container" style="display: none;">
     <div class="about_card">
       <h2>DEEMAK Shell - Version 1.0</h2>
       <p>A modern terminal shell built with <strong>Rust</strong> and <strong>Raylib</strong>.</p>
