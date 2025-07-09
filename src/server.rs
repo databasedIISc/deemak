@@ -1,6 +1,5 @@
-use crate::globals::WORLD_DIR;
+use crate::globals;
 use deemak::commands::cmds;
-use deemak::utils::find_root;
 use deemak::utils::prompt::DummyPrompter;
 use rocket::Config;
 use rocket::fairing::{Fairing, Info, Kind};
@@ -27,9 +26,8 @@ struct CommandResponse {
 fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
     use cmds::{CommandResult, cmd_manager};
 
-    let world_dir = WORLD_DIR.get().expect("WORLD_DIR not initialized");
     let parts: Vec<&str> = command.split_whitespace().collect();
-    let root_dir = find_root::find_home(world_dir).expect("Could not find sekai home directory");
+    let root_dir = globals::get_world_dir();
     let mut current_dir = if current_dir.is_empty() {
         root_dir.clone()
     } else {

@@ -1,4 +1,5 @@
-use super::{log, read_validate_info};
+use super::read_validate_info;
+use crate::utils::log;
 use std::path::Path;
 
 /// Creates properly formatted .dir_info with valid JSON info.json
@@ -11,10 +12,12 @@ pub fn create_dir_info(dir: &Path, home_dir: bool) -> bool {
     let dir_info = dir.join(".dir_info");
     let info_path = dir_info.join("info.json");
 
-    // Skip if already exists
-    if info_path.exists() {
-        return true;
-    }
+    // Try to read existing info if present
+    let existing_info = if info_path.exists() {
+        read_validate_info(&info_path).ok()
+    } else {
+        None
+    };
 
     // Create directory if needed
     if let Err(e) = std::fs::create_dir_all(&dir_info) {
@@ -25,10 +28,26 @@ pub fn create_dir_info(dir: &Path, home_dir: bool) -> bool {
         return false;
     }
 
-    // Get default values from Info struct
-    let default_info = super::info_reader::Info::default_for_path(dir, home_dir);
+    // Get default values, preserving existing valid fields
+    let mut default_info = super::info_reader::Info::default_for_path(dir, home_dir);
 
-    // Write as proper JSON file
+    if let Some(existing) = existing_info {
+        // Preserve existing valid fields
+        if !existing.location.trim().is_empty() {
+            default_info.location = existing.location;
+        }
+        if !existing.about.trim().is_empty() {
+            default_info.about = existing.about;
+        }
+
+        // Merge objects maps, preserving existing entries
+        for (key, val) in existing.objects {
+            default_info.objects.entry(key).or_insert(val);
+        }
+    } else {
+        println!("No existing info found, using defaults");
+    }
+    // Write the merged info
     match std::fs::write(
         &info_path,
         match serde_json::to_string_pretty(&default_info) {
@@ -36,11 +55,7 @@ pub fn create_dir_info(dir: &Path, home_dir: bool) -> bool {
             Err(e) => {
                 log::log_error(
                     "SEKAI",
-                    &format!(
-                        "Failed to serialize default info for {}: {}",
-                        dir.display(),
-                        e
-                    ),
+                    &format!("Failed to serialize info for {}: {}", dir.display(), e),
                 );
                 return false;
             }
@@ -49,14 +64,14 @@ pub fn create_dir_info(dir: &Path, home_dir: bool) -> bool {
         Ok(_) => {
             log::log_info(
                 "SEKAI",
-                &format!("Created valid info.json for: {}", dir.display()),
+                &format!("Updated info.json for: {}", dir.display()),
             );
             true
         }
         Err(e) => {
             log::log_error(
                 "SEKAI",
-                &format!("Failed to create info.json in {}: {}", dir.display(), e),
+                &format!("Failed to write info.json in {}: {}", dir.display(), e),
             );
             false
         }
@@ -64,7 +79,7 @@ pub fn create_dir_info(dir: &Path, home_dir: bool) -> bool {
 }
 
 /// Checks if .dir_info/info.json exists and is valid (updated for PathBuf)
-pub fn check_dir_info_exists(dir: &Path) -> bool {
+pub fn check_dir_info_exists_valid(dir: &Path) -> bool {
     let info_path = dir.join(".dir_info/info.json");
     if !info_path.exists() {
         log::log_warning(
@@ -81,7 +96,7 @@ fn validate_info_file(info_path: &Path) -> bool {
     match read_validate_info(info_path) {
         Ok(info) => info.validate().is_ok(),
         Err(e) => {
-            log::log_error(
+            log::log_warning(
                 "SEKAI",
                 &format!("Invalid info.json at {}: {}", info_path.display(), e),
             );
@@ -118,7 +133,7 @@ fn check_subdirectories(path: &Path) -> bool {
             }
 
             let entry_path_buf = entry_path;
-            if !check_dir_info_exists(&entry_path_buf) {
+            if !check_dir_info_exists_valid(&entry_path_buf) {
                 all_valid = false;
             }
             if !check_subdirectories(&entry_path_buf) {
@@ -130,8 +145,8 @@ fn check_subdirectories(path: &Path) -> bool {
 }
 
 /// Main validation function with auto-creation
-pub fn validate_or_create_sekai(sekai_path: &Path) -> bool {
-    // Initial validation checks
+pub fn validate_or_create_sekai(sekai_path: &Path, home_check: bool) -> bool {
+    // Initial path checks
     if !sekai_path.exists() {
         log::log_error(
             "SEKAI",
@@ -152,28 +167,31 @@ pub fn validate_or_create_sekai(sekai_path: &Path) -> bool {
         &format!("Validating directory: {}", sekai_path.display()),
     );
 
-    // First validate current structure
-    let mut all_valid = check_dir_info_exists(sekai_path);
-    all_valid &= check_subdirectories(sekai_path);
-
-    // If invalid, attempt to fix recursively
-    if !all_valid {
-        log::log_info("SEKAI", "Attempting to create missing .dir_info...");
-        all_valid = true; // Reset for creation phase
-
-        // Process current directory
-        if !sekai_path.join(".dir_info/info.json").exists() {
-            all_valid &= create_dir_info(sekai_path, true);
+    // Process directories recursively with single-pass validation/creation
+    if home_check {
+        // Check if the home directory is valid and create if not
+        if !check_dir_info_exists_valid(sekai_path) {
+            log::log_info(
+                "SEKAI",
+                &format!(
+                    "Creating valid .dir_info for home directory: {}",
+                    sekai_path.display()
+                ),
+            );
+            if !create_dir_info(sekai_path, true) {
+                log::log_error(
+                    "SEKAI",
+                    &format!(
+                        "Failed to create valid .dir_info for home directory: {}",
+                        sekai_path.display()
+                    ),
+                );
+                return false;
+            }
         }
-
-        // Process all subdirectories recursively
-        all_valid &= process_directory_recursively(sekai_path);
-
-        // Final validation after creation attempts
-        if all_valid {
-            all_valid = check_dir_info_exists(sekai_path) && check_subdirectories(sekai_path);
-        }
+        return true;
     }
+    let all_valid = process_directory_recursive(sekai_path, true);
 
     if all_valid {
         log::log_info("SEKAI", "Directory structure is valid");
@@ -187,26 +205,42 @@ pub fn validate_or_create_sekai(sekai_path: &Path) -> bool {
     all_valid
 }
 
-/// Helper function for recursive directory processing
-fn process_directory_recursively(dir: &Path) -> bool {
+/// Recursively processes directories to validate or create valid .dir_info
+fn process_directory_recursive(dir: &Path, is_home: bool) -> bool {
     let mut all_valid = true;
 
-    if let Ok(entries) = std::fs::read_dir(dir) {
-        for entry in entries.filter_map(|e| e.ok()) {
-            let path = entry.path();
+    // Skip .dir_info directories
+    if dir.file_name().and_then(|n| n.to_str()) == Some(".dir_info") {
+        return true;
+    }
 
-            // Skip .dir_info and non-directories
-            if !path.is_dir() || path.file_name().and_then(|n| n.to_str()) == Some(".dir_info") {
-                continue;
+    // Check/create info for current directory
+    let info_path = dir.join(".dir_info/info.json");
+    if !info_path.exists() {
+        log::log_info(
+            "SEKAI",
+            &format!("Creating valid .dir_info for: {}", dir.display()),
+        );
+        if !create_dir_info(dir, is_home) {
+            all_valid = false;
+        }
+    // Else if not valid, try to create it
+    } else if !create_dir_info(dir, is_home) {
+        log::log_error(
+            "SEKAI",
+            &format!("Failed to create valid .dir_info for: {}", dir.display()),
+        );
+        all_valid = false;
+    }
+    // Process subdirectories if current directory is valid
+    if all_valid {
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_dir() {
+                    all_valid &= process_directory_recursive(&path, false);
+                }
             }
-
-            // Create .dir_info if missing
-            if !path.join(".dir_info/info.json").exists() {
-                all_valid &= create_dir_info(&path, false);
-            }
-
-            // Recurse into subdirectories
-            all_valid &= process_directory_recursively(&path);
         }
     }
 

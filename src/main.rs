@@ -3,16 +3,18 @@ mod commands;
 mod gui_shell;
 mod keys;
 mod login;
+mod metainfo;
 mod rns;
 mod server;
 mod utils;
+use crate::metainfo::valid_sekai::validate_or_create_sekai;
 use crate::rns::restore_comp;
-use crate::utils::valid_sekai::validate_or_create_sekai;
 use crate::utils::{debug_mode, find_root, globals, log};
-use deemak::DEBUG_MODE;
 use deemak::menu;
+use deemak::{DEBUG_MODE, SEKAI_DIR};
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
+use utils::globals::set_world_dir;
 
 pub const HELP_TXT: &str = r#"
 Usage: deemak <sekai_directory> [--debug] [--web]
@@ -38,8 +40,33 @@ fn main() {
             "SEKAI",
             &format!("Sekai directory provided: {:?}", sekai_path),
         );
+
+        if !validate_or_create_sekai(&sekai_path, true) {
+            log::log_error(
+                "SEKAI",
+                &format!(
+                    "Sekai directory is not valid. Creating default `.dir_info` at {:?}",
+                    sekai_path
+                ),
+            );
+        }
+        // Just check first for HOME directory validity and create if not.
+        let root_dir = find_root::find_home(&sekai_path);
+        if root_dir.is_some() {
+            log::log_info(
+                "SEKAI",
+                &format!("Found root directory for Sekai: {:?}", root_dir),
+            );
+            // Set the global Sekai directory
+            println!("***************************");
+            set_world_dir(root_dir.clone().unwrap());
+        } else {
+            log::log_error("SEKAI", "Failed to find root directory for Sekai. Exiting.");
+            eprintln!("Error: Failed to find root directory for Sekai. Exiting.");
+            return;
+        }
         // If not valid, create .dir_info for each of them.
-        if !validate_or_create_sekai(&sekai_path) {
+        if !validate_or_create_sekai(&sekai_path, false) {
             log::log_error(
                 "SEKAI",
                 &format!(
@@ -55,17 +82,6 @@ fn main() {
         } else {
             // sekai is valid
             log::log_info("SEKAI", &format!("Sekai is Valid {:?}", sekai_path));
-            let root_dir = find_root::find_home(&sekai_path);
-            if root_dir.is_some() {
-                log::log_info(
-                    "SEKAI",
-                    &format!("Found root directory for Sekai: {:?}", root_dir),
-                );
-            } else {
-                log::log_error("SEKAI", "Failed to find root directory for Sekai. Exiting.");
-                eprintln!("Error: Failed to find root directory for Sekai. Exiting.");
-                return;
-            }
 
             // Create the restore file if it doesn't exist, since it is required for restoring. The
             // progress will be saved as `save_me` and will be recreated every run.
@@ -141,10 +157,6 @@ Continuing...",
             log::log_info("SEKAI", "Sekai restored successfully from save file");
         }
     }
-
-    globals::WORLD_DIR
-        .set(sekai_dir.clone().unwrap())
-        .expect("Failed to set world dir");
 
     // NOTE: All Directory operations and variables settings should be done before this point.
     //

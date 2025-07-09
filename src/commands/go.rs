@@ -1,7 +1,7 @@
 use super::argparser::ArgParser;
 use super::cmds::check_dir_info;
 use super::whereami::display_relative_path;
-use crate::utils::info_reader;
+use crate::metainfo::info_reader;
 use crate::utils::log;
 use std::path::{Path, PathBuf};
 
