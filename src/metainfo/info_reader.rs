@@ -204,16 +204,10 @@ pub fn del_obj_from_info(obj_path: &Path, obj_name: &str) -> Result<(), InfoErro
 /// Update status of an object in info.json
 ///
 /// # Arguments
-/// * `info_path` - Path to the info.json file
+/// * `obj_path` - Path to the object whose status is to be updated
 /// * `obj_name` - Name of the object to update
 /// * `status` - Status key to update (e.g., "locked", "hidden")
 /// * `st_value` - Value to set (must be serializable to JSON)
-///
-/// # Example
-/// ```
-/// update_obj_status(info_path, "file.txt", "locked", true)?;
-/// update_obj_status(info_path, "dir", "permissions", "read-only")?;
-/// ```
 /// Update or add a status property for an object
 pub fn update_obj_status(
     obj_path: &Path,
@@ -253,4 +247,51 @@ pub fn read_get_obj_info(info_path: &Path, obj_name: &str) -> Result<ObjectInfo,
         .get(obj_name)
         .cloned() // This does the same as .map(|x| x.clone())
         .unwrap_or_default())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::{self, File};
+    use std::io::Write;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_update_obj_status() {
+        // Create a temporary directory for the test
+        let dir = tempdir().unwrap();
+        fs::create_dir_all(dir.path().join(".dir_info")).unwrap();
+        let info_path = dir.path().join(".dir_info/info.json");
+
+        // Create a dummy info.json file
+        let mut file = File::create(&info_path).unwrap();
+        file.write_all(b"{\"location\":\"test\",\"about\":\"test\",\"objects\":{}}")
+            .unwrap();
+
+        // Create a dummy object file
+        let obj_path = dir.path().join("file.txt");
+        File::create(&obj_path).unwrap();
+
+        // Update the object's status
+        update_obj_status(
+            &obj_path,
+            "file.txt",
+            "locked",
+            serde_json::Value::Bool(true),
+        )
+        .unwrap();
+
+        // Verify the update
+        let data = fs::read_to_string(&info_path).unwrap();
+        let info: Info = serde_json::from_str(&data).unwrap();
+        assert_eq!(
+            info.objects
+                .get("file.txt")
+                .unwrap()
+                .properties
+                .get("locked")
+                .unwrap(),
+            &serde_json::Value::Bool(true)
+        );
+    }
 }

@@ -1,4 +1,4 @@
-use super::read_validate_info;
+use super::info_reader::read_validate_info;
 use crate::utils::log;
 use std::path::Path;
 
@@ -49,10 +49,10 @@ pub fn create_dir_info(dir: &Path, home_dir: bool) -> bool {
     let info_to_write = match existing_info {
         Some(ref mut existing) => {
             // Fill in missing default fields
-            if existing.location.trim().is_empty() {
+            if (*existing).location.trim().is_empty() {
                 existing.location = default_info.location.clone();
             }
-            if existing.about.trim().is_empty() {
+            if (*existing).about.trim().is_empty() {
                 existing.about = default_info.about.clone();
             }
 
