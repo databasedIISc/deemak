@@ -1,5 +1,5 @@
 {
-  "extends": ["config:base"],
+  "extends": ["config:recommended"],
   "branchPrefix": "renovate-",
   "baseBranches": ["develop"],
   "assigneesFromCodeOwners": true,
