@@ -190,7 +190,7 @@ pub fn del(
                     // Operation permitted only if not locked
                     if let Err(e) = lock_perm::operation_locked_perm(
                         &full_path,
-                        "read",
+                        "del",
                         "Cannot delete locked file/directory. Unlock it first.",
                     ) {
                         return e;
