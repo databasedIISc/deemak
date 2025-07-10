@@ -1,5 +1,6 @@
-use crate::auth::{load_users, verify_password};
 use crate::keys::key_to_char;
+use crate::utils::auth::verify_password;
+use deemak::utils::auth::load_users;
 use raylib::ffi::{DrawTextEx, LoadFontEx, MeasureTextEx, Vector2};
 use raylib::prelude::*;
 use std::ffi::CString;
@@ -69,7 +70,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                         } else if !password.is_empty() {
                             USER_ID.set(username.clone()).ok();
                             USER_PASSWORD.set(password.clone()).ok();
-                            let users: Vec<crate::auth::User> = load_users();
+                            let users:Vec<deemak::utils::auth::User>  = load_users();
                             let username: String = username.trim().to_string();
                             let password: String = password.trim().to_string();
                             if let Some(user) = users.iter().find(|u| u.username == username) {

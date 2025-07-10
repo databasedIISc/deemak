@@ -47,7 +47,7 @@ body {
   border: 1px solid #333;
   width: 90%;
   max-width: 400px;
-  text-align: center;
+  text-align: left;
   animation: fadeIn 0.4s ease;
 }
 

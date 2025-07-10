@@ -1,27 +1,20 @@
-use crate::globals::WORLD_DIR;
-use deemak::commands::cmds;
-use deemak::utils::find_root;
-use deemak::utils::prompt::DummyPrompter;
-use rocket::Config;
-use rocket::fairing::{Fairing, Info, Kind};
-use rocket::fs::{FileServer, relative};
-use rocket::http::Header;
-use rocket::serde::Serialize;
-use rocket::serde::json::Json;
-use rocket::{Request, Response, get, options, routes};
+use std::env;
+use std::fs::File;
+use std::io::Write;
 use std::path::PathBuf;
 
 // === External Crates ===
+use dotenvy::dotenv;
 use rocket::{Config, Request, Response, get, options, routes};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::fs::{FileServer, relative};
 use rocket::http::Header;
-use rocket::serde::{Deserialize, Serialize, json::Json};
+use rocket::serde::{Serialize, json::Json};
 
 // === Local Modules ===
-use crate::auth;
+use crate::utils::auth;
 use crate::globals::WORLD_DIR;
-use deemak::commands::{self, CommandResult, cmd_manager, cmds};
+use deemak::commands::{cmds};
 use deemak::utils::{find_root, prompt::DummyPrompter};
 
 // === Data Structures ===
