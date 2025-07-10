@@ -194,8 +194,9 @@ function startTerminal() {
       </pre>
     </div>
     <p class="startup_msg">
-      Built by <strong>Databased Club, IISc</strong> · <a href="https://github.com/databasedIISc/deemak" target="_blank">GitHub</a><br>
-      Type <code>help</code> to begin.
+    Developed by <strong>Databased Club, Indian Institute of Science, Bangalore.</strong><br>
+    Official Github Repo:<a href="https://github.com/databasedIISc/deemak" target="_blank">GitHub</a><br>
+    <h4>Type commands and press Enter. Try <code>help</code> for more info.</h4>
     </p>`;
   addNewInput();
 }

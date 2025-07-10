@@ -13,3 +13,5 @@ pub mod shell_history;
 pub mod wrapit;
 
 pub mod prompt;
+
+pub mod auth;
