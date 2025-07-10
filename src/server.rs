@@ -1,4 +1,3 @@
-use crate::globals;
 use std::env;
 use std::fs::File;
 use std::io::Write;
@@ -6,16 +5,17 @@ use std::path::PathBuf;
 
 // === External Crates ===
 use dotenvy::dotenv;
+use rocket::{Config, Request, Response, get, options, routes};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::fs::{FileServer, relative};
 use rocket::http::Header;
 use rocket::serde::{Serialize, json::Json};
-use rocket::{Config, Request, Response, get, options, routes};
 
 // === Local Modules ===
 use crate::utils::auth;
-use deemak::commands::cmds;
-use deemak::utils::prompt::DummyPrompter;
+use crate::globals::WORLD_DIR;
+use deemak::commands::{cmds};
+use deemak::utils::{find_root, prompt::DummyPrompter};
 
 // === Data Structures ===
 #[derive(Serialize)]
@@ -29,8 +29,9 @@ struct CommandResponse {
 fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
     use cmds::{CommandResult, cmd_manager};
 
+    let world_dir = WORLD_DIR.get().expect("WORLD_DIR not initialized");
     let parts: Vec<&str> = command.split_whitespace().collect();
-    let root_dir = globals::get_world_dir();
+    let root_dir = find_root::find_home(world_dir).expect("Could not find sekai home directory");
     let mut current_dir = if current_dir.is_empty() {
         root_dir.clone()
     } else {
@@ -82,10 +83,7 @@ impl Fairing for Cors {
 
     async fn on_response<'r>(&self, _req: &'r Request<'_>, res: &mut Response<'r>) {
         res.set_header(Header::new("Access-Control-Allow-Origin", "*"));
-        res.set_header(Header::new(
-            "Access-Control-Allow-Methods",
-            "POST, GET, OPTIONS",
-        ));
+        res.set_header(Header::new("Access-Control-Allow-Methods", "POST, GET, OPTIONS"));
         res.set_header(Header::new("Access-Control-Allow-Headers", "*"));
         res.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
     }
@@ -97,8 +95,7 @@ fn generate_config_js(port: u16) {
 
     let path = "static/config.js";
     let mut file = File::create(path).expect("Failed to create config.js");
-    file.write_all(js_content.as_bytes())
-        .expect("Failed to write config.js");
+    file.write_all(js_content.as_bytes()).expect("Failed to write config.js");
     println!("Generated static/config.js with port {}", port);
 }
 
@@ -122,10 +119,12 @@ pub async fn server() -> Option<Result<(), rocket::Error>> {
     let _rocket = rocket::custom(config)
         .attach(Cors)
         .mount("/", FileServer::from(relative!("static")))
-        .mount(
-            "/backend",
-            routes![response, cors_preflight, auth::register, auth::login],
-        )
+        .mount("/backend", routes![
+            response,
+            cors_preflight,
+            auth::register,
+            auth::login
+        ])
         .launch()
         .await
         .expect("failed to launch Rocket server");
