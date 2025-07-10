@@ -1,0 +1,9 @@
+{
+  "location": "HOME/room_8/dir",
+  "about": "You are in 'HOME/room_8/dir'. Look around and explore!",
+  "objects": {
+    "hi": {
+      "locked": "00"
+    }
+  }
+}

@@ -1,17 +1,20 @@
+use chrono::{Duration, Utc};
+use data_encoding::HEXUPPER;
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
+use ring::{
+    digest, pbkdf2,
+    rand::{self, SecureRandom},
+};
 use rocket::form::Form;
-use rocket::serde::{json::Json, Deserialize, Serialize};
-use rocket::{post, FromForm};
+use rocket::serde::{Deserialize, Serialize, json::Json};
+use rocket::{FromForm, post};
 use std::fs::File;
 use std::io::{Read, Write};
-use std::path::Path;
-use ring::{digest, pbkdf2, rand::{self, SecureRandom}};
-use data_encoding::HEXUPPER;
 use std::num::NonZeroU32;
-use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
-use chrono::{Utc, Duration};
+use std::path::Path;
 
 const USER_FILE: &str = "database.json";
-const ITERATIONS: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(100_000) };
+const ITERATIONS: NonZeroU32 = NonZeroU32::new(100_000).unwrap();
 const CREDENTIAL_LEN: usize = digest::SHA512_OUTPUT_LEN;
 const JWT_SECRET: &[u8] = b"super-secret-key";
 
@@ -96,7 +99,8 @@ pub fn verify_password(password: &String, salt_hex: &str, hash_hex: &str) -> boo
         &salt,
         password.as_bytes(),
         &expected_hash,
-    ).is_ok()
+    )
+    .is_ok()
 }
 #[post("/register", data = "<input>")]
 pub fn register(input: Form<AuthInput>) -> Json<AuthResponse> {
@@ -117,7 +121,7 @@ pub fn register(input: Form<AuthInput>) -> Json<AuthResponse> {
                 status: false,
                 message: "Failed to hash password".into(),
                 token: None,
-            })
+            });
         }
     };
 
@@ -139,8 +143,12 @@ pub fn register(input: Form<AuthInput>) -> Json<AuthResponse> {
         exp: expiration as usize,
     };
 
-    let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(JWT_SECRET))
-        .expect("Failed to create token");
+    let token = encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(JWT_SECRET),
+    )
+    .expect("Failed to create token");
 
     Json(AuthResponse {
         status: true,
@@ -215,7 +223,7 @@ pub fn login(input: Form<AuthInput>) -> Json<AuthResponse> {
             message: "User not found".into(),
             token: None,
         });
-    } 
+    }
     Json(AuthResponse {
         status: false,
         message: "Invalid request".into(),
