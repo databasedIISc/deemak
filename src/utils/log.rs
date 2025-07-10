@@ -4,7 +4,6 @@ pub fn debug_mode() -> bool {
     *DEBUG_MODE.get().unwrap_or(&false)
 }
 
-#[cfg(debug_assertions)]
 /// Logger for debugging elements.
 /// Args:
 ///     `feature` - the feature/command/module name
