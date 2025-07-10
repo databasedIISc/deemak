@@ -32,6 +32,7 @@ pub struct ShellScreen {
     scroll_offset: i32,
     active_prompt: Option<String>,
     history_index: Option<usize>,
+    cursor_pos: usize,
 }
 
 impl UserPrompter for ShellScreen {
@@ -103,6 +104,7 @@ impl ShellScreen {
             scroll_offset: 0,
             active_prompt: None,
             history_index: None,
+            cursor_pos: 0,
         }
     }
 
@@ -148,11 +150,11 @@ impl ShellScreen {
                 }
             }
             Some(KeyboardKey::KEY_BACKSPACE) => {
-                if !self.input_buffer.is_empty() {
-                    self.input_buffer.pop();
+                if !self.input_buffer.is_empty() && self.cursor_pos > 0 {
+                    self.input_buffer.remove(self.cursor_pos - 1);
+                    self.cursor_pos -= 1;
                 }
             }
-
             Some(KeyboardKey::KEY_TAB) => {
                 // Get current command parts
                 let parts: Vec<&str> = self.input_buffer.split_whitespace().collect();
@@ -216,6 +218,7 @@ impl ShellScreen {
                         TabCompletionResult::NoAction => {}
                     }
                 }
+                self.cursor_pos = self.input_buffer.len(); // Move cursor to end after tab
             }
             Some(KeyboardKey::KEY_UP) => {
                 // Save current buffer if we're starting history navigation
@@ -233,6 +236,7 @@ impl ShellScreen {
                     self.input_buffer = history[new_index].clone();
                     self.history_index = Some(new_index);
                 }
+                self.cursor_pos = self.input_buffer.len();
             }
             Some(KeyboardKey::KEY_DOWN) => {
                 if let Some(index) = self.history_index {
@@ -247,6 +251,17 @@ impl ShellScreen {
                         self.input_buffer = self.working_buffer.take().unwrap_or_default();
                         self.history_index = None;
                     }
+                    self.cursor_pos = self.input_buffer.len();
+                }
+            }
+            Some(KeyboardKey::KEY_LEFT) => {
+                if self.cursor_pos > 0 {
+                    self.cursor_pos -= 1;
+                }
+            }
+            Some(KeyboardKey::KEY_RIGHT) => {
+                if self.cursor_pos < self.input_buffer.len() {
+                    self.cursor_pos += 1;
                 }
             }
             Some(key) => {
@@ -260,6 +275,7 @@ impl ShellScreen {
                             self.output_lines.clear();
                             self.output_lines.push(INITIAL_MSG.to_string());
                             self.working_buffer = None;
+                            self.cursor_pos = 0;
                         }
                         KeyboardKey::KEY_C => {
                             // Next prompt
@@ -267,6 +283,7 @@ impl ShellScreen {
                             self.working_buffer = None;
                             self.input_buffer.clear();
                             self.scroll_offset = 0;
+                            self.cursor_pos = 0;
                         }
                         _ => {}
                     }
@@ -277,6 +294,7 @@ impl ShellScreen {
 
                     if let Some(c) = key_to_char(key, shift) {
                         self.input_buffer.push(c);
+                        self.cursor_pos += 1;
                     }
                 }
             }
@@ -394,12 +412,23 @@ impl ShellScreen {
 
         // CURSOR
         let cursor_line = display_lines.len() - 1;
+        let cursor_prefix = if let Some(ref prompt) = self.active_prompt {
+            format!("{} ", prompt)
+        } else {
+            "> ".to_string()
+        };
+        let cursor_text = if self.cursor_pos <= self.input_buffer.len() {
+            format!("{}{}", cursor_prefix, &self.input_buffer[..self.cursor_pos])
+        } else {
+            format!("{}{}", cursor_prefix, &self.input_buffer)
+        };
+
         let cursor_x_offset = unsafe {
-            let last_line = display_lines.last().unwrap();
-            let c_string = CString::new(last_line.to_string()).unwrap();
+            let c_string = CString::new(cursor_text).unwrap();
             MeasureTextEx(self.font, c_string.as_ptr(), self.font_size, 1.2).x
         };
 
+        // Draw cursor
         unsafe {
             DrawRectangle(
                 (10.0 + cursor_x_offset) as c_int,
