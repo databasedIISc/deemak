@@ -293,7 +293,7 @@ impl ShellScreen {
                         || self.rl.is_key_down(KeyboardKey::KEY_RIGHT_SHIFT);
 
                     if let Some(c) = key_to_char(key, shift) {
-                        self.input_buffer.push(c);
+                        self.input_buffer.insert(self.cursor_pos, c);
                         self.cursor_pos += 1;
                     }
                 }
