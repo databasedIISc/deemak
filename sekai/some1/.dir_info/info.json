@@ -1,0 +1,12 @@
+{
+  "location": "HOME/some1",
+  "about": "You are in 'HOME/some1'. Look around and explore!",
+  "objects": {
+    "books.txt": {
+      "locked": "11"
+    },
+    "shit.txt": {
+      "locked": "00"
+    }
+  }
+}

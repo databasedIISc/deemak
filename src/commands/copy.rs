@@ -1,11 +1,13 @@
 use super::argparser::ArgParser;
 use super::cmds::normalize_path;
 use super::display_relative_path;
+use crate::commands::cmds::check_dir_info;
+use crate::metainfo::info_reader::*;
 use crate::metainfo::lock_perm;
 use crate::metainfo::valid_sekai::create_dir_info;
 use crate::utils::{log, prompt::UserPrompter};
 use std::fs;
-use std::io;
+use std::io::{self, Error};
 use std::path::{Path, PathBuf};
 
 pub const HELP_TXT: &str = r#"
@@ -23,8 +25,23 @@ Examples:
 - copy -r dir/ new_dir/              # Recursive directory copy
 - copy -x old.txt new.txt            # Move (cut/paste) file
 - copy -x -r old_dir/ new_location/    # Move directory recursively
-- copy -f existing_file.txt new_file.txt  # Force overwrite existing file
+- copy -f /path/to/existing_file.txt /path/to/new_file.txt  # Force overwrite existing file
 "#;
+
+fn _print_dir_contents(path: &Path) {
+    if let Ok(entries) = fs::read_dir(path) {
+        for entry in entries.filter_map(Result::ok) {
+            let entry_path = entry.path();
+            if entry_path.is_dir() {
+                println!("{} (directory)", entry_path.display());
+            } else {
+                println!("{}", entry_path.display());
+            }
+        }
+    } else {
+        println!("Failed to read directory: {}", path.display());
+    }
+}
 
 /// Validates paths for copy/move operations
 fn validate_paths(
@@ -74,11 +91,58 @@ fn validate_paths(
     Ok((src_normalized, dest_normalized))
 }
 
+/// Moves object metadata from source to destination in their respective info.json files
+fn move_obj_info(src: &Path, dest: &Path, cut: bool) -> Result<(), String> {
+    // Get source and destination parent directories
+    let src_parent = src.parent().ok_or("Source has no parent directory")?;
+    let dest_parent = dest.parent().ok_or("Destination has no parent directory")?;
+
+    // Get source and destination info.json paths
+    let src_info_path = src_parent.join(".dir_info/info.json");
+    let dest_info_path = dest_parent.join(".dir_info/info.json");
+
+    // Get source object name
+    let src_obj_name = src
+        .file_name()
+        .and_then(|s| s.to_str())
+        .ok_or("Invalid source object name")?;
+
+    // Get destination object name
+    let dest_obj_name = dest
+        .file_name()
+        .and_then(|s| s.to_str())
+        .ok_or("Invalid destination object name")?;
+
+    // Read source object info (if exists)
+    let src_obj_info = match read_get_obj_info(&src_info_path, src_obj_name) {
+        Ok(info) => info,
+        Err(_) => return Ok(()), // No metadata to move
+    };
+
+    // Remove source object info
+    if cut {
+        del_obj_from_info(src, src_obj_name)
+            .map_err(|e| format!("Failed to remove source metadata: {}", e))?;
+    }
+
+    // Add destination object info with same properties
+    add_obj_to_info(dest, dest_obj_name, Some(src_obj_info.properties))
+        .map_err(|e| format!("Failed to add destination metadata: {}", e))?;
+
+    Ok(())
+}
+
 /// Copies a file from source to destination
-fn copy_file(src: &Path, dest: &Path, force: bool) -> io::Result<()> {
+fn copy_file(
+    src: &Path,
+    dest: &Path,
+    root_dir: &Path,
+    force: bool,
+    cut: bool,
+) -> io::Result<String> {
     if dest.exists() {
         if !force {
-            return Err(io::Error::new(
+            return Err(Error::new(
                 io::ErrorKind::AlreadyExists,
                 "Destination file exists (use -f to overwrite)",
             ));
@@ -86,15 +150,35 @@ fn copy_file(src: &Path, dest: &Path, force: bool) -> io::Result<()> {
         fs::remove_file(dest)?;
     }
     fs::copy(src, dest)?;
-    Ok(())
+
+    // Copy metadata
+    if let Err(e) = move_obj_info(src, dest, false) {
+        // false = copy operation
+        log::log_warning(
+            "copy",
+            &format!("Failed to copy metadata for {}: {}", dest.display(), e),
+        );
+    }
+
+    Ok(format!(
+        "{} {} to {}",
+        if cut { "Moved" } else { "Copied" },
+        display_relative_path(src, root_dir),
+        display_relative_path(dest, root_dir)
+    ))
 }
 
 /// Recursively copies a directory
-fn copy_directory(src: &Path, dest: &Path, root_dir: &Path, force: bool) -> io::Result<String> {
-    // Create destination directory (without .dir_info initially)
+fn copy_directory(
+    src: &Path,
+    dest: &Path,
+    root_dir: &Path,
+    force: bool,
+    cut: bool,
+) -> io::Result<String> {
     if dest.exists() {
         if !force {
-            return Err(io::Error::new(
+            return Err(Error::new(
                 io::ErrorKind::AlreadyExists,
                 "Destination directory exists (use -f to overwrite)",
             ));
@@ -103,36 +187,36 @@ fn copy_directory(src: &Path, dest: &Path, root_dir: &Path, force: bool) -> io::
     }
     fs::create_dir_all(dest)?;
 
-    // Copy contents except .dir_info
+    // First copy directory metadata
+    if let Err(e) = move_obj_info(src, dest, false) {
+        // false = copy operation
+        log::log_warning(
+            "copy",
+            &format!("Failed to copy metadata for {}: {}", dest.display(), e),
+        );
+    }
+
+    // Then copy contents
     for entry in fs::read_dir(src)? {
         let entry = entry?;
         let entry_path = entry.path();
         let entry_name = entry.file_name();
 
-        // Skip .dir_info
         if entry_name == ".dir_info" {
             continue;
         }
 
         let new_path = dest.join(entry_name);
-
         if entry_path.is_dir() {
-            copy_directory(&entry_path, &new_path, root_dir, force)?;
+            copy_directory(&entry_path, &new_path, root_dir, force, cut)?;
         } else {
-            copy_file(&entry_path, &new_path, force)?;
+            copy_file(&entry_path, &new_path, root_dir, force, cut)?;
         }
     }
 
-    // Create new .dir_info in destination
-    if !create_dir_info(dest, false) {
-        return Err(io::Error::other(format!(
-            "Failed to create .dir_info in {}",
-            display_relative_path(dest, root_dir)
-        )));
-    }
-
     Ok(format!(
-        "Copied directory: {} → {}",
+        "{} directory: {} → {}",
+        if cut { "Moved" } else { "Copied" },
         display_relative_path(src, root_dir),
         display_relative_path(dest, root_dir)
     ))
@@ -146,61 +230,109 @@ fn move_item(
     recursive: bool,
     force: bool,
 ) -> io::Result<String> {
-    // Prevent moving .dir_info directly
     if src.ends_with(".dir_info") {
-        return Err(io::Error::new(
+        return Err(Error::new(
             io::ErrorKind::InvalidInput,
-            "Cannot move .dir_info directly",
+            "Cannot move a restricted file/directory. Operation not allowed",
         ));
     }
 
     if src.is_dir() {
         if !recursive {
-            return Err(io::Error::other("Use -r for directories"));
+            return Err(Error::other("Use -r for directories"));
         }
 
-        // Prepare destination
         if dest.exists() && !force {
-            return Err(io::Error::new(
+            return Err(Error::new(
                 io::ErrorKind::AlreadyExists,
                 "Use -f to overwrite",
             ));
         }
         fs::create_dir_all(dest)?;
 
-        // Move contents except .dir_info
-        fs::read_dir(src)?
-            .filter_map(|e| e.ok())
-            .filter(|e| e.file_name() != ".dir_info")
-            .try_for_each(|e| {
-                let new_path = dest.join(e.file_name());
-                fs::rename(e.path(), &new_path).or_else(|_| {
-                    if e.path().is_dir() {
-                        copy_directory(&e.path(), &new_path, root_dir, force)?;
-                    } else {
-                        copy_file(&e.path(), &new_path, force)?;
-                    }
-                    fs::remove_dir_all(e.path()).or_else(|_| fs::remove_file(e.path()))
-                })
-            })?;
-
-        fs::remove_dir(src)?;
+        // Create .dir_info for destination first
         if !create_dir_info(dest, false) {
-            return Err(io::Error::other(format!(
+            return Err(Error::other(format!(
                 "Failed to create .dir_info in {}",
                 display_relative_path(dest, root_dir)
             )));
         }
+
+        // First move the directory metadata
+        if let Err(e) = move_obj_info(src, dest, true) {
+            log::log_warning(
+                "move",
+                &format!(
+                    "Failed to move directory metadata for {}: {}",
+                    dest.display(),
+                    e
+                ),
+            );
+        }
+
+        // Process all contents
+        for entry in fs::read_dir(src)? {
+            let entry = entry?;
+            let entry_path = entry.path();
+            let entry_name = entry.file_name();
+
+            if entry_name == ".dir_info" {
+                continue;
+            }
+
+            let new_path = dest.join(entry_name);
+
+            // Handle metadata first for each item
+            if let Err(e) = move_obj_info(&entry_path, &new_path, true) {
+                log::log_warning(
+                    "move",
+                    &format!("Failed to move metadata for {}: {}", new_path.display(), e),
+                );
+            }
+
+            // Then handle the actual file/directory move
+            if entry_path.is_dir() {
+                fs::create_dir_all(&new_path)?;
+                if !create_dir_info(&new_path, false) {
+                    return Err(Error::other(format!(
+                        "Failed to create .dir_info in {}",
+                        display_relative_path(&new_path, root_dir)
+                    )));
+                }
+
+                // Recursively move subdirectory
+                move_item(&entry_path, &new_path, root_dir, true, force)?;
+                fs::remove_dir_all(&entry_path)?;
+            } else {
+                fs::rename(&entry_path, &new_path).or_else(|_| {
+                    copy_file(&entry_path, &new_path, root_dir, force, true)?;
+                    fs::remove_file(&entry_path)
+                })?;
+            }
+        }
+
+        // Clean up source directory
+        fs::remove_dir_all(src)?;
     } else {
         // Handle file move
         if dest.exists() && !force {
-            return Err(io::Error::new(
+            return Err(Error::new(
                 io::ErrorKind::AlreadyExists,
                 "Use -f to overwrite",
             ));
         }
+
+        // Move metadata first
+        if let Err(e) = move_obj_info(src, dest, true) {
+            log::log_warning(
+                "move",
+                &format!("Failed to move file metadata for {}: {}", dest.display(), e),
+            );
+        }
+
+        // Then move the file
         fs::rename(src, dest).or_else(|_| {
-            copy_file(src, dest, force)?;
+            copy_file(src, dest, root_dir, force, true)?;
             fs::remove_file(src)
         })?;
     }
@@ -282,6 +414,14 @@ pub fn copy(
             let recursive = args.contains(&"-r") || args.contains(&"--recursive");
             let force = args.contains(&"-f") || args.contains(&"--force");
 
+            // If restricted file/directory used in paths, return error
+            for pth in [&src, &dest] {
+                if check_dir_info(pth) {
+                    return "copy: Cannot copy/refer restricted file or directory. Operation Not Allowed."
+                        .to_string();
+                }
+            }
+
             // Prompt for force confirmation
             if force && !prompter.confirm("Are you sure you want to force overwrite files?") {
                 return "Operation of force overwriting cancelled. No files copied/moved."
@@ -304,11 +444,11 @@ pub fn copy(
                     let result = if cut {
                         move_item(&src_path, &dest_path, root_dir, recursive, force)
                     } else if src_path.is_dir() && !recursive {
-                        Err(io::Error::other("Cannot copy directory without -r flag"))
+                        Err(Error::other("Cannot copy directory without -r flag"))
                     } else if src_path.is_dir() {
-                        copy_directory(&src_path, &dest_path, root_dir, force)
+                        copy_directory(&src_path, &dest_path, root_dir, force, false)
                     } else {
-                        copy_file(&src_path, &dest_path, force).map(|_| {
+                        copy_file(&src_path, &dest_path, root_dir, force, false).map(|_| {
                             format!(
                                 "Copied {} to {}",
                                 display_relative_path(&src_path, root_dir),

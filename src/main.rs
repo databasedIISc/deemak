@@ -58,7 +58,6 @@ fn main() {
                 &format!("Found root directory for Sekai: {:?}", root_dir),
             );
             // Set the global Sekai directory
-            println!("***************************");
             set_world_dir(root_dir.clone().unwrap());
         } else {
             log::log_error("SEKAI", "Failed to find root directory for Sekai. Exiting.");

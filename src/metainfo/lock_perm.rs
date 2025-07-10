@@ -58,37 +58,53 @@ pub fn operation_locked_perm(
     operation: &str,
     message: &str,
 ) -> Result<(), String> {
-    match read_lock_perm(obj_path) {
-        Ok((_, is_locked)) => {
-            if is_locked {
+    // Check all parents up to root
+    let mut current = obj_path;
+    while let Some(parent) = current.parent() {
+        if let Ok((_, locked)) = read_lock_perm(current) {
+            if locked {
+                let rel_path = relative_deemak_path(current);
                 log::log_warning(
                     operation,
-                    &format!(
-                        "Attempted {} on locked path: {} - {}",
-                        operation,
-                        relative_deemak_path(obj_path).display(),
-                        message
-                    ),
+                    &format!("Locked path: {} - {}", rel_path.display(), message),
                 );
                 return Err(format!(
                     "{}: {} is locked. {}",
                     operation,
-                    relative_deemak_path(obj_path).display(),
+                    rel_path.display(),
                     message
                 ));
             }
-            Ok(())
         }
+        current = parent;
+    }
+
+    // Check the object itself
+    match read_lock_perm(obj_path) {
+        Ok((_, true)) => {
+            let rel_path = relative_deemak_path(obj_path);
+            log::log_warning(
+                operation,
+                &format!("Locked: {} - {}", rel_path.display(), message),
+            );
+            Err(format!(
+                "{}: {} is locked. {}",
+                operation,
+                rel_path.display(),
+                message
+            ))
+        }
+        Ok((_, false)) => Ok(()),
         Err(e) => {
             log::log_warning(
                 operation,
                 &format!(
-                    "Failed to check lock status for {}: {}",
+                    "Lock check failed for {}: {}",
                     relative_deemak_path(obj_path).display(),
                     e
                 ),
             );
-            Ok(()) // Allow operation if we can't determine lock status
+            Ok(()) // Fail open if we can't check
         }
     }
 }
