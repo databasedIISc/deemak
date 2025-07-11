@@ -61,9 +61,9 @@ pub fn process_tab_completion(
         } else {
             // Prepare to display completions
             let current_line = if let Some(prompt) = prompt {
-                format!("{} {}", prompt, current_input)
+                format!("{prompt} {current_input}")
             } else {
-                format!("> {}", current_input)
+                format!("> {current_input}")
             };
 
             // Calculate optimal column display

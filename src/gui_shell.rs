@@ -413,7 +413,7 @@ impl ShellScreen {
         // CURSOR
         let cursor_line = display_lines.len() - 1;
         let cursor_prefix = if let Some(ref prompt) = self.active_prompt {
-            format!("{} ", prompt)
+            format!("{prompt} ")
         } else {
             "> ".to_string()
         };
@@ -505,7 +505,7 @@ impl ShellScreen {
     }
 
     pub fn prompt_yes_no(&mut self, message: &str) -> bool {
-        self.active_prompt = Some(format!("{} [y/N]", message));
+        self.active_prompt = Some(format!("{message} [y/N]"));
         self.input_buffer.clear();
         self.draw();
 
@@ -515,7 +515,7 @@ impl ShellScreen {
 
             if self.rl.is_key_pressed(raylib::consts::KeyboardKey::KEY_Y) {
                 self.active_prompt = None;
-                self.output_lines.push(format!("{} [y/N] yes", message));
+                self.output_lines.push(format!("{message} [y/N] yes"));
                 return true;
             }
             if self.rl.is_key_pressed(raylib::consts::KeyboardKey::KEY_N)
@@ -524,7 +524,7 @@ impl ShellScreen {
                     .is_key_pressed(raylib::consts::KeyboardKey::KEY_ENTER)
             {
                 self.active_prompt = None;
-                self.output_lines.push(format!("{} [y/N] no", message));
+                self.output_lines.push(format!("{message} [y/N] no"));
                 return false;
             }
         }
@@ -545,7 +545,7 @@ impl ShellScreen {
                 let input = take(&mut self.input_buffer);
                 self.active_prompt = None;
                 if !input.is_empty() {
-                    self.output_lines.push(format!("{}: {}", message, input));
+                    self.output_lines.push(format!("{message}: {input}"));
                     return input;
                 }
             } else if self

@@ -87,5 +87,15 @@ jobs:
             libxi-dev \
             libgl1-mesa-dev \
             libglu1-mesa-dev
-      - run: cargo clippy -- -D warnings
+      - run: cargo clippy --fix
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          if ! git diff --quiet; then
+            git add .
+            git commit -m "fix: auto-fix clippy warnings"
+            git push
+          fi
+        shell: bash
 

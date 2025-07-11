@@ -14,7 +14,7 @@ fn generate_temp_path(usage: &str, root_path: &PathBuf) -> PathBuf {
     let mut hasher = DefaultHasher::new();
     root_path.hash(&mut hasher);
     let hash = hasher.finish();
-    PathBuf::from(format!("/tmp/deemak-{}-{:x}", usage, hash))
+    PathBuf::from(format!("/tmp/deemak-{usage}-{hash:x}"))
 }
 
 pub fn backup_sekai(usage: &str, root_path: &PathBuf) -> std::io::Result<String> {
@@ -64,7 +64,7 @@ pub fn backup_sekai(usage: &str, root_path: &PathBuf) -> std::io::Result<String>
     }
 
     encoder.finish()?;
-    Ok(format!("Backup {} created at {:?}", usage, backup_file))
+    Ok(format!("Backup {usage} created at {backup_file:?}"))
 }
 
 pub fn restore_sekai(usage: &str, root_path: &PathBuf) -> std::io::Result<()> {

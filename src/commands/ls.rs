@@ -69,8 +69,7 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
                 if let Ok((_, is_locked)) = lock_perm::read_lock_perm(&dir_path) {
                     if is_locked {
                         return format!(
-                            "{} is locked. To list contents, unlock it first.",
-                            dir_name
+                            "{dir_name} is locked. To list contents, unlock it first."
                         );
                     }
                 }
@@ -79,13 +78,11 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
                     log::log_warning(
                         "ls",
                         &format!(
-                            "Attempted to list restricted directory: {} Operation Not Permitted",
-                            dir_name
+                            "Attempted to list restricted directory: {dir_name} Operation Not Permitted"
                         ),
                     );
                     return format!(
-                        "Attempted to list restricted directory: {} Operation Not Permitted",
-                        dir_name
+                        "Attempted to list restricted directory: {dir_name} Operation Not Permitted"
                     );
                 }
 
@@ -148,9 +145,7 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
             };
 
             format!(
-                "\nObjects:\n{files}\nFrom inside here, you can go to:\n{directories}",
-                files = files,
-                directories = directories
+                "\nObjects:\n{files}\nFrom inside here, you can go to:\n{directories}"
             )
         }
         Err(e) => match &e[..] {

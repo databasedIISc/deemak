@@ -38,15 +38,14 @@ fn main() {
         let sekai_path = std::env::current_dir().unwrap().join(&args[1]);
         log::log_info(
             "SEKAI",
-            &format!("Sekai directory provided: {:?}", sekai_path),
+            &format!("Sekai directory provided: {sekai_path:?}"),
         );
 
         if !validate_or_create_sekai(&sekai_path, true) {
             log::log_error(
                 "SEKAI",
                 &format!(
-                    "Sekai directory is not valid. Creating default `.dir_info` at {:?}",
-                    sekai_path
+                    "Sekai directory is not valid. Creating default `.dir_info` at {sekai_path:?}"
                 ),
             );
         }
@@ -55,7 +54,7 @@ fn main() {
         if root_dir.is_some() {
             log::log_info(
                 "SEKAI",
-                &format!("Found root directory for Sekai: {:?}", root_dir),
+                &format!("Found root directory for Sekai: {root_dir:?}"),
             );
             // Set the global Sekai directory
             set_world_dir(root_dir.clone().unwrap());
@@ -69,18 +68,16 @@ fn main() {
             log::log_error(
                 "SEKAI",
                 &format!(
-                    "Sekai directory is not valid even after creating default `.dir_info`. Sekai: {:?}",
-                    sekai_path
+                    "Sekai directory is not valid even after creating default `.dir_info`. Sekai: {sekai_path:?}"
                 ),
             );
             eprintln!(
-                "Error: Sekai directory is not valid even after creating default `.dir_info`. Please check the sekai validity. Sekai: {:?}",
-                sekai_path
+                "Error: Sekai directory is not valid even after creating default `.dir_info`. Please check the sekai validity. Sekai: {sekai_path:?}"
             );
             return;
         } else {
             // sekai is valid
-            log::log_info("SEKAI", &format!("Sekai is Valid {:?}", sekai_path));
+            log::log_info("SEKAI", &format!("Sekai is Valid {sekai_path:?}"));
 
             // Create the restore file if it doesn't exist, since it is required for restoring. The
             // progress will be saved as `save_me` and will be recreated every run.
@@ -94,11 +91,10 @@ fn main() {
             // restore_me should be made initially if it doesnt exist, else it will not be created
             match restore_comp::backup_sekai("restore", root_dir.as_ref().unwrap()) {
                 Err(e) => {
-                    log::log_error("SEKAI", &format!("Failed to create restore file: {}", e));
+                    log::log_error("SEKAI", &format!("Failed to create restore file: {e}"));
                     eprintln!(
-                        "Error: Failed to create restore file: {}
-Continuing...",
-                        e
+                        "Error: Failed to create restore file: {e}
+Continuing..."
                     );
                     return;
                 }
@@ -117,11 +113,10 @@ Continuing...",
             );
             match restore_comp::backup_sekai("save", root_dir.as_ref().unwrap()) {
                 Err(e) => {
-                    log::log_error("SEKAI", &format!("Failed to create save file: {}", e));
+                    log::log_error("SEKAI", &format!("Failed to create save file: {e}"));
                     eprintln!(
-                        "Error: Failed to create save file: {}
-Continuing...",
-                        e
+                        "Error: Failed to create save file: {e}
+Continuing..."
                     );
                     return;
                 }
@@ -135,7 +130,7 @@ Continuing...",
         // args.len() == 1
         log::log_error("Application", "Invalid arguments provided.");
         eprintln!("Error: At least one argument is required.");
-        println!("{}", HELP_TXT);
+        println!("{HELP_TXT}");
         return;
     };
 
@@ -144,12 +139,11 @@ Continuing...",
         Err(err) => {
             log::log_error(
                 "SEKAI",
-                &format!("Failed to restore Sekai from save file: {}", err),
+                &format!("Failed to restore Sekai from save file: {err}"),
             );
             eprintln!(
-                "Error: Failed to restore Sekai from save file at {:?}
-Continuing...",
-                sekai_dir
+                "Error: Failed to restore Sekai from save file at {sekai_dir:?}
+Continuing..."
             );
         }
         Ok(_) => {

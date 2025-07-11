@@ -177,7 +177,7 @@ pub fn login(input: Form<AuthInput>) -> Json<AuthResponse> {
             Err(err) => {
                 return Json(AuthResponse {
                     status: false,
-                    message: format!("Invalid token: {}", err),
+                    message: format!("Invalid token: {err}"),
                     token: None,
                 });
             }

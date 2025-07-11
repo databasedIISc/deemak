@@ -209,7 +209,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     visible.insert(0, ch);
                 }
                 let user_display = if entering_username {
-                    format!("{}|", visible)
+                    format!("{visible}|")
                 } else {
                     visible.clone()
                 };
@@ -262,7 +262,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     visible_masked.insert(0, ch);
                 }
                 let pass_display = if !entering_username {
-                    format!("{}|", visible_masked)
+                    format!("{visible_masked}|")
                 } else {
                     visible_masked.clone()
                 };
@@ -308,7 +308,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     let trial = if line.is_empty() {
                         word.to_string()
                     } else {
-                        format!("{} {}", line, word)
+                        format!("{line} {word}")
                     };
                     let trial_c = CString::new(trial.clone()).unwrap();
                     let width =

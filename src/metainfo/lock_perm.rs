@@ -17,7 +17,7 @@ pub fn read_lock_perm(obj_path: &Path) -> Result<(bool, bool), String> {
         .join(".dir_info/info.json");
 
     let info =
-        read_validate_info(&info_path).map_err(|e| format!("Failed to read info.json: {}", e))?;
+        read_validate_info(&info_path).map_err(|e| format!("Failed to read info.json: {e}"))?;
 
     let obj_name = obj_path
         .file_name()
