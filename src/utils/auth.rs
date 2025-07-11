@@ -230,4 +230,3 @@ pub fn login(input: Form<AuthInput>) -> Json<AuthResponse> {
         token: None,
     })
 }
-

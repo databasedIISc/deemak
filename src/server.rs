@@ -133,4 +133,3 @@ pub async fn server() -> Option<Result<(), rocket::Error>> {
 
     Some(Ok(()))
 }
-
