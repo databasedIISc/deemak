@@ -90,9 +90,7 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
             );
             return (
                 current_dir.clone(),
-                format!(
-                    "go: {destination}: Is a file (try 'read {destination}')"
-                ),
+                format!("go: {destination}: Is a file (try 'read {destination}')"),
             );
         }
 

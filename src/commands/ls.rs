@@ -68,9 +68,7 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
                 let dir_path = current_dir.join(dir_name);
                 if let Ok((_, is_locked)) = lock_perm::read_lock_perm(&dir_path) {
                     if is_locked {
-                        return format!(
-                            "{dir_name} is locked. To list contents, unlock it first."
-                        );
+                        return format!("{dir_name} is locked. To list contents, unlock it first.");
                     }
                 }
 
@@ -144,9 +142,7 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
                     .collect()
             };
 
-            format!(
-                "\nObjects:\n{files}\nFrom inside here, you can go to:\n{directories}"
-            )
+            format!("\nObjects:\n{files}\nFrom inside here, you can go to:\n{directories}")
         }
         Err(e) => match &e[..] {
             "help" => HELP_TXT,
