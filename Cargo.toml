@@ -15,7 +15,6 @@ thiserror = "2.0.12"
 textwrap = "0.16.2"
 flate2 = "1.1.1"
 tar = "0.4.44"
-walkdir = "2.5.0"
 once_cell = "1.18"
 dotenvy = "0.15"       # For environment variables
 rocket = { version = "0.5.1", features = ["json","tls"]} # For  backend server
@@ -26,6 +25,8 @@ rocket_cors = "0.6"    # for frontend requests
 ring = "0.17"
 data-encoding = "2.4.0"
 chrono = "0.4"         # for token expiry
+tempfile = "3.10.1"
+walkdir = "2.5.0"
 
 [dev-dependencies]
 tempfile = "3.10.1"

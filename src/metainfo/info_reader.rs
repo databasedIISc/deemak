@@ -201,14 +201,13 @@ pub fn del_obj_from_info(obj_path: &Path, obj_name: &str) -> Result<(), InfoErro
     Ok(())
 }
 
-/// Update status of an object in info.json
+/// Update or add a status property for an object
 ///
 /// # Arguments
 /// * `obj_path` - Path to the object whose status is to be updated
 /// * `obj_name` - Name of the object to update
 /// * `status` - Status key to update (e.g., "locked", "hidden")
 /// * `st_value` - Value to set (must be serializable to JSON)
-/// Update or add a status property for an object
 pub fn update_obj_status(
     obj_path: &Path,
     obj_name: &str,
