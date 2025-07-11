@@ -25,6 +25,17 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
       - uses: Swatinem/rust-cache@v2
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libx11-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxcursor-dev \
+            libxi-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev
       - run: cargo check
 
   test:
@@ -98,4 +109,3 @@ jobs:
             git push
           fi
         shell: bash
-
