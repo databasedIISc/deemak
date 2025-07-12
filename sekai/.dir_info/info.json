@@ -2,6 +2,7 @@
   "location": "HOME",
   "about": "Home Sweet Home",
   "objects": {
+
     "some1": {
       "locked": "00"
     },
@@ -32,6 +33,7 @@
     },
     "room_3": {
       "locked": "11"
+
     },
     "room_4": {
       "locked": "11"
@@ -44,6 +46,9 @@
     },
     "room_10": {
       "locked": "11"
+
     }
+    
+    
   }
 }
