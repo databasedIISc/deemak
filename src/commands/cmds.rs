@@ -89,6 +89,14 @@ pub fn cmd_manager(
         },
         "restore" => CommandResult::Output(restore::restore(&parts[1..], root_dir, prompter)),
         "save" => CommandResult::Output(save::save(&parts[1..], root_dir)),
+        "solve" => {
+            let msg = solve(&parts[1..], current_dir, root_dir);
+            CommandResult::Output(msg)
+        }
+        "unlock" => {
+            let msg = unlock(&parts[1..], current_dir, root_dir);
+            CommandResult::Output(msg)
+        }
         _ => CommandResult::NotFound,
     }
 }
