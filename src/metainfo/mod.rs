@@ -1,4 +1,5 @@
 pub mod info_reader;
+mod tests;
 
 pub mod valid_sekai;
 

@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod test {
+mod rns_test {
     use crate::rns::restore_comp::{backup_sekai, can_restore, can_save, restore_sekai};
     use crate::utils::test_utils::{create_file, get_dir_contents, remove_file, setup_test_dir};
     use std::fs;
@@ -69,9 +69,8 @@ mod test {
         assert!(root_path.join(".dir_info").join("restore_me").exists());
 
         // Modify the directory
-        fs::remove_file(root_path.join("file1.txt")).unwrap();
-        fs::create_dir(root_path.join("new_dir")).unwrap();
-        create_file(root_path.join("subdir1/new_file.txt"), "new content");
+        remove_file(root_path.join("file1.txt"));
+        create_file(root_path.join("subdir1/file2.txt"), "new content");
 
         // Restore from the restore point
         assert!(restore_sekai("restore", &root_path).is_ok());
