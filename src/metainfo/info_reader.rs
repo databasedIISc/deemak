@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
@@ -247,6 +247,31 @@ pub fn read_get_obj_info(info_path: &Path, obj_name: &str) -> Result<ObjectInfo,
         .get(obj_name)
         .cloned() // This does the same as .map(|x| x.clone())
         .unwrap_or_default())
+}
+pub fn get_level_name(path: &PathBuf) -> Result<&str,String> {
+    path.file_name()
+        .and_then(|s| s.to_str())
+        .ok_or_else(|| "Failed to get level name".to_string())
+        
+}
+pub fn get_encrypted_flag(path: &PathBuf,level_name:&str) -> Result<String, String> {
+    //the flag is stored in ./dir_info/info.json of parent directory
+    match read_get_obj_info(path.parent().unwrap(), level_name) {
+        Ok(obj_info) => {
+            if let Some(decrypt_me) = obj_info.properties.get("decrypt_me") {
+                if let serde_json::Value::String(flag_str) = decrypt_me {
+                    return Ok(flag_str.clone());
+                } else {
+                    return Err("decrypt_me property is not a string.".to_string());
+                }
+            }
+            else {
+                return Err("decrypt_me property not found in object info.".to_string());
+            }
+        }
+        Err(e) => Err(format!("Error reading object info"))
+    }
+
 }
 
 #[cfg(test)]

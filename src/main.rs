@@ -199,6 +199,7 @@ Continuing...",
         log::log_info("Application", "Login aborted by user.");
         return; // Exit if window closed during login
     }
+    // Initialize save_me specific to the user and copy to .dir_info inside HOME
 
     // Main menu loop
     loop {
@@ -229,4 +230,5 @@ Continuing...",
             _ => unreachable!(),
         }
     }
+    //copy the current save_me file to  home./.config/user_name/save_me
 }

@@ -26,6 +26,8 @@ rocket_cors = "0.6"    # for frontend requests
 ring = "0.17"
 data-encoding = "2.4.0"
 chrono = "0.4"         # for token expiry
+sha3 = "0.10.8"
+base64ct = "1.8.0"
 
 [dev-dependencies]
 tempfile = "3.10.1"

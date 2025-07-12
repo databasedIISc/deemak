@@ -21,7 +21,7 @@ pub fn save(args: &[&str], root_path: &PathBuf) -> String {
             let pos_args = parser.get_positional_args();
             if !pos_args.is_empty() {
                 err_msg += "Too many positional arguments provided. No arguments expected.";
-                log::log_info("restore", err_msg.as_str());
+                log::log_info("save", err_msg.as_str());
                 return err_msg;
             }
             if backup_sekai("save", root_path).is_err() {

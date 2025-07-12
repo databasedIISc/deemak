@@ -4,11 +4,11 @@ use crate::utils::relative_deemak_path;
 use std::path::Path;
 
 /// Reads the lock permissions from an object.
-/// Returns: (bool, bool) => (is_level_locked, is_locked)
+/// Returns: (bool, bool) => (is_level, is_locked)
 ///
 /// The lock corresponsds as below:
 ///     1st bit: Locked/Unlocked bit.
-///     2nd bit: Type of lock. 1 => Level locking, 0 => Normal locking.
+///     2nd bit: Type of lock. 1 => Level locking, 0 => Chest locking.
 /// The bit correspondence: "1" => True, "0" => False
 pub fn read_lock_perm(obj_path: &Path) -> Result<(bool, bool), String> {
     let info_path = obj_path
