@@ -94,13 +94,13 @@ impl Fairing for Cors {
 
 // === Write Frontend Config ===
 fn generate_config_js(port: u16) {
-    let js_content = format!(r#"export const BACKEND_URL = "http://localhost:{}";"#, port);
+    let js_content = format!(r#"export const BACKEND_URL = "http://localhost:{port}";"#);
 
     let path = "static/config.js";
     let mut file = File::create(path).expect("Failed to create config.js");
     file.write_all(js_content.as_bytes())
         .expect("Failed to write config.js");
-    println!("Generated static/config.js with port {}", port);
+    println!("Generated static/config.js with port {port}");
 }
 
 // === Rocket Entry Point ===
@@ -133,4 +133,3 @@ pub async fn server() -> Option<Result<(), rocket::Error>> {
 
     Some(Ok(()))
 }
-

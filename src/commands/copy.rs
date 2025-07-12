@@ -122,12 +122,12 @@ fn move_obj_info(src: &Path, dest: &Path, cut: bool) -> Result<(), String> {
     // Remove source object info
     if cut {
         del_obj_from_info(src, src_obj_name)
-            .map_err(|e| format!("Failed to remove source metadata: {}", e))?;
+            .map_err(|e| format!("Failed to remove source metadata: {e}"))?;
     }
 
     // Add destination object info with same properties
     add_obj_to_info(dest, dest_obj_name, Some(src_obj_info.properties))
-        .map_err(|e| format!("Failed to add destination metadata: {}", e))?;
+        .map_err(|e| format!("Failed to add destination metadata: {e}"))?;
 
     Ok(())
 }
@@ -459,7 +459,7 @@ pub fn copy(
 
                     match result {
                         Ok(msg) => msg,
-                        Err(e) => format!("copy: {}", e),
+                        Err(e) => format!("copy: {e}"),
                     }
                 }
                 Err(e) => e,

@@ -178,8 +178,7 @@ pub fn del(
             }
 
             if !prompter.confirm(&format!(
-                "Are you sure you want to delete '{}'? This action cannot be undone.",
-                destination
+                "Are you sure you want to delete '{destination}'? This action cannot be undone."
             )) {
                 return "Deletion cancelled by user.".to_string();
             }

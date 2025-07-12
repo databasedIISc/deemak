@@ -65,12 +65,12 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                         if entering_username {
                             if !username.is_empty() {
                                 entering_username = false;
-                                warning = false; 
+                                warning = false;
                             }
                         } else if !password.is_empty() {
                             USER_ID.set(username.clone()).ok();
                             USER_PASSWORD.set(password.clone()).ok();
-                            let users:Vec<deemak::utils::auth::User>  = load_users();
+                            let users: Vec<deemak::utils::auth::User> = load_users();
                             let username: String = username.trim().to_string();
                             let password: String = password.trim().to_string();
                             if let Some(user) = users.iter().find(|u| u.username == username) {
@@ -164,10 +164,10 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                 let pass_y = user_y + 100.0;
                 let box_width = 320.0;
                 let box_height = 40.0;
-                
+
                 // Draw warning if any
                 if warning {
-                    d.draw_text(                    
+                    d.draw_text(
                         &warning_text,
                         base_x as i32,
                         (pass_y + 90.0) as i32,
@@ -189,8 +189,12 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     (user_y + 40.0) as i32,
                     box_width as i32,
                     box_height as i32,
-                    if entering_username { highlight_color } else { Color::GRAY },
-    );
+                    if entering_username {
+                        highlight_color
+                    } else {
+                        Color::GRAY
+                    },
+                );
 
                 // Draw username
                 let mut total_width = 0.0;
@@ -205,7 +209,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     visible.insert(0, ch);
                 }
                 let user_display = if entering_username {
-                    format!("{}|", visible)
+                    format!("{visible}|")
                 } else {
                     visible.clone()
                 };
@@ -258,7 +262,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     visible_masked.insert(0, ch);
                 }
                 let pass_display = if !entering_username {
-                    format!("{}|", visible_masked)
+                    format!("{visible_masked}|")
                 } else {
                     visible_masked.clone()
                 };
@@ -304,7 +308,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     let trial = if line.is_empty() {
                         word.to_string()
                     } else {
-                        format!("{} {}", line, word)
+                        format!("{line} {word}")
                     };
                     let trial_c = CString::new(trial.clone()).unwrap();
                     let width =

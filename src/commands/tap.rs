@@ -25,7 +25,7 @@ pub fn create_file(destination: &str, current_dir: &Path, root_dir: &Path) -> St
 
     // Check if the path already exists
     if new_path.exists() {
-        return format!("tap: {}: File or directory already exists", destination);
+        return format!("tap: {destination}: File or directory already exists");
     }
 
     // Create the file or directory
@@ -41,7 +41,7 @@ pub fn create_file(destination: &str, current_dir: &Path, root_dir: &Path) -> St
                 display_relative_path(new_path, root_dir)
             )
         }
-        Err(e) => format!("tap: {}: {}", destination, e),
+        Err(e) => format!("tap: {destination}: {e}"),
     }
 }
 

@@ -22,7 +22,7 @@ impl ArgParser {
 
         log::log_debug(
             "Argparse",
-            &format!("Input arguments: {} {:?}", cmd, input_args),
+            &format!("Input arguments: {cmd} {input_args:?}"),
         );
         for arg in input_args {
             // Check for help flags first

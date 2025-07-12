@@ -14,7 +14,7 @@ use std::num::NonZeroU32;
 use std::path::Path;
 
 const USER_FILE: &str = "database.json";
-const ITERATIONS: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(100_000) };
+const ITERATIONS: NonZeroU32 = NonZeroU32::new(100_000).unwrap();
 const CREDENTIAL_LEN: usize = digest::SHA512_OUTPUT_LEN;
 const JWT_SECRET: &[u8] = b"super-secret-key";
 
@@ -177,7 +177,7 @@ pub fn login(input: Form<AuthInput>) -> Json<AuthResponse> {
             Err(err) => {
                 return Json(AuthResponse {
                     status: false,
-                    message: format!("Invalid token: {}", err),
+                    message: format!("Invalid token: {err}"),
                     token: None,
                 });
             }

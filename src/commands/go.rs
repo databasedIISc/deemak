@@ -34,15 +34,13 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
                 log::log_warning(
                     "go",
                     &format!(
-                        "Attempted to go to/refers a restricted directory: {}. Operation Not Permitted.",
-                        destination
+                        "Attempted to go to/refers a restricted directory: {destination}. Operation Not Permitted."
                     ),
                 );
                 return (
                     current_dir.clone(),
                     format!(
-                        "go: Attempted to go to/refers a restricted directory: {}. Operation Not Permitted",
-                        destination
+                        "go: Attempted to go to/refers a restricted directory: {destination}. Operation Not Permitted"
                     ),
                 );
             } else {
@@ -61,7 +59,7 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
             );
             return (
                 current_dir.clone(),
-                format!("go: {}: No such directory", destination),
+                format!("go: {destination}: No such directory"),
             );
         }
     };
@@ -92,10 +90,7 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
             );
             return (
                 current_dir.clone(),
-                format!(
-                    "go: {}: Is a file (try 'read {}')",
-                    destination, destination
-                ),
+                format!("go: {destination}: Is a file (try 'read {destination}')"),
             );
         }
 
@@ -108,7 +103,7 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
         );
         return (
             current_dir.clone(),
-            format!("go: {}: Not a directory", destination),
+            format!("go: {destination}: Not a directory"),
         );
     }
 
