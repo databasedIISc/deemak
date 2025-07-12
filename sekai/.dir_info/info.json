@@ -9,40 +9,41 @@
       "locked": "00"
     },
     "cat.txt": {
-      "locked": "10"
-    },
-    "room_6": {
-      "locked": "00"
-    },
-    "room_5": {
-      "locked": "00"
-    },
-    "room_8": {
       "locked": "01"
     },
-    "README": {
+    "room_6": {
+      "locked": "11",
+      "encrypted":"mango_tree"
+    },
+    "room_5": {
       "locked": "11"
     },
-    "room_9": {
+    "room_8": {
+      "locked": "11"
+    },
+    "README": {
       "locked": "00"
+    },
+    "room_9": {
+      "locked": "11"
     },
     "dog.txt": {
-      "locked": "00"
+      "locked": "01"
     },
     "room_3": {
-      "locked": "00"
+      "locked": "11"
     },
     "room_4": {
-      "locked": "00"
+      "locked": "11"
     },
     "room_2": {
-      "locked": "00"
+      "locked": "11"
     },
     "room_7": {
-      "locked": "00"
+      "locked": "11"
     },
     "room_10": {
-      "locked": "00"
+      "locked": "11"
     }
   }
 }
