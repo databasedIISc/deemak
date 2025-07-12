@@ -39,8 +39,9 @@ Welcome to DBD Deemak Help. You can use the following commands:
 - clear: Clears the screen.
 - restore: Restores the Sekai to last saved version or to starting point( if forced)
 - save: Saves your current progress of the Sekai.
-
-Try `help command` to get help on a specific command.
+-solve: after completing a level, use this command to submit your answer and obtain the flag.
+-unlock: use flag to unlock levels and chests.
+- help <command>: Displays help for the specified command.
 "#;
         help_text.to_string()
     } else {
