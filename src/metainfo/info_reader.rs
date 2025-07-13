@@ -28,6 +28,17 @@ impl ObjectInfo {
             .insert("locked".to_string(), Value::String(locked));
         obj
     }
+    pub fn with_obj_id(obj_id: String) -> Self {
+        let mut obj = Self::new();
+        obj.properties
+            .insert("obj_id".to_string(), Value::String(obj_id));
+        obj
+    }
+    pub fn with_decrypt_me(decrypt_me: String) -> Self {
+        let mut obj = Self::new();
+        obj.properties
+            .insert("decrypt_me".to_string(), Value::String(decrypt_me));
+        obj }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -140,6 +151,24 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
                     "Invalid 'locked' value, must be a 2-bit string".to_string(),
                 ));
             }
+            if s.chars().nth(1)==Some('1')//protected ->level/chest
+            {
+                // If locked is '1', ensure it has a 'decrypt_me' property
+                if !obj_info.properties.contains_key("decrypt_me") {
+                    return Err(InfoError::ValidationError(
+                        "Locked objects must have a 'decrypt_me' property".to_string(),
+                    ));
+                }
+                //also check for presence of obj_id
+                if !obj_info.properties.contains_key("obj_id") {
+                    return Err(InfoError::ValidationError(
+                        "Locked objects must have an 'obj_id' property".to_string(),
+                    ));
+                }
+            } else {
+                // If not locked, ensure 'decrypt_me' is not present
+                obj_info.properties.remove("decrypt_me");
+            }
         }
 
         // Trim any string values in properties
@@ -247,12 +276,7 @@ pub fn read_get_obj_info(info_path: &Path, obj_name: &str) -> Result<ObjectInfo,
         .cloned() // This does the same as .map(|x| x.clone())
         .unwrap_or_default())
 }
-pub fn get_level_name(path: &PathBuf) -> Result<&str,String> {
-    path.file_name()
-        .and_then(|s| s.to_str())
-        .ok_or_else(|| "Failed to get level name".to_string())
-        
-}
+
 pub fn get_encrypted_flag(path: &PathBuf,level_name:&str) -> Result<String, String> {
     //the flag is stored in ./dir_info/info.json of parent directory
     match read_get_obj_info(path.parent().unwrap(), level_name) {
