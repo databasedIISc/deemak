@@ -31,6 +31,11 @@ fn main() {
     DEBUG_MODE
         .set(args.iter().any(|arg| arg == "--debug"))
         .expect("DEBUG_MODE already set");
+    unsafe {
+        if DEBUG_MODE.get().unwrap_or(&false) == &true {
+            std::env::set_var("RUST_BACKTRACE", "1");
+        }
+    }
     log::log_info("Application", "Starting DEEMAK Shell");
 
     let sekai_dir = if args.len() > 1 {

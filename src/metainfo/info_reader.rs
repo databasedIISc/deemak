@@ -34,7 +34,8 @@ impl ObjectInfo {
         obj.properties
             .insert("decrypt_me".to_string(), Value::String(decrypt_me));
         obj }
-    fn with_obj_salt(obj_salt: String) -> Self {
+
+    pub fn with_obj_salt(obj_salt: String) -> Self {
         let mut obj = Self::new();
         obj.properties
             .insert("obj_salt".to_string(), Value::String(obj_salt));
