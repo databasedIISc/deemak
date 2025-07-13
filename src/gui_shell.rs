@@ -422,7 +422,8 @@ impl ShellScreen {
         } else {
             format!("{}{}", cursor_prefix, &self.input_buffer)
         };
-        let cursor_line = display_lines.len() - length_input + wrapit(&cursor_text, limit).len() - 1;
+        let cursor_line =
+            display_lines.len() - length_input + wrapit(&cursor_text, limit).len() - 1;
         let cursor_x_offset = unsafe {
             let c_string = CString::new(cursor_text).unwrap();
             (MeasureTextEx(self.font, c_string.as_ptr(), self.font_size, 1.2).x)
