@@ -237,7 +237,7 @@ impl ShellScreen {
                     self.input_buffer = history[new_index].clone();
                     self.history_index = Some(new_index);
                 }
-                self.cursor_pos = self.input_buffer.len();//place at the end of the command 
+                self.cursor_pos = self.input_buffer.len(); //place at the end of the command 
             }
             Some(KeyboardKey::KEY_DOWN) => {
                 if let Some(index) = self.history_index {
@@ -422,16 +422,17 @@ impl ShellScreen {
         } else {
             format!("{}{}", cursor_prefix, &self.input_buffer)
         };
-        let cursor_line = display_lines.len() - length_input  + (self.cursor_pos  / (limit - 1));
+        let cursor_line = display_lines.len() - length_input + (self.cursor_pos / (limit - 1));
         let cursor_x_offset = unsafe {
             let c_string = CString::new(cursor_text).unwrap();
-            (MeasureTextEx(self.font, c_string.as_ptr(), self.font_size, 1.2).x ) % ((limit as f32 +6.0)*char_width )
+            (MeasureTextEx(self.font, c_string.as_ptr(), self.font_size, 1.2).x)
+                % ((limit as f32 + 6.0) * char_width)
         };
 
         // Draw cursor
         unsafe {
             DrawRectangle(
-                ( 10.0+ cursor_x_offset) as c_int,
+                (10.0 + cursor_x_offset) as c_int,
                 (10.0 + (cursor_line as f32 * self.font_size)) as c_int,
                 (char_width as f32 * 1.2) as c_int,
                 self.font_size as c_int,
