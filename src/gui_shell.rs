@@ -422,7 +422,7 @@ impl ShellScreen {
         } else {
             format!("{}{}", cursor_prefix, &self.input_buffer)
         };
-        let cursor_line = display_lines.len() - length_input + (self.cursor_pos / (limit - 1));
+        let cursor_line = display_lines.len() - length_input + wrapit(&cursor_text, limit).len() - 1;
         let cursor_x_offset = unsafe {
             let c_string = CString::new(cursor_text).unwrap();
             (MeasureTextEx(self.font, c_string.as_ptr(), self.font_size, 1.2).x)
@@ -432,7 +432,7 @@ impl ShellScreen {
         // Draw cursor
         unsafe {
             DrawRectangle(
-                (10.0 + cursor_x_offset) as c_int,
+                (10.6 + cursor_x_offset) as c_int,
                 (10.0 + (cursor_line as f32 * self.font_size)) as c_int,
                 (char_width as f32 * 1.2) as c_int,
                 self.font_size as c_int,
