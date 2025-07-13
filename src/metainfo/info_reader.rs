@@ -28,17 +28,18 @@ impl ObjectInfo {
             .insert("locked".to_string(), Value::String(locked));
         obj
     }
-    pub fn with_obj_id(obj_id: String) -> Self {
-        let mut obj = Self::new();
-        obj.properties
-            .insert("obj_id".to_string(), Value::String(obj_id));
-        obj
-    }
+    
     pub fn with_decrypt_me(decrypt_me: String) -> Self {
         let mut obj = Self::new();
         obj.properties
             .insert("decrypt_me".to_string(), Value::String(decrypt_me));
         obj }
+    fn with_obj_salt(obj_salt: String) -> Self {
+        let mut obj = Self::new();
+        obj.properties
+            .insert("obj_salt".to_string(), Value::String(obj_salt));
+        obj
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -151,7 +152,7 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
                     "Invalid 'locked' value, must be a 2-bit string".to_string(),
                 ));
             }
-            if s.chars().nth(1)==Some('1')//protected ->level/chest
+            if s.chars().nth(1)==Some('1')//locked ->level/chest
             {
                 // If locked is '1', ensure it has a 'decrypt_me' property
                 if !obj_info.properties.contains_key("decrypt_me") {
@@ -159,12 +160,13 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
                         "Locked objects must have a 'decrypt_me' property".to_string(),
                     ));
                 }
-                //also check for presence of obj_id
-                if !obj_info.properties.contains_key("obj_id") {
+                //obj_salt is required for locked objects
+                if !obj_info.properties.contains_key("obj_salt") {
                     return Err(InfoError::ValidationError(
-                        "Locked objects must have an 'obj_id' property".to_string(),
+                        "Locked objects must have an 'obj_salt' property".to_string(),
                     ));
                 }
+                
             } else {
                 // If not locked, ensure 'decrypt_me' is not present
                 obj_info.properties.remove("decrypt_me");

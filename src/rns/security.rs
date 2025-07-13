@@ -1,4 +1,3 @@
-use crate::utils::globals::USER_ID;
 use argon2::{
     Argon2, PasswordHasher,
     password_hash::{SaltString, rand_core::OsRng},

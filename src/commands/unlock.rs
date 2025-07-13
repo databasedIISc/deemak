@@ -8,8 +8,7 @@ use crate::metainfo::lock_perm::{operation_locked_perm};
 use crate::metainfo::read_lock_perm;
 use crate::metainfo::valid_sekai::create_dir_info;
 use crate::rns::security::{argonhash, characterise_enc_key, decrypt, encrypt};
-use crate::utils::globals::USER_ID;
-use crate::utils::log;
+use crate::utils::{globals::{USER_NAME,USER_SALT}, prompt::UserPrompter, log};
 use base64ct::{Base64Unpadded, Encoding};
 use std::path::{Path, PathBuf};
 pub const HELP_TXT: &str = r#"
@@ -24,7 +23,7 @@ Examples:
 - copy file.txt new_file.txt         # Copy file
 
 "#;
-pub fn unlock(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> String {
+pub fn unlock(args: &[&str], current_dir: &PathBuf, root_dir: &Path, prompter: &mut dyn UserPrompter) -> String {
     //one argument giving path to the chest/level to be unlocked
     let mut parser = ArgParser::new(&["-l", "--level", "-c", "--chest"]);
     let args_string: Vec<String> = args.iter().map(|s| s.to_string()).collect();
@@ -69,84 +68,125 @@ pub fn unlock(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> String {
                 //since it protected and open for unlocking read level/chest id 
             
                 //get id of level/chest
-                let locked_file_name = target
+                let locked_obj_name = target
                     .file_name()
                     .and_then(|s| s.to_str())
                     .ok_or_else(|| "Invalid object name".to_string());
-                if locked_file_name.is_err() {
-                    err_msg += &format!("Failed to get locked file name: {}", locked_file_name.err().unwrap());
+                if locked_obj_name.is_err() {
+                    err_msg += &format!("Failed to get locked file name: {}", locked_obj_name.err().unwrap());
                     log::log_error("unlock", err_msg.as_str());
                     return err_msg;
                 }
-                let locked_file_name = locked_file_name.unwrap();
+                let locked_obj_name = locked_obj_name.unwrap();
 
-                let locked_file_info=read_get_obj_info(&target.parent().unwrap().join("./.dir_info/info.json"), locked_file_name);
-                if locked_file_info.is_err() {
-                    err_msg += &format!("Failed to read info.json for the locked object: {}", locked_file_info.err().unwrap());
+                let locked_obj_info=read_get_obj_info(&target.parent().unwrap().join("./.dir_info/info.json"), locked_obj_name);
+                if locked_obj_info.is_err() {
+                    err_msg += &format!("Failed to read info.json for the locked object: {}", locked_obj_info.err().unwrap());
                     log::log_error("unlock", err_msg.as_str());
                     return err_msg;
                     }
-                let locked_file_info = locked_file_info.unwrap();
-                
-                // take flag 
-                //ask for flag------------FILLIN-------------
-                let mut user_flag = String::from("user_flag_placeholder");
-                if is_level{
-                    //unlocking level
-                    if check_flag(user_flag, current_dir, root_dir);
+                let locked_obj_info = locked_obj_info.unwrap();
+                let obj_salt=&locked_obj_info.properties["obj_salt"]
+                    .as_str()
+                    .ok_or_else(|| "Invalid 'obj_salt' property in info.json".to_string());
+                if obj_salt.is_err() {
+                    err_msg += &format!("Failed to get level salt {}", obj_salt.as_ref().err().unwrap());
+                    log::log_error("unlock", err_msg.as_str());
                     return err_msg;
                 }
-                else {
-                    //is chest 
+                let obj_salt = obj_salt.as_ref().unwrap();
+                //reads decrypt_me from info.json
+                let decrypt_me = get_encrypted_flag(&target, locked_obj_name);
+                if decrypt_me.is_err() {
+                    err_msg += &format!("Failed to get encrypted flag for the level/chest: {}", decrypt_me.err().unwrap());
+                    log::log_error("unlock", err_msg.as_str());
                     return err_msg;
-                    
+                }
+                let decrypt_me = decrypt_me.unwrap();
+                // take flag 
+                let user_flag = prompter.input(format!(
+                    "Enter the flag for: {} ",
+                    locked_obj_name
+                ).as_str());
+                let compare_me = get_encrypted_flag(&target, locked_obj_name);
+                    if compare_me.is_err() {
+                        err_msg += &format!("Failed to get encrypted flag for the level/chest: {}", compare_me.err().unwrap());
+                        log::log_error("unlock", err_msg.as_str());
+                        return err_msg;
+                    }
+                    let compare_me = compare_me.unwrap();
+                if is_level{
+                    if check_level(user_flag, locked_obj_name,obj_salt,&decrypt_me,&compare_me){ 
+                        //update obj_info_lock_perm
+                        return "{} is unlocked".to_string();}
+                    else {err_msg += "Invalid flag. Try again."; log::log_info("unlock", err_msg.as_str()); return err_msg;}  
+                }           
+                else {
+                //is chest 
+                if check_chest(user_flag, locked_obj_name, obj_salt, &compare_me) {
+                    //update obj_info_lock_perm
+                    return " Chest {} is unlocked".to_string();
+                } else {
+                    err_msg += "Invalid flag. Try again.";
+                    log::log_info("unlock", err_msg.as_str());
+                    return err_msg;
+                }
                 }
             }
             else {
-                err_msg += "Failed to read lock permissions for the object.";
-                log::log_error("unlock", err_msg.as_str());
-                return err_msg;}
-            }
-            Err(e) => {
-                err_msg += &format!("Failed to parse arguments: {}", e);
-                log::log_error("unlock", err_msg.as_str());
+                err_msg += "Unable to read lock status of the given target. Cannot unlock.";
+                log::log_info("unlock", err_msg.as_str());
                 return err_msg;
             }
         }
-
-            
-    //velidity of path
-    //test for operation_lock_perm except last one file
-    //if permitted then ask for flag
-    //take flag and check
-    //return message
+        Err(e) => match &e[..] {
+            "help" => HELP_TXT.to_string(),
+            _ => "Error parsing arguments. Try 'help unlock' for more information.".to_string(),
+        },
     }
+}
 
-fn check_flag(user_flag: String,level_name:&str ,level_id:&str, current_dir: &PathBuf, root_dir: &PathBuf) -> bool {
-    let level_name = level_name;
-    let level_id = level_id;
-    let COMPARE_ME = r#"RAyDHwYErR{/)-RG/)-Z+[Vz/YVx/)RqYxszyCZqY+y=<+FrKzMsMzrGuDrzsyJCykMm9Ry2373dahat7qsmrCZF\<{4vefk(e;7tYLlhqdq*&C;3"#;
-    const LEVEL_SALT: &str = "b2pjZWRtb25rYW5kYXN0aGVyZQ";
-    let level_salt: SaltString = SaltString::from_b64(LEVEL_SALT).expect("Invalid salt");
-    const USER_SALT: &str = "b2pftre4b25rYW5kdutyfytdmjgdtfrserVyZQ";
-    let user_salt: SaltString = SaltString::from_b64(USER_SALT).expect("Invalid salt");
+fn check_level(user_flag: String,level_name:&str,level_salt:&str, encrypted_flag:&str,compare_me:&str) -> bool {
+    let obj_salt = SaltString::from_b64(level_salt).expect("Invalid obj_salt format");
+    //read user salt from database using f
+    let user_salt=SaltString::from_b64(USER_SALT.get().expect("USER_SALT not set")).unwrap();
+
+
     let decrypted_user_flag = decrypt(
         &characterise_enc_key(
             &format!(
                 "{}_{}",
-                USER_ID.get().unwrap(),
-                USER_ID.get().unwrap().len()
+                USER_NAME.get().unwrap(),
+                USER_NAME.get().unwrap().len()
             ),
-            &format!("{}_{}", USER_ID.get().unwrap(), level_name),
+            &format!("{}_{}", USER_NAME.get().unwrap(), level_name),
         ),
         &user_flag,
     );
-    let l1_hashed_user_flag = argonhash(&level_salt, decrypted_user_flag);
+    let l1_hashed_user_flag = argonhash(&obj_salt, decrypted_user_flag);
     let hashed_with_usersalt = argonhash(&user_salt, l1_hashed_user_flag);
-    let compare_me_decrypted = decrypt(&characterise_enc_key(level_id, level_name), COMPARE_ME);
+    let compare_me_decrypted = decrypt(&characterise_enc_key(&level_salt, &level_name), compare_me);
     if &compare_me_decrypted == &hashed_with_usersalt {
-        "unlocked".to_string()
+        true
     } else {
-        "try again ".to_string()
+        false
     }
 }
+fn check_chest(user_flag: String, chest_name: &str, chest_salt: &str, encrypted_hashed_flag: &str) -> bool {
+    let obj_salt = SaltString::from_b64(chest_salt).expect("Invalid obj_salt format");
+    //read user salt from database using f
+    let user_salt = SaltString::from_b64(USER_SALT.get().expect("USER_SALT not set"));
+
+    let hashed_user_flag=argonhash(&obj_salt, user_flag);
+    let encryped_hshed_user_flag = encrypt(
+        &characterise_enc_key(&chest_name, &hashed_user_flag),
+        &hashed_user_flag,
+    );
+    if encryped_hshed_user_flag == encrypted_hashed_flag {
+        true
+    } else {
+        false
+    }
+
+}
+    

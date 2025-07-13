@@ -2,6 +2,9 @@
   "location": "HOME/room_6",
   "about": "You are in 'HOME/room_6'. Look around and explore!",
   "objects": {
+    ".DS_Store": {
+      "locked": "00"
+    },
     "shit.txt": {
       "locked": "00"
     },

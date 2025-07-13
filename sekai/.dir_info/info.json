@@ -1,54 +1,51 @@
 {
   "location": "HOME",
-  "about": "Home Sweet Home",
+  "about": "You are in 'HOME'. Look around and explore!",
   "objects": {
-
-    "some1": {
+    "cat.txt": {
+      "locked": "00"
+    },
+    ".DS_Store": {
+      "locked": "00"
+    },
+    "room_8": {
+      "locked": "00"
+    },
+    "room_9": {
+      "locked": "00"
+    },
+    "room_3": {
       "locked": "00"
     },
     "room_1": {
       "locked": "00"
     },
-    "cat.txt": {
-      "locked": "01"
+    "some1": {
+      "locked": "00"
     },
-    "room_6": {
-      "locked": "11",
-      "encrypted":"mango_tree"
-    },
-    "room_5": {
-      "locked": "11"
-    },
-    "room_8": {
-      "locked": "11"
+    "room_4": {
+      "locked": "00"
     },
     "README": {
       "locked": "00"
     },
-    "room_9": {
-      "locked": "11"
-    },
     "dog.txt": {
-      "locked": "01"
-    },
-    "room_3": {
-      "locked": "11"
-
-    },
-    "room_4": {
-      "locked": "11"
+      "locked": "00"
     },
     "room_2": {
-      "locked": "11"
+      "locked": "00"
+    },
+    "room_6": {
+      "locked": "00"
     },
     "room_7": {
-      "locked": "11"
+      "locked": "00"
+    },
+    "room_5": {
+      "locked": "00"
     },
     "room_10": {
-      "locked": "11"
-
+      "locked": "00"
     }
-    
-    
   }
 }

@@ -4,13 +4,13 @@ use serde::de;
 use super::argparser::ArgParser;
 use super::cmds::{check_dir_info, normalize_path};
 use super::display_relative_path;
-use crate::metainfo::info_reader::{add_obj_to_info,read_get_obj_info,get_encrypted_flag,get_level_name};
-use crate::metainfo::lock_perm::read_lock_perm;
+use crate::metainfo::info_reader::{add_obj_to_info,read_get_obj_info,get_encrypted_flag};
+use crate::metainfo::lock_perm::{read_lock_perm};
 use crate::metainfo::valid_sekai::create_dir_info;
 use crate::rns::security::{characterise_enc_key, decrypt, encrypt};
-use crate::utils::log;
+use crate::utils::{log, prompt::UserPrompter};
 use std::path::{self, Path, PathBuf};
-use crate::utils::globals::USER_ID;
+use crate::utils::{globals::{USER_NAME}};
 use crate::commands::go::navigate;
 pub const HELP_TEXT: &str = r#"
 Usage: solve [OPTIONS] <LEVEL_NAME> <
@@ -21,7 +21,7 @@ Options:
 Examples:
 "#;
 
-pub fn solve(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> String {
+pub fn solve(args: &[&str], current_dir: &PathBuf, root_dir: &Path, prompter: &mut dyn UserPrompter) -> String {
     //only 1 argumen :path to level
     let mut parser = ArgParser::new(&[]);
     let args_string: Vec<String> = args.iter().map(|s| s.to_string()).collect();
@@ -69,41 +69,48 @@ pub fn solve(args: &[&str], current_dir: &PathBuf, root_dir: &Path) -> String {
                 return err_msg;
             }
            
-            if let Ok(level_name) = get_level_name(&target) {
-                log::log_info("solve", &format!("Level name: {}", level_name));
-                if let Ok(decrypt_me) = get_encrypted_flag(&target, &level_name) {
-                    log::log_info("solve", &format!("Encrypted flag: {}", decrypt_me));
-                    let input="krishna".to_string();
-                    log::log_info("solve", &format!("Input received: {}", input));
-                    let flag= check_solve_input(input,&target,level_name);
-                    log::log_info("solve", &format!("Flag obtained: {}", flag));
-                    return err_msg;
-                } else {
-                    err_msg += "Failed to get encrypted flag for the level.";
-                    log::log_error("solve", err_msg.as_str());
-                    return err_msg;
-                }
-            } else {
-                err_msg += "Failed to get level name.";
+            let Ok(level_name) = (&target).file_name()
+                .and_then(|s| s.to_str())
+                .ok_or("Invalid level name") else {
+                err_msg += "Failed to get level name from path.";
                 log::log_error("solve", err_msg.as_str());
                 return err_msg;
+            };
+                log::log_info("solve", &format!("Level name: {}", level_name));
+                let user_input = prompter.input(&format!("Enter your answer for level '{}': ", level_name));
+                if user_input.is_empty() {
+                    err_msg += "No input provided. Cannot solve.";
+                    log::log_info("solve", err_msg.as_str());
+                    return err_msg; 
+                } 
+                else{
+                    let user_flag = check_solve_input(user_input, &target, &level_name);
+                    if user_flag.is_empty() {
+                        err_msg += "User flag is empty. Cannot solve.";
+                        log::log_info("solve", err_msg.as_str());
+                        return err_msg;
+                    }
+                    else {
+                        log::log_info("solve", &format!("Successfully generated User flag: {}", user_flag));
+                        return format!("Your flag is {}", user_flag);
+                    }
+                }
+            
             }
-        }
         Err(e) => match &e[..] {
             "help" => HELP_TEXT.to_string(),
             _ => "Error parsing arguments. Try 'help solve' for more information.".to_string(),
         },
     }
-    //check solution
-    //return level "<levelname>" else "try again"
-    
 }
+    
+
 
 fn check_solve_input(user_input: String,path_to_level:&PathBuf,level_name:&str) -> String {    
     
     let text_decrypt_me = get_encrypted_flag(path_to_level,level_name)
         .expect("Failed to get encrypted flag");
-    let user_inp_enc_key = characterise_enc_key(&USER_ID.get().unwrap(), level_name);
+    let user_inp_enc_key = characterise_enc_key(&USER_NAME.get().unwrap(), level_name);
     let decrypted_user_input = decrypt(&user_inp_enc_key, &user_input);
     //run some extra tests on decrypted user input 
     //use this to decrypt textfile
@@ -115,10 +122,10 @@ fn check_solve_input(user_input: String,path_to_level:&PathBuf,level_name:&str) 
         &characterise_enc_key(
             &format!(
                 "{}_{}",
-                USER_ID.get().unwrap(),
-                USER_ID.get().unwrap().len()
+                USER_NAME.get().unwrap(),
+                USER_NAME.get().unwrap().len()
             ),
-            &format!("{}_{}", USER_ID.get().unwrap(), level_name),
+            &format!("{}_{}", USER_NAME.get().unwrap(), level_name),
         ),
         &decrypted_decrypt_me,
     );

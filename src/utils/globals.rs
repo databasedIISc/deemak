@@ -6,16 +6,9 @@ use argon2::{
 use once_cell::sync::{Lazy, OnceCell};
 use std::path::PathBuf;
 use std::sync::Mutex;
-
-// Global variable to store the user ID. This will be set after the user logs in and can be accessed throughout the application.
-pub static USER_ID: OnceCell<String> = OnceCell::new();
-
-// Global variable to store the user password. This will be set after the user logs in and can be accessed throughout the application.
+pub static USER_NAME: OnceCell<String> = OnceCell::new();
+pub static USER_SALT: OnceCell<String> = OnceCell::new();
 pub static USER_PASSWORD: OnceCell<String> = OnceCell::new();
-
-//Global variable to add userspecific security feature in hashing
-pub static USER_SALT: OnceCell<SaltString> = OnceCell::new();
-
 // Shell history to store the commands executed by the user.
 pub static SHELL_HISTORY: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
 

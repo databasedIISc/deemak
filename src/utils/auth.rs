@@ -12,6 +12,8 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::num::NonZeroU32;
 use std::path::Path;
+ //passwrd hashing
+use argon2::password_hash::{SaltString, rand_core::OsRng};
 
 const USER_FILE: &str = "database.json";
 const ITERATIONS: NonZeroU32 = NonZeroU32::new(100_000).unwrap();
@@ -203,7 +205,10 @@ pub fn login(input: Form<AuthInput>) -> Json<AuthResponse> {
                     &EncodingKey::from_secret(JWT_SECRET),
                 )
                 .expect("Failed to create token");
-
+                // Set global USER_ID and USER_SALT
+                crate::utils::globals::USER_NAME.set(user.username.clone()).expect("Failed to set USER_ID");
+                crate::utils::globals::USER_SALT.set(user.salt.clone()).expect("Failed to set USER_SALT");
+                crate::utils::globals::USER_PASSWORD.set(input.password.clone()).expect("Failed to set USER_PASSWORD");
                 return Json(AuthResponse {
                     status: true,
                     message: "Login successful".into(),
