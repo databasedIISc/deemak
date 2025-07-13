@@ -141,6 +141,7 @@ impl ShellScreen {
                     shell_history::add_to_history(&input);
                     self.working_buffer = None; // Clear working buffer after command execution
                     self.cursor_pos = 0; // Reset cursor position
+                    self.history_index = None; // Reset history index
                 } else {
                     // If input is empty, just add a new line
                     if !unsafe { FIRST_RUN } {
