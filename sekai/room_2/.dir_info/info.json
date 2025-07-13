@@ -5,6 +5,9 @@
     "shit.txt": {
       "locked": "00"
     },
+    ".DS_Store": {
+      "locked": "00"
+    },
     "books.txt": {
       "locked": "00"
     }

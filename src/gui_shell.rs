@@ -140,6 +140,8 @@ impl ShellScreen {
                     self.scroll_offset = 0;
                     shell_history::add_to_history(&input);
                     self.working_buffer = None; // Clear working buffer after command execution
+                    self.cursor_pos = 0; // Reset cursor position
+                    self.history_index = None; // Reset history index
                 } else {
                     // If input is empty, just add a new line
                     if !unsafe { FIRST_RUN } {
@@ -236,7 +238,7 @@ impl ShellScreen {
                     self.input_buffer = history[new_index].clone();
                     self.history_index = Some(new_index);
                 }
-                self.cursor_pos = self.input_buffer.len();
+                self.cursor_pos = self.input_buffer.len(); //place at the end of the command 
             }
             Some(KeyboardKey::KEY_DOWN) => {
                 if let Some(index) = self.history_index {
@@ -411,7 +413,6 @@ impl ShellScreen {
         }
 
         // CURSOR
-        let cursor_line = display_lines.len() - 1;
         let cursor_prefix = if let Some(ref prompt) = self.active_prompt {
             format!("{prompt} ")
         } else {
@@ -422,18 +423,20 @@ impl ShellScreen {
         } else {
             format!("{}{}", cursor_prefix, &self.input_buffer)
         };
-
+        let cursor_line =
+            display_lines.len() - length_input + wrapit(&cursor_text, limit).len() - 1;
         let cursor_x_offset = unsafe {
             let c_string = CString::new(cursor_text).unwrap();
-            MeasureTextEx(self.font, c_string.as_ptr(), self.font_size, 1.2).x
+            (MeasureTextEx(self.font, c_string.as_ptr(), self.font_size, 1.2).x)
+                % ((limit as f32 + 6.0) * char_width)
         };
 
         // Draw cursor
         unsafe {
             DrawRectangle(
-                (10.0 + cursor_x_offset) as c_int,
+                (10.6 + cursor_x_offset) as c_int,
                 (10.0 + (cursor_line as f32 * self.font_size)) as c_int,
-                char_width as c_int,
+                (char_width as f32 * 1.2) as c_int,
                 self.font_size as c_int,
                 ColorFromHSV(0.0, 0.0, 1.0),
             );
