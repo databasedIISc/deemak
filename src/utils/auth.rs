@@ -12,6 +12,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::num::NonZeroU32;
 use std::path::Path;
+use crate::utils::globals::{USER_NAME, USER_SALT, USER_PASSWORD};
 //passwrd hashing
 
 const USER_FILE: &str = "database.json";
@@ -205,13 +206,13 @@ pub fn login(input: Form<AuthInput>) -> Json<AuthResponse> {
                 )
                 .expect("Failed to create token");
                 // Set global USER_ID and USER_SALT
-                crate::utils::globals::USER_NAME
+                USER_NAME
                     .set(user.username.clone())
                     .expect("Failed to set USER_ID");
-                crate::utils::globals::USER_SALT
+                USER_SALT
                     .set(user.salt.clone())
                     .expect("Failed to set USER_SALT");
-                crate::utils::globals::USER_PASSWORD
+                USER_PASSWORD
                     .set(input.password.clone())
                     .expect("Failed to set USER_PASSWORD");
                 return Json(AuthResponse {

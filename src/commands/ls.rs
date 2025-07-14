@@ -1,5 +1,5 @@
 use super::argparser::ArgParser;
-use super::cmds::check_dir_info;
+use super::cmds::{check_dir_info, RESTRICTED_FILES};
 use super::whereami::display_relative_path;
 use crate::metainfo::lock_perm;
 use crate::utils::log;
@@ -30,7 +30,10 @@ pub fn list_directory_entries(target_path: &Path, root_dir: &Path) -> (Vec<Strin
         let path = entry.path();
         let name = entry.file_name().to_string_lossy().into_owned();
 
-        if name == ".dir_info" || name == "info.json" {
+        // if name == ".dir_info" || name == "info.json" {
+        //     continue;
+        // }
+        if RESTRICTED_FILES.iter().any(|&file| name.contains(file)) {
             continue;
         }
 

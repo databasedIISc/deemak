@@ -2,33 +2,23 @@
   "location": "HOME",
   "about": "Home Sweet Home",
   "objects": {
-    "room_5": {
-      "locked": "00"
-    },
-    "room_8": {
-      "decrypt_me": "blah",
+    "room_3": {
       "locked": "11",
-      "obj_salt": "salt"
+      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK",
+      "compare_me": "blwwnryvrewnhwusw8sue0pwah",
+      "decrypt_me": "bldwryvrdhwuch dudhwd8wuah"
     },
-    "room_6": {
-      "locked": "00"
-    },
-    "room_7": {
-      "locked": "00"
+    "room_5": {
+      "decrypt_me": "bleyrcmwje[oxwah",
+      "locked": "11",
+      "compare_me": "blwwnewne0pwah",
+      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK"
     },
     "room_9": {
-      "locked": "00"
-    },
-    "some1": {
-      "locked": "00"
-    },
-    "room_10": {
-      "locked": "00"
-    },
-    "dog.txt": {
-      "decrypt_me": "blah",
       "locked": "11",
-      "obj_salt": "salt"
+      "decrypt_me": "blewueryvm9sod0sdkah",
+      "compare_me": "blwwnryvewne0pwah",
+      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK"
     },
     "README": {
       "locked": "00"
@@ -36,16 +26,58 @@
     "cat.txt": {
       "locked": "00"
     },
+    "room_10": {
+      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK",
+      "compare_me": "blhmc8htn8rvthurah",
+      "decrypt_me": "bwehqwe,ilah",
+      "locked": "11"
+    },
     "room_1": {
-      "locked": "00"
+      "decrypt_me": "blehwhr4569hw28jah",
+      "locked": "11",
+      "compare_me": "bdn345c4cb6n7c93045047873074vn379wah",
+      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK"
     },
     "room_2": {
+      "locked": "11",
+      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK",
+      "compare_me": "blwwnewne0pwah",
+      "decrypt_me": "blahdiedmhf0wh"
+    },
+    "room_8": {
+      "compare_me": "blwwcdcnewndf de0pwah",
+      "decrypt_me": "blajdhgrtywerjgkidhdhh",
+      "locked": "11",
+      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK"
+    },
+    ".DS_Store": {
       "locked": "00"
     },
-    "room_3": {
-      "locked": "00"
+    "dog.txt": {
+      "decrypt_me": "blah",
+      "locked": "01",
+      "compare_me": "rhcenhruhce845c64684wah",
+      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK"
+    },
+    "room_7": {
+      "locked": "11",
+      "compare_me": "blwwnecberytc846536375ah",
+      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK",
+      "decrypt_me": "blwe8ey73ah"
+    },
+    "room_6": {
+      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK",
+      "decrypt_me": "beuxnahmsouji0dah  h0ap",
+      "locked": "11",
+      "compare_me": "blwx yd cydcus dcg9sds83647"
     },
     "room_4": {
+      "compare_me": "523468946",
+      "decrypt_me": "blwq0j,9qiyne6rerg7eah",
+      "locked": "11",
+      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK"
+    },
+    "some1": {
       "locked": "00"
     }
   }

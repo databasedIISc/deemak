@@ -1,16 +1,18 @@
 use super::argparser::ArgParser;
 use super::cmds::normalize_path;
-use crate::metainfo::info_reader::{get_encrypted_flag, read_get_obj_info};
+use crate::metainfo::info_reader::read_get_obj_info;
 use crate::metainfo::lock_perm::operation_locked_perm;
 use crate::metainfo::read_lock_perm;
 use crate::rns::security::{argonhash, characterise_enc_key, decrypt, encrypt};
 use crate::utils::{
-    globals::{USER_NAME, USER_SALT},
+    //globals::{USER_NAME, USER_SALT},
     log,
     prompt::UserPrompter,
 };
 use argon2::password_hash::SaltString;
 use std::path::Path;
+pub static USER_NAME: &str = "1234";
+pub static USER_SALT: &str = "salt"; // Placeholder, should be replaced with actual salt retrieval logic
 pub const HELP_TXT: &str = r#"
 Usage: unlock [OPTIONS] <LEVEL/CHEST_NAME>
 
@@ -70,7 +72,7 @@ pub fn unlock(
             //now check if it is a protected thing
             if let Ok((is_level, is_locked)) = read_lock_perm(&target) {
                 if !is_locked {
-                    err_msg += "Object requested is not locked or already unlocked. Cannot unlock. you can try accessing it directly.";
+                    err_msg += "target is not locked, you can try accessing it directly.";
                     log::log_info("unlock", err_msg.as_str());
                     return err_msg;
                 }
@@ -117,29 +119,36 @@ pub fn unlock(
                 }
                 let obj_salt = obj_salt.as_ref().unwrap();
                 //reads decrypt_me from info.json
-                let decrypt_me = get_encrypted_flag(&target, locked_obj_name);
+                let decrypt_me = &locked_obj_info.properties["decrypt_me"]
+                    .as_str()
+                    .ok_or_else(|| "Invalid 'decrypt_me' property in info.json".to_string());
                 if decrypt_me.is_err() {
                     err_msg += &format!(
                         "Failed to get encrypted flag for the level/chest: {}",
-                        decrypt_me.err().unwrap()
+                        locked_obj_name
                     );
                     log::log_error("unlock", err_msg.as_str());
                     return err_msg;
                 }
-                let decrypt_me = decrypt_me.unwrap();
+                let decrypt_me = decrypt_me.as_ref().unwrap();
                 // take flag
                 let user_flag =
-                    prompter.input(format!("Enter the flag for: {locked_obj_name} ").as_str());
-                let compare_me = get_encrypted_flag(&target, locked_obj_name);
+                prompter.input(format!("Enter the flag for: {locked_obj_name} ").as_str());
+                let compare_me =&locked_obj_info.properties["compare_me"]
+                    .as_str()
+                    .ok_or_else(|| {
+                    "Invalid 'compare_me' property in info.json".to_string()
+                    });
                 if compare_me.is_err() {
                     err_msg += &format!(
-                        "Failed to get encrypted flag for the level/chest: {}",
-                        compare_me.err().unwrap()
+                        "Failed to get compare_me for the level/chest: {}",
+                        locked_obj_name
                     );
                     log::log_error("unlock", err_msg.as_str());
                     return err_msg;
                 }
-                let compare_me = compare_me.unwrap();
+                let compare_me = compare_me.as_ref().unwrap();
+
                 if is_level {
                     if check_level(
                         user_flag,
@@ -188,16 +197,16 @@ fn check_level(
 ) -> bool {
     let obj_salt = SaltString::from_b64(level_salt).expect("Invalid obj_salt format");
     //read user salt from database using f
-    let user_salt = SaltString::from_b64(USER_SALT.get().expect("USER_SALT not set")).unwrap();
+    let user_salt = SaltString::from_b64(USER_SALT).unwrap();
 
     let decrypted_user_flag = decrypt(
         &characterise_enc_key(
             &format!(
                 "{}_{}",
-                USER_NAME.get().unwrap(),
-                USER_NAME.get().unwrap().len()
+                USER_NAME,
+                USER_NAME.len()
             ),
-            &format!("{}_{}", USER_NAME.get().unwrap(), level_name),
+            &format!("{}_{}", USER_NAME, level_name),
         ),
         &user_flag,
     );
@@ -214,7 +223,7 @@ fn check_chest(
 ) -> bool {
     let obj_salt = SaltString::from_b64(chest_salt).expect("Invalid obj_salt format");
     //read user salt from database using f
-    let user_salt = SaltString::from_b64(USER_SALT.get().expect("USER_SALT not set"));
+    let user_salt = SaltString::from_b64(USER_SALT);
 
     let hashed_user_flag = argonhash(&obj_salt, user_flag);
     let encryped_hshed_user_flag = encrypt(

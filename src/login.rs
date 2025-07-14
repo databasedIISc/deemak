@@ -1,12 +1,11 @@
 use crate::keys::key_to_char;
 use crate::utils::auth::verify_password;
+use crate::utils::globals::{USER_NAME, USER_PASSWORD};
 use deemak::utils::auth::load_users;
 use raylib::ffi::{DrawTextEx, LoadFontEx, MeasureTextEx, Vector2};
 use raylib::prelude::*;
 use std::ffi::CString;
 use std::time::{Duration, Instant};
-
-use crate::utils::globals::{USER_NAME, USER_PASSWORD};
 
 pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32) -> bool {
     let mut username = String::new();

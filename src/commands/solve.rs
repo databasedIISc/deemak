@@ -1,9 +1,8 @@
 use super::argparser::ArgParser;
 use super::cmds::normalize_path;
-use crate::metainfo::info_reader::get_encrypted_flag;
+use crate::metainfo::info_reader::read_get_obj_info;
 use crate::metainfo::lock_perm::read_lock_perm;
 use crate::rns::security::{characterise_enc_key, decrypt, encrypt};
-use crate::utils::globals::USER_NAME;
 use crate::utils::{log, prompt::UserPrompter};
 use std::path::Path;
 pub const HELP_TEXT: &str = r#"
@@ -14,6 +13,8 @@ Options:
 
 Examples:
 "#;
+
+pub static USER_NAME: &str = "1234";
 
 pub fn solve(
     args: &[&str],
@@ -36,8 +37,13 @@ pub fn solve(
     match parser.parse(&args_string, "solve") {
         Ok(_) => {
             let pos_args = parser.get_positional_args();
-            if !pos_args.len() == 1 {
+            if pos_args.len() > 1 {
                 err_msg += "Too many positional arguments provided. Only 1 argument expected.";
+                log::log_info("solve", err_msg.as_str());
+                return err_msg;
+            }
+            if pos_args.is_empty() {
+                err_msg += "No positional argument provided. Expected path to level.";
                 log::log_info("solve", err_msg.as_str());
                 return err_msg;
             }
@@ -56,12 +62,13 @@ pub fn solve(
                     log::log_info("solve", err_msg.as_str());
                     return err_msg;
                 }
-                if !is_locked {
-                    err_msg += "Level is unlocked. You have permission to access it.";
+                if is_locked {
+                    err_msg += "Level is locked. You must first unlock it.";
                     log::log_info("solve", err_msg.as_str());
                     return err_msg;
                 }
-            } else {
+            } 
+            else {
                 err_msg += "Failed to read lock permissions for the level.";
                 log::log_error("solve", err_msg.as_str());
                 return err_msg;
@@ -78,54 +85,71 @@ pub fn solve(
             };
             log::log_info("solve", &format!("Level name: {level_name}"));
             let user_input =
-                prompter.input(&format!("Enter your answer for level '{level_name}': "));
+                prompter.input(&format!("> Enter your answer for level '{level_name}': "));
             if user_input.is_empty() {
                 err_msg += "No input provided. Cannot solve.";
                 log::log_info("solve", err_msg.as_str());
                 err_msg
             } else {
                 let user_flag = check_solve_input(user_input, &target, level_name);
-                if user_flag.is_empty() {
-                    err_msg += "User flag is empty. Cannot solve.";
-                    log::log_warning("solve", err_msg.as_str());
-                    err_msg
-                } else {
-                    log::log_info(
-                        "solve",
-                        &format!("Successfully generated User flag: {user_flag}"),
-                    );
-                    format!("Your flag is {user_flag}")
+                match user_flag {
+                    Ok(flag) => {
+                        log::log_info("solve", &format!("Successfully generated User flag: {flag}")); 
+                        format!("User flag: {flag}")                    
+                    }
+                    Err(e) => {
+                        err_msg += &format!("Error solving {level_name}: {e}");
+                        log::log_error("solve", err_msg.as_str());
+                        err_msg
+                    }
                 }
             }
-        }
+                
+            }
+        
         Err(e) => match &e[..] {
             "help" => HELP_TEXT.to_string(),
             _ => "Error parsing arguments. Try 'help solve' for more information.".to_string(),
-        },
-    }
-}
+        }
+    }}
 
-fn check_solve_input(user_input: String, path_to_level: &Path, level_name: &str) -> String {
-    let text_decrypt_me =
-        get_encrypted_flag(path_to_level, level_name).expect("Failed to get encrypted flag");
-    let user_inp_enc_key = characterise_enc_key(USER_NAME.get().unwrap(), level_name);
+
+fn check_solve_input(user_input: String, path_to_level: &Path, level_name: &str) -> Result<String,String> {
+    let info_path = path_to_level.parent().unwrap().join(".dir_info/info.json");
+    println!("info_path: {}", info_path.display());
+    println!("level_name: {}", level_name);
+    if let Some(text_decrypt_me) =read_get_obj_info(&info_path, level_name)
+    .unwrap().properties.get("decrypt_me")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string()){
+    println!("text_decrypt_me: {}", text_decrypt_me);
+    println!("Username: {}", USER_NAME);
+    let user_inp_enc_key = characterise_enc_key(USER_NAME, level_name);
     let decrypted_user_input = decrypt(&user_inp_enc_key, &user_input);
+        println!("decrypted _user input: {}", decrypted_user_input);
+
     //run some extra tests on decrypted user input
     //use this to decrypt textfile
     let decrypted_decrypt_me = decrypt(
         &characterise_enc_key(level_name, &decrypted_user_input),
         &text_decrypt_me,
     );
+    println!("decrypted _decrypt me : {}", decrypted_decrypt_me);
     let user_flag: String = encrypt(
         &characterise_enc_key(
             &format!(
                 "{}_{}",
-                USER_NAME.get().unwrap(),
-                USER_NAME.get().unwrap().len()
+                USER_NAME,
+                USER_NAME.len()
             ),
-            &format!("{}_{}", USER_NAME.get().unwrap(), level_name),
+            &format!("{}_{}", USER_NAME, level_name),
         ),
         &decrypted_decrypt_me,
     );
-    user_flag
+    return Ok(user_flag);}
+    else {//unable to read decrypt_me property
+        println!("Unable to read decrypt_me property from info.json for level: {}", level_name);
+        return Err("Unable to read decrypt_me property from info.json".to_string());
+    }
+    
 }

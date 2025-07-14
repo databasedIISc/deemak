@@ -343,11 +343,6 @@ impl ShellScreen {
         d.clear_background(Color::BLACK);
 
         // Input
-        // let input_lines = if self.input_buffer.len()+1 > limit {
-        //     wrap(&self.input_buffer, limit)
-        // } else {
-        //     vec![Cow::Borrowed(self.input_buffer.as_str())]
-        // };
         let input_line = if let Some(ref prompt) = self.active_prompt {
             format!("{} {}", prompt, self.input_buffer)
         } else {
@@ -413,9 +408,8 @@ impl ShellScreen {
         }
 
         // CURSOR
-        let cursor_line = display_lines.len() - 1;
         let cursor_prefix = if let Some(ref prompt) = self.active_prompt {
-            format!("{prompt} ")
+            format!(">{prompt}")  
         } else {
             "> ".to_string()
         };
@@ -423,17 +417,18 @@ impl ShellScreen {
             format!("{}{}", cursor_prefix, &self.input_buffer[..self.cursor_pos])
         } else {
             format!("{}{}", cursor_prefix, &self.input_buffer)
-        };
-
+        };      
+        let cursor_line =
+            display_lines.len() - length_input + wrapit(&cursor_text, limit).len() - 1;
         let cursor_x_offset = unsafe {
             let c_string = CString::new(cursor_text).unwrap();
-            MeasureTextEx(self.font, c_string.as_ptr(), self.font_size, 1.2).x
+            (MeasureTextEx(self.font, c_string.as_ptr(), self.font_size, 1.2).x)
+                % ((limit as f32 + 6.0) * char_width)
         };
-
         // Draw cursor
         unsafe {
             DrawRectangle(
-                (10.0 + cursor_x_offset) as c_int,
+                (10.6 + cursor_x_offset) as c_int,
                 (10.0 + (cursor_line as f32 * self.font_size)) as c_int,
                 char_width as c_int,
                 self.font_size as c_int,
@@ -535,28 +530,56 @@ impl ShellScreen {
         self.active_prompt = Some(message.to_string());
         self.input_buffer.clear();
         self.draw();
+        println!("cursor_pos: {}", self.cursor_pos);
+        let excess=self.cursor_pos;
+        self.cursor_pos = 0;
 
         loop {
             self.update();
             self.draw();
 
-            if self
-                .rl
-                .is_key_pressed(raylib::consts::KeyboardKey::KEY_ENTER)
-            {
+            match self.rl.get_key_pressed() {
+            Some(KeyboardKey::KEY_ENTER) => {
                 let input = take(&mut self.input_buffer);
                 self.active_prompt = None;
-                if !input.is_empty() {
-                    self.output_lines.push(format!("{message}: {input}"));
-                    return input;
+                self.output_lines.push(format!("{message}: {input}"));
+                self.cursor_pos = 0;
+                return input;
+            },
+            Some(KeyboardKey::KEY_BACKSPACE) => {
+                if !self.input_buffer.is_empty() && self.cursor_pos > 0 {
+                self.input_buffer.remove(self.cursor_pos - 1);
+                self.cursor_pos -= 1;
+                println!("cursor_pos after backspace: {}", self.cursor_pos);
+                } 
+            },
+            Some(KeyboardKey::KEY_LEFT) => {
+                if self.cursor_pos > 0  {
+                    println!("cursor_pos after moving to left : {}", self.cursor_pos);
+                    self.cursor_pos -= 1;
+                } 
+            },
+            Some(KeyboardKey::KEY_RIGHT) => {
+                if self.cursor_pos < self.input_buffer.len() {
+                self.cursor_pos += 1;
+                println!("cursor_pos after adding moving to the right : {}", self.cursor_pos);
                 }
-            } else if self
-                .rl
-                .is_key_pressed(raylib::consts::KeyboardKey::KEY_BACKSPACE)
-                && !self.input_buffer.is_empty()
-            {
-                self.input_buffer.pop();
+            },
+            Some(key) => {
+                let shift = self.rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT) 
+                || self.rl.is_key_down(KeyboardKey::KEY_RIGHT_SHIFT);
+
+                if let Some(c) = key_to_char(key, shift) {
+                self.input_buffer.insert(self.cursor_pos, c);
+                println!("cursor_pos: after insertion : {}", self.cursor_pos);
+                self.cursor_pos += 1;
+                println!("cursor_pos after adding 1 : {}", self.cursor_pos);
+                }
+            },
+            None => {}
             }
         }
+        // Reset cursor position after input
+        
     }
 }

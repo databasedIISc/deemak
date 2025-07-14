@@ -12,6 +12,8 @@ pub enum CommandResult {
     NotFound,
 }
 
+pub static RESTRICTED_FILES: [&str; 5] = [".dir_info", "info.json", ".DS_Store", "restore_me", "save_me"];
+
 /// Normalizes a path by removing `.` and `..` components
 pub fn normalize_path(path: &Path) -> PathBuf {
     let components = path.components();
@@ -34,9 +36,8 @@ pub fn normalize_path(path: &Path) -> PathBuf {
 
 /// Check existence of `.dir_info` or `info.json` in the given Path
 pub fn check_dir_info(path: &Path) -> bool {
-    let restricted_files = [".dir_info", "info.json"];
     let path_str = path.to_string_lossy();
-    restricted_files.iter().any(|&file| path_str.contains(file))
+    RESTRICTED_FILES.iter().any(|&file| path_str.contains(file))
 }
 
 /// Command manager that processes commands and processed to return appropriate outputs
