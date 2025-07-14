@@ -150,13 +150,13 @@ fn check_solve_input(
             ),
             &decrypted_decrypt_me,
         );
-        return Ok(user_flag);
+        Ok(user_flag)
     } else {
         //unable to read decrypt_me property
         println!(
             "Unable to read decrypt_me property from info.json for level: {}",
             level_name
         );
-        return Err("Unable to read decrypt_me property from info.json".to_string());
+        Err("Unable to read decrypt_me property from info.json".to_string())
     }
 }

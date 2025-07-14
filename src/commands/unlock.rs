@@ -148,13 +148,7 @@ pub fn unlock(
                 let compare_me = compare_me.as_ref().unwrap();
 
                 if is_level {
-                    if check_level(
-                        user_flag,
-                        locked_obj_name,
-                        obj_salt,
-                        &decrypt_me,
-                        &compare_me,
-                    ) {
+                    if check_level(user_flag, locked_obj_name, obj_salt, decrypt_me, compare_me) {
                         //update obj_info_lock_perm
                         "{} is unlocked".to_string()
                     } else {
@@ -164,7 +158,7 @@ pub fn unlock(
                     }
                 } else {
                     //is chest
-                    if check_chest(user_flag, locked_obj_name, obj_salt, &compare_me) {
+                    if check_chest(user_flag, locked_obj_name, obj_salt, compare_me) {
                         //update obj_info_lock_perm
                         " Chest {} is unlocked".to_string()
                     } else {

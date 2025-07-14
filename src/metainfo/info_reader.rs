@@ -294,7 +294,7 @@ pub fn read_get_obj_info(info_path: &Path, obj_name: &str) -> Result<ObjectInfo,
 pub fn get_encrypted_flag(path: &Path, level_name: &str) -> Result<String, String> {
     //the flag is stored in ./dir_info/info.json of parent directory
     match read_get_obj_info(
-        &path.parent().unwrap().join("/.dir_info/info.json"),
+        &path.parent().unwrap().join(".dir_info/info.json"),
         level_name,
     ) {
         Ok(obj_info) => {
