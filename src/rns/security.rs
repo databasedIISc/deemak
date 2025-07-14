@@ -1,10 +1,6 @@
-use argon2::{
-    Argon2, PasswordHasher,
-    password_hash::{SaltString, rand_core::OsRng},
-};
-use base64ct::{Base64Unpadded, Encoding}; //used in deteministic salt for l1hashing
+use argon2::{Argon2, PasswordHasher, password_hash::SaltString};
+use base64ct::Encoding; //used in deteministic salt for l1hashing
 use sha3::{Digest, Sha3_256}; //used in deteministic salt for l1hashing
-use std::sync::OnceLock;
 
 pub fn argonhash(salt_unique: &SaltString, user_input: String) -> String {
     let salt = salt_unique;
@@ -37,7 +33,7 @@ fn gen_encryption_key(str1: &str, str2: &str) -> Vec<Vec<i32>> {
         (_, 0) => mult + 1, // Other multiples of 19
         _ => mult,          // No conditions met
     };
-    for i in (1..=95) {
+    for i in 1..=95 {
         let key = i + 31;
         let val = ((i * mult) % 95) + 32;
         result.push(vec![key, val]);
@@ -70,7 +66,7 @@ pub fn characterise_dec_key(str1: &str, str2: &str) -> Vec<Vec<char>> {
         .collect()
 }
 
-pub fn encrypt(enc_key: &Vec<Vec<char>>, text: &str) -> String {
+pub fn encrypt(enc_key: &[Vec<char>], text: &str) -> String {
     text.chars()
         .map(|c| {
             enc_key
@@ -82,7 +78,7 @@ pub fn encrypt(enc_key: &Vec<Vec<char>>, text: &str) -> String {
         .collect()
 }
 
-pub fn decrypt(enc_key: &Vec<Vec<char>>, text: &str) -> String {
+pub fn decrypt(enc_key: &[Vec<char>], text: &str) -> String {
     text.chars()
         .map(|c| {
             enc_key
