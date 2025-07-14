@@ -141,7 +141,6 @@ impl ShellScreen {
                     shell_history::add_to_history(&input);
                     self.history_index = None;
                     self.working_buffer = None; // Clear working buffer after command execution
-                    self.cursor_pos = 0; // Reset cursor position
                 } else {
                     // If input is empty, just add a new line
                     if !unsafe { FIRST_RUN } {
@@ -150,6 +149,7 @@ impl ShellScreen {
                         unsafe { FIRST_RUN = false };
                     }
                 }
+                self.cursor_pos = 0; // Reset cursor position
             }
             Some(KeyboardKey::KEY_BACKSPACE) => {
                 if !self.input_buffer.is_empty() && self.cursor_pos > 0 {
@@ -238,7 +238,7 @@ impl ShellScreen {
                     self.input_buffer = history[new_index].clone();
                     self.history_index = Some(new_index);
                 }
-                self.cursor_pos = self.input_buffer.len();
+                self.cursor_pos = self.input_buffer.len(); //place at the end of the command 
             }
             Some(KeyboardKey::KEY_DOWN) => {
                 if let Some(index) = self.history_index {
@@ -430,7 +430,7 @@ impl ShellScreen {
             DrawRectangle(
                 (10.6 + cursor_x_offset) as c_int,
                 (10.0 + (cursor_line as f32 * self.font_size)) as c_int,
-                char_width as c_int,
+                (char_width as f32 * 1.2) as c_int,
                 self.font_size as c_int,
                 ColorFromHSV(0.0, 0.0, 1.0),
             );

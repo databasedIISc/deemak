@@ -13,7 +13,6 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::num::NonZeroU32;
 use std::path::Path;
-//passwrd hashing
 
 const USER_FILE: &str = "database.json";
 const ITERATIONS: NonZeroU32 = NonZeroU32::new(100_000).unwrap();
