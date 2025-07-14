@@ -64,7 +64,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
-      - run: cargo fmt
+      - run: cargo fmt --all
       - name: Commit and push changes
         run: |
           git config --global user.name 'github-actions[bot]'
