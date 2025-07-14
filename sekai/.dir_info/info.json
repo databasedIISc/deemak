@@ -2,47 +2,48 @@
   "location": "HOME",
   "about": "Home Sweet Home",
   "objects": {
-    "room_1": {
-      "locked": "00"
-    },
-    "room_3": {
-      "locked": "00"
-    },
-    "dog.txt": {
+    "room_5": {
       "locked": "00"
     },
     "room_8": {
-      "locked": "01"
-    },
-    ".DS_Store": {
-      "locked": "00"
-    },
-    "room_2": {
-      "locked": "00"
-    },
-    "room_10": {
-      "locked": "00"
-    },
-    "README": {
-      "locked": "11"
+      "decrypt_me": "blah",
+      "locked": "11",
+      "obj_salt": "salt"
     },
     "room_6": {
-      "locked": "00"
-    },
-    "room_5": {
       "locked": "00"
     },
     "room_7": {
       "locked": "00"
     },
-    "some1": {
-      "locked": "00"
-    },
     "room_9": {
       "locked": "00"
     },
+    "some1": {
+      "locked": "00"
+    },
+    "room_10": {
+      "locked": "00"
+    },
+    "dog.txt": {
+      "decrypt_me": "blah",
+      "locked": "11",
+      "obj_salt": "salt"
+    },
+    "README": {
+      "locked": "00"
+    },
     "cat.txt": {
-      "locked": "10"
+      "locked": "00"
+    },
+    "room_1": {
+      "locked": "00"
+    },
+    "room_2": {
+      "locked": "00"
+    },
+    "room_3": {
+      "locked": "00"
     },
     "room_4": {
       "locked": "00"
