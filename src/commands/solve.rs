@@ -153,9 +153,7 @@ fn check_solve_input(
         Ok(user_flag)
     } else {
         //unable to read decrypt_me property
-        println!(
-            "Unable to read decrypt_me property from info.json for level: {level_name}"
-        );
+        println!("Unable to read decrypt_me property from info.json for level: {level_name}");
         Err("Unable to read decrypt_me property from info.json".to_string())
     }
 }

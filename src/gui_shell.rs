@@ -530,7 +530,6 @@ impl ShellScreen {
         self.active_prompt = Some(message.to_string());
         self.input_buffer.clear();
         self.draw();
-        println!("cursor_pos: {}", self.cursor_pos);
         let excess = self.cursor_pos;
         self.cursor_pos = 0;
 
@@ -550,22 +549,16 @@ impl ShellScreen {
                     if !self.input_buffer.is_empty() && self.cursor_pos > 0 {
                         self.input_buffer.remove(self.cursor_pos - 1);
                         self.cursor_pos -= 1;
-                        println!("cursor_pos after backspace: {}", self.cursor_pos);
                     }
                 }
                 Some(KeyboardKey::KEY_LEFT) => {
                     if self.cursor_pos > 0 {
-                        println!("cursor_pos after moving to left : {}", self.cursor_pos);
                         self.cursor_pos -= 1;
                     }
                 }
                 Some(KeyboardKey::KEY_RIGHT) => {
                     if self.cursor_pos < self.input_buffer.len() {
                         self.cursor_pos += 1;
-                        println!(
-                            "cursor_pos after adding moving to the right : {}",
-                            self.cursor_pos
-                        );
                     }
                 }
                 Some(key) => {
@@ -574,9 +567,7 @@ impl ShellScreen {
 
                     if let Some(c) = key_to_char(key, shift) {
                         self.input_buffer.insert(self.cursor_pos, c);
-                        println!("cursor_pos: after insertion : {}", self.cursor_pos);
                         self.cursor_pos += 1;
-                        println!("cursor_pos after adding 1 : {}", self.cursor_pos);
                     }
                 }
                 None => {}
