@@ -122,7 +122,7 @@ fn check_solve_input(
 ) -> Result<String, String> {
     let info_path = path_to_level.parent().unwrap().join(".dir_info/info.json");
     println!("info_path: {}", info_path.display());
-    println!("level_name: {}", level_name);
+    println!("level_name: {level_name}");
     if let Some(text_decrypt_me) = read_get_obj_info(&info_path, level_name)
         .unwrap()
         .properties
@@ -130,11 +130,11 @@ fn check_solve_input(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string())
     {
-        println!("text_decrypt_me: {}", text_decrypt_me);
-        println!("Username: {}", USER_NAME);
+        println!("text_decrypt_me: {text_decrypt_me}");
+        println!("Username: {USER_NAME}");
         let user_inp_enc_key = characterise_enc_key(USER_NAME, level_name);
         let decrypted_user_input = decrypt(&user_inp_enc_key, &user_input);
-        println!("decrypted _user input: {}", decrypted_user_input);
+        println!("decrypted _user input: {decrypted_user_input}");
 
         //run some extra tests on decrypted user input
         //use this to decrypt textfile
@@ -142,11 +142,11 @@ fn check_solve_input(
             &characterise_enc_key(level_name, &decrypted_user_input),
             &text_decrypt_me,
         );
-        println!("decrypted _decrypt me : {}", decrypted_decrypt_me);
+        println!("decrypted _decrypt me : {decrypted_decrypt_me}");
         let user_flag: String = encrypt(
             &characterise_enc_key(
                 &format!("{}_{}", USER_NAME, USER_NAME.len()),
-                &format!("{}_{}", USER_NAME, level_name),
+                &format!("{USER_NAME}_{level_name}"),
             ),
             &decrypted_decrypt_me,
         );
@@ -154,8 +154,7 @@ fn check_solve_input(
     } else {
         //unable to read decrypt_me property
         println!(
-            "Unable to read decrypt_me property from info.json for level: {}",
-            level_name
+            "Unable to read decrypt_me property from info.json for level: {level_name}"
         );
         Err("Unable to read decrypt_me property from info.json".to_string())
     }

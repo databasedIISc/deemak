@@ -124,8 +124,7 @@ pub fn unlock(
                     .ok_or_else(|| "Invalid 'decrypt_me' property in info.json".to_string());
                 if decrypt_me.is_err() {
                     err_msg += &format!(
-                        "Failed to get encrypted flag for the level/chest: {}",
-                        locked_obj_name
+                        "Failed to get encrypted flag for the level/chest: {locked_obj_name}"
                     );
                     log::log_error("unlock", err_msg.as_str());
                     return err_msg;
@@ -139,8 +138,7 @@ pub fn unlock(
                     .ok_or_else(|| "Invalid 'compare_me' property in info.json".to_string());
                 if compare_me.is_err() {
                     err_msg += &format!(
-                        "Failed to get compare_me for the level/chest: {}",
-                        locked_obj_name
+                        "Failed to get compare_me for the level/chest: {locked_obj_name}"
                     );
                     log::log_error("unlock", err_msg.as_str());
                     return err_msg;
@@ -194,7 +192,7 @@ fn check_level(
     let decrypted_user_flag = decrypt(
         &characterise_enc_key(
             &format!("{}_{}", USER_NAME, USER_NAME.len()),
-            &format!("{}_{}", USER_NAME, level_name),
+            &format!("{USER_NAME}_{level_name}"),
         ),
         &user_flag,
     );
