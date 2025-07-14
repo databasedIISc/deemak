@@ -67,8 +67,7 @@ pub fn solve(
                     log::log_info("solve", err_msg.as_str());
                     return err_msg;
                 }
-            } 
-            else {
+            } else {
                 err_msg += "Failed to read lock permissions for the level.";
                 log::log_error("solve", err_msg.as_str());
                 return err_msg;
@@ -94,8 +93,11 @@ pub fn solve(
                 let user_flag = check_solve_input(user_input, &target, level_name);
                 match user_flag {
                     Ok(flag) => {
-                        log::log_info("solve", &format!("Successfully generated User flag: {flag}")); 
-                        format!("User flag: {flag}")                    
+                        log::log_info(
+                            "solve",
+                            &format!("Successfully generated User flag: {flag}"),
+                        );
+                        format!("User flag: {flag}")
                     }
                     Err(e) => {
                         err_msg += &format!("Error solving {level_name}: {e}");
@@ -104,52 +106,57 @@ pub fn solve(
                     }
                 }
             }
-                
-            }
-        
+        }
+
         Err(e) => match &e[..] {
             "help" => HELP_TEXT.to_string(),
             _ => "Error parsing arguments. Try 'help solve' for more information.".to_string(),
-        }
-    }}
+        },
+    }
+}
 
-
-fn check_solve_input(user_input: String, path_to_level: &Path, level_name: &str) -> Result<String,String> {
+fn check_solve_input(
+    user_input: String,
+    path_to_level: &Path,
+    level_name: &str,
+) -> Result<String, String> {
     let info_path = path_to_level.parent().unwrap().join(".dir_info/info.json");
     println!("info_path: {}", info_path.display());
     println!("level_name: {}", level_name);
-    if let Some(text_decrypt_me) =read_get_obj_info(&info_path, level_name)
-    .unwrap().properties.get("decrypt_me")
+    if let Some(text_decrypt_me) = read_get_obj_info(&info_path, level_name)
+        .unwrap()
+        .properties
+        .get("decrypt_me")
         .and_then(|v| v.as_str())
-        .map(|s| s.to_string()){
-    println!("text_decrypt_me: {}", text_decrypt_me);
-    println!("Username: {}", USER_NAME);
-    let user_inp_enc_key = characterise_enc_key(USER_NAME, level_name);
-    let decrypted_user_input = decrypt(&user_inp_enc_key, &user_input);
+        .map(|s| s.to_string())
+    {
+        println!("text_decrypt_me: {}", text_decrypt_me);
+        println!("Username: {}", USER_NAME);
+        let user_inp_enc_key = characterise_enc_key(USER_NAME, level_name);
+        let decrypted_user_input = decrypt(&user_inp_enc_key, &user_input);
         println!("decrypted _user input: {}", decrypted_user_input);
 
-    //run some extra tests on decrypted user input
-    //use this to decrypt textfile
-    let decrypted_decrypt_me = decrypt(
-        &characterise_enc_key(level_name, &decrypted_user_input),
-        &text_decrypt_me,
-    );
-    println!("decrypted _decrypt me : {}", decrypted_decrypt_me);
-    let user_flag: String = encrypt(
-        &characterise_enc_key(
-            &format!(
-                "{}_{}",
-                USER_NAME,
-                USER_NAME.len()
+        //run some extra tests on decrypted user input
+        //use this to decrypt textfile
+        let decrypted_decrypt_me = decrypt(
+            &characterise_enc_key(level_name, &decrypted_user_input),
+            &text_decrypt_me,
+        );
+        println!("decrypted _decrypt me : {}", decrypted_decrypt_me);
+        let user_flag: String = encrypt(
+            &characterise_enc_key(
+                &format!("{}_{}", USER_NAME, USER_NAME.len()),
+                &format!("{}_{}", USER_NAME, level_name),
             ),
-            &format!("{}_{}", USER_NAME, level_name),
-        ),
-        &decrypted_decrypt_me,
-    );
-    return Ok(user_flag);}
-    else {//unable to read decrypt_me property
-        println!("Unable to read decrypt_me property from info.json for level: {}", level_name);
+            &decrypted_decrypt_me,
+        );
+        return Ok(user_flag);
+    } else {
+        //unable to read decrypt_me property
+        println!(
+            "Unable to read decrypt_me property from info.json for level: {}",
+            level_name
+        );
         return Err("Unable to read decrypt_me property from info.json".to_string());
     }
-    
 }

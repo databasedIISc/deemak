@@ -1,3 +1,4 @@
+use crate::utils::globals::{USER_NAME, USER_PASSWORD, USER_SALT};
 use chrono::{Duration, Utc};
 use data_encoding::HEXUPPER;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
@@ -12,7 +13,6 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::num::NonZeroU32;
 use std::path::Path;
-use crate::utils::globals::{USER_NAME, USER_SALT, USER_PASSWORD};
 //passwrd hashing
 
 const USER_FILE: &str = "database.json";

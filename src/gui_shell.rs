@@ -409,7 +409,7 @@ impl ShellScreen {
 
         // CURSOR
         let cursor_prefix = if let Some(ref prompt) = self.active_prompt {
-            format!(">{prompt}")  
+            format!(">{prompt}")
         } else {
             "> ".to_string()
         };
@@ -417,7 +417,7 @@ impl ShellScreen {
             format!("{}{}", cursor_prefix, &self.input_buffer[..self.cursor_pos])
         } else {
             format!("{}{}", cursor_prefix, &self.input_buffer)
-        };      
+        };
         let cursor_line =
             display_lines.len() - length_input + wrapit(&cursor_text, limit).len() - 1;
         let cursor_x_offset = unsafe {
@@ -531,7 +531,7 @@ impl ShellScreen {
         self.input_buffer.clear();
         self.draw();
         println!("cursor_pos: {}", self.cursor_pos);
-        let excess=self.cursor_pos;
+        let excess = self.cursor_pos;
         self.cursor_pos = 0;
 
         loop {
@@ -539,47 +539,49 @@ impl ShellScreen {
             self.draw();
 
             match self.rl.get_key_pressed() {
-            Some(KeyboardKey::KEY_ENTER) => {
-                let input = take(&mut self.input_buffer);
-                self.active_prompt = None;
-                self.output_lines.push(format!("{message}: {input}"));
-                self.cursor_pos = 0;
-                return input;
-            },
-            Some(KeyboardKey::KEY_BACKSPACE) => {
-                if !self.input_buffer.is_empty() && self.cursor_pos > 0 {
-                self.input_buffer.remove(self.cursor_pos - 1);
-                self.cursor_pos -= 1;
-                println!("cursor_pos after backspace: {}", self.cursor_pos);
-                } 
-            },
-            Some(KeyboardKey::KEY_LEFT) => {
-                if self.cursor_pos > 0  {
-                    println!("cursor_pos after moving to left : {}", self.cursor_pos);
-                    self.cursor_pos -= 1;
-                } 
-            },
-            Some(KeyboardKey::KEY_RIGHT) => {
-                if self.cursor_pos < self.input_buffer.len() {
-                self.cursor_pos += 1;
-                println!("cursor_pos after adding moving to the right : {}", self.cursor_pos);
+                Some(KeyboardKey::KEY_ENTER) => {
+                    let input = take(&mut self.input_buffer);
+                    self.active_prompt = None;
+                    self.output_lines.push(format!("{message}: {input}"));
+                    self.cursor_pos = 0;
+                    return input;
                 }
-            },
-            Some(key) => {
-                let shift = self.rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT) 
-                || self.rl.is_key_down(KeyboardKey::KEY_RIGHT_SHIFT);
+                Some(KeyboardKey::KEY_BACKSPACE) => {
+                    if !self.input_buffer.is_empty() && self.cursor_pos > 0 {
+                        self.input_buffer.remove(self.cursor_pos - 1);
+                        self.cursor_pos -= 1;
+                        println!("cursor_pos after backspace: {}", self.cursor_pos);
+                    }
+                }
+                Some(KeyboardKey::KEY_LEFT) => {
+                    if self.cursor_pos > 0 {
+                        println!("cursor_pos after moving to left : {}", self.cursor_pos);
+                        self.cursor_pos -= 1;
+                    }
+                }
+                Some(KeyboardKey::KEY_RIGHT) => {
+                    if self.cursor_pos < self.input_buffer.len() {
+                        self.cursor_pos += 1;
+                        println!(
+                            "cursor_pos after adding moving to the right : {}",
+                            self.cursor_pos
+                        );
+                    }
+                }
+                Some(key) => {
+                    let shift = self.rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT)
+                        || self.rl.is_key_down(KeyboardKey::KEY_RIGHT_SHIFT);
 
-                if let Some(c) = key_to_char(key, shift) {
-                self.input_buffer.insert(self.cursor_pos, c);
-                println!("cursor_pos: after insertion : {}", self.cursor_pos);
-                self.cursor_pos += 1;
-                println!("cursor_pos after adding 1 : {}", self.cursor_pos);
+                    if let Some(c) = key_to_char(key, shift) {
+                        self.input_buffer.insert(self.cursor_pos, c);
+                        println!("cursor_pos: after insertion : {}", self.cursor_pos);
+                        self.cursor_pos += 1;
+                        println!("cursor_pos after adding 1 : {}", self.cursor_pos);
+                    }
                 }
-            },
-            None => {}
+                None => {}
             }
         }
         // Reset cursor position after input
-        
     }
 }

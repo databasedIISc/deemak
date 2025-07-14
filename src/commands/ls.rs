@@ -1,5 +1,5 @@
 use super::argparser::ArgParser;
-use super::cmds::{check_dir_info, RESTRICTED_FILES};
+use super::cmds::{RESTRICTED_FILES, check_dir_info};
 use super::whereami::display_relative_path;
 use crate::metainfo::lock_perm;
 use crate::utils::log;

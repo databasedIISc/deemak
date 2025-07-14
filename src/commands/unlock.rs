@@ -133,12 +133,10 @@ pub fn unlock(
                 let decrypt_me = decrypt_me.as_ref().unwrap();
                 // take flag
                 let user_flag =
-                prompter.input(format!("Enter the flag for: {locked_obj_name} ").as_str());
-                let compare_me =&locked_obj_info.properties["compare_me"]
+                    prompter.input(format!("Enter the flag for: {locked_obj_name} ").as_str());
+                let compare_me = &locked_obj_info.properties["compare_me"]
                     .as_str()
-                    .ok_or_else(|| {
-                    "Invalid 'compare_me' property in info.json".to_string()
-                    });
+                    .ok_or_else(|| "Invalid 'compare_me' property in info.json".to_string());
                 if compare_me.is_err() {
                     err_msg += &format!(
                         "Failed to get compare_me for the level/chest: {}",
@@ -201,11 +199,7 @@ fn check_level(
 
     let decrypted_user_flag = decrypt(
         &characterise_enc_key(
-            &format!(
-                "{}_{}",
-                USER_NAME,
-                USER_NAME.len()
-            ),
+            &format!("{}_{}", USER_NAME, USER_NAME.len()),
             &format!("{}_{}", USER_NAME, level_name),
         ),
         &user_flag,

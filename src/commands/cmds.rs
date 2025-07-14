@@ -12,7 +12,13 @@ pub enum CommandResult {
     NotFound,
 }
 
-pub static RESTRICTED_FILES: [&str; 5] = [".dir_info", "info.json", ".DS_Store", "restore_me", "save_me"];
+pub static RESTRICTED_FILES: [&str; 5] = [
+    ".dir_info",
+    "info.json",
+    ".DS_Store",
+    "restore_me",
+    "save_me",
+];
 
 /// Normalizes a path by removing `.` and `..` components
 pub fn normalize_path(path: &Path) -> PathBuf {
