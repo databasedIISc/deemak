@@ -11,7 +11,7 @@ pub fn argonhash(salt_unique: &SaltString, user_input: String) -> String {
 
 fn deterministic_salt(str1: &str, str2: &str) -> SaltString {
     // Combine the word + unique ID (e.g., username/user ID) to ensure uniqueness
-    let input = format!("{}_{}", str2, str2);
+    let input = format!("{str2}_{str2}");
     // Hash the input to get a fixed-length value
     let mut hasher = Sha3_256::new();
     hasher.update(input.as_bytes());

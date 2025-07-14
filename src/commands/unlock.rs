@@ -129,7 +129,7 @@ pub fn unlock(
                 let decrypt_me = decrypt_me.unwrap();
                 // take flag
                 let user_flag =
-                    prompter.input(format!("Enter the flag for: {} ", locked_obj_name).as_str());
+                    prompter.input(format!("Enter the flag for: {locked_obj_name} ").as_str());
                 let compare_me = get_encrypted_flag(&target, locked_obj_name);
                 if compare_me.is_err() {
                     err_msg += &format!(

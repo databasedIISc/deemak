@@ -76,9 +76,9 @@ pub fn solve(
                 log::log_error("solve", err_msg.as_str());
                 return err_msg;
             };
-            log::log_info("solve", &format!("Level name: {}", level_name));
+            log::log_info("solve", &format!("Level name: {level_name}"));
             let user_input =
-                prompter.input(&format!("Enter your answer for level '{}': ", level_name));
+                prompter.input(&format!("Enter your answer for level '{level_name}': "));
             if user_input.is_empty() {
                 err_msg += "No input provided. Cannot solve.";
                 log::log_info("solve", err_msg.as_str());
@@ -92,9 +92,9 @@ pub fn solve(
                 } else {
                     log::log_info(
                         "solve",
-                        &format!("Successfully generated User flag: {}", user_flag),
+                        &format!("Successfully generated User flag: {user_flag}"),
                     );
-                    format!("Your flag is {}", user_flag)
+                    format!("Your flag is {user_flag}")
                 }
             }
         }
