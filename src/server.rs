@@ -31,7 +31,7 @@ fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
 
     let world_dir = &get_world_dir();
     let parts: Vec<&str> = command.split_whitespace().collect();
-    let root_dir = find_root::find_home(world_dir).expect("Could not find sekai home directory");
+    let root_dir = find_root::get_home(world_dir).expect("Could not find sekai home directory");
     let mut current_dir = if current_dir.is_empty() {
         root_dir.clone()
     } else {

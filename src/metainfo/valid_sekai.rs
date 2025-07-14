@@ -79,14 +79,6 @@ pub fn create_dir_info(dir: &Path, home_dir: bool) -> bool {
         }
     };
 
-    // Ascending order of objects
-    let mut sorted_entries: Vec<_> = info_to_write.objects.iter().collect();
-    sorted_entries.sort_by(|a, b| a.0.cmp(b.0));
-    info_to_write.objects = sorted_entries
-        .into_iter()
-        .map(|(k, v)| (k.clone(), v.clone()))
-        .collect();
-
     // Write the merged info
     match std::fs::write(
         &info_path,

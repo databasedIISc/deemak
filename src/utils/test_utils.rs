@@ -1,3 +1,4 @@
+use crate::metainfo::valid_sekai::create_dir_info;
 use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::{Read, Write};
@@ -30,7 +31,7 @@ pub fn remove_file<P: AsRef<Path>>(path: P) {
 ///     └── nested2/
 ///         ├── file6.txt
 ///         └── file7.txt
-pub fn setup_test_dir() -> (TempDir, PathBuf) {
+pub fn setup_test_dir(make_dirinfo: bool) -> (TempDir, PathBuf) {
     let temp_dir = TempDir::new().unwrap();
     let root_path = temp_dir.path().to_path_buf();
 
@@ -53,6 +54,16 @@ pub fn setup_test_dir() -> (TempDir, PathBuf) {
     fs::create_dir(&nested2_path).unwrap();
     create_file(nested2_path.join("file6.txt"), "hello from file6");
     create_file(nested2_path.join("file7.txt"), "hello from file7");
+
+    // NOTE: We assume that create_dir_info is correctly implemented. It's tests are elsewhere.
+    // If you find that there is issue in the dir_info creation, please check first that those
+    // tests are passing.
+    if make_dirinfo && !create_dir_info(&root_path, true) {
+        panic!(
+            "Failed to create valid .dir_info for root directory: {}",
+            root_path.display()
+        );
+    }
 
     (temp_dir, root_path)
 }
@@ -112,7 +123,7 @@ mod test {
 
     #[test]
     fn test_get_dir_contents() {
-        let (_temp_dir, root_path) = setup_test_dir();
+        let (_temp_dir, root_path) = setup_test_dir(false);
         let contents_got = get_dir_contents(&root_path, true);
 
         let mut expected = HashMap::new();

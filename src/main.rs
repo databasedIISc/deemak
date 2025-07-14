@@ -55,18 +55,33 @@ fn main() {
             );
         }
         // Just check first for HOME directory validity and create if not.
-        let root_dir = find_root::find_home(&sekai_path);
-        if root_dir.is_some() {
-            log::log_info(
-                "SEKAI",
-                &format!("Found root directory for Sekai: {root_dir:?}"),
-            );
-            // Set the global Sekai directory
-            set_world_dir(root_dir.clone().unwrap());
-        } else {
-            log::log_error("SEKAI", "Failed to find root directory for Sekai. Exiting.");
-            eprintln!("Error: Failed to find root directory for Sekai. Exiting.");
-            return;
+        let root_dir;
+        match find_root::find_home(&sekai_path) {
+            Ok(Some(sekai_dir)) => {
+                log::log_info(
+                    "SEKAI",
+                    &format!("Found root directory for Sekai: {}", sekai_dir.display()),
+                );
+                // Set the global Sekai directory
+                root_dir = Some(sekai_dir.clone());
+                set_world_dir(sekai_dir);
+            }
+            Ok(None) => {
+                log::log_error(
+                    "SEKAI",
+                    "Failed to find root directory for Sekai. No HOME location found. Exiting.",
+                );
+                eprintln!("Error: Failed to find root directory for Sekai. Exiting.");
+                return;
+            }
+            Err(e) => {
+                log::log_error(
+                    "SEKAI",
+                    &format!("Process failed while finding Sekai HOME. Error: {e}. Exiting."),
+                );
+                eprintln!("Process failed while finding Sekai HOME. Error: {e}. Exiting.");
+                return;
+            }
         }
         // If not valid, create .dir_info for each of them.
         if !validate_or_create_sekai(&sekai_path, false) {

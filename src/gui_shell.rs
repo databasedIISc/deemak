@@ -85,7 +85,7 @@ impl ShellScreen {
             MeasureTextEx(font, cstr.as_ptr(), font_size, 1.2).x
         };
         let root_dir =
-            find_root::find_home(&sekai_dir).expect("Could not find sekai home directory");
+            find_root::get_home(&sekai_dir).expect("Could not find sekai home directory");
 
         Self {
             rl,
