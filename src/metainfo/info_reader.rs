@@ -71,6 +71,7 @@ impl Info {
     /// Creates default Info values for a path
     pub fn default_for_path(path: &Path, home_dir: bool) -> Self {
         let norm_path = normalize_path(path);
+        // NOTE: Since deafult Permission is "00", decrypt_me and obj_salt are not going to be set.
         Info {
             location: Self::default_location(&norm_path, home_dir),
             about: Self::default_about(&norm_path, home_dir),
@@ -154,16 +155,21 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
                     "Invalid 'locked' value, must be a 2-bit string".to_string(),
                 ));
             }
-            if s.chars().nth(1) == Some('1')
-            //locked ->level/chest
-            {
-                // If locked is '1', ensure it has a 'decrypt_me' property
+
+            // If is_level is '1', further checks are needed
+            if let Some(is_locked) = s.chars().nth(1).map(|c| c == '1') {
+                println!("is_locked: {}", is_locked);
+                println!("obj_info: {:?}", obj_info);
+                if !is_locked {
+                    continue; // Not locked, skip further checks
+                }
+                // ensure it has a 'decrypt_me' property
                 if !obj_info.properties.contains_key("decrypt_me") {
                     return Err(InfoError::ValidationError(
                         "Locked objects must have a 'decrypt_me' property".to_string(),
                     ));
                 }
-                //obj_salt is required for locked objects
+                // obj_salt is required for locked objects
                 if !obj_info.properties.contains_key("obj_salt") {
                     return Err(InfoError::ValidationError(
                         "Locked objects must have an 'obj_salt' property".to_string(),

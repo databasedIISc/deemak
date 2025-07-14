@@ -1,5 +1,3 @@
-use argon2::password_hash::SaltString;
-
 use super::argparser::ArgParser;
 use super::cmds::normalize_path;
 use crate::metainfo::info_reader::{get_encrypted_flag, read_get_obj_info};
@@ -11,6 +9,7 @@ use crate::utils::{
     log,
     prompt::UserPrompter,
 };
+use argon2::password_hash::SaltString;
 use std::path::Path;
 pub const HELP_TXT: &str = r#"
 Usage: unlock [OPTIONS] <LEVEL/CHEST_NAME>
@@ -52,8 +51,7 @@ pub fn unlock(
             }
             //now we know only 1 argument is there
             //validate path existence
-            let target = Path::new(pos_args[0]);
-            let target = normalize_path(target);
+            let target = normalize_path(&current_dir.join(pos_args[0]));
             if !target.exists() {
                 err_msg += "Invalid path given";
                 log::log_info("unlock", err_msg.as_str());

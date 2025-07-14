@@ -1,12 +1,11 @@
 use super::argparser::ArgParser;
 use super::cmds::normalize_path;
-use crate::commands::go::navigate;
 use crate::metainfo::info_reader::get_encrypted_flag;
 use crate::metainfo::lock_perm::read_lock_perm;
 use crate::rns::security::{characterise_enc_key, decrypt, encrypt};
 use crate::utils::globals::USER_NAME;
 use crate::utils::{log, prompt::UserPrompter};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 pub const HELP_TEXT: &str = r#"
 Usage: solve [OPTIONS] <LEVEL_NAME> <
 
@@ -18,7 +17,7 @@ Examples:
 
 pub fn solve(
     args: &[&str],
-    current_dir: &PathBuf,
+    current_dir: &Path,
     root_dir: &Path,
     prompter: &mut dyn UserPrompter,
 ) -> String {
@@ -44,22 +43,21 @@ pub fn solve(
             }
             //now we know only 1 argument is there
             //test for valid level name
-            let (mut target, _) = navigate(pos_args[0].as_str(), current_dir, root_dir);
-            target = normalize_path(&target);
+            let target = normalize_path(&current_dir.join(pos_args[0]));
             if !target.exists() {
                 err_msg += "Invalid path given";
                 log::log_info("solve", err_msg.as_str());
                 return err_msg;
             }
             //validated path. now check if it is a protected thing
-            if let Ok((is_locked, is_level)) = read_lock_perm(&target) {
+            if let Ok((is_level, is_locked)) = read_lock_perm(&target) {
                 if !is_level {
                     err_msg += "This is not a level. Cannot solve.";
                     log::log_info("solve", err_msg.as_str());
                     return err_msg;
                 }
-                if is_locked {
-                    err_msg += "Level is locked. Cannot solve.";
+                if !is_locked {
+                    err_msg += "Level is unlocked. You have permission to access it.";
                     log::log_info("solve", err_msg.as_str());
                     return err_msg;
                 }
@@ -89,7 +87,7 @@ pub fn solve(
                 let user_flag = check_solve_input(user_input, &target, level_name);
                 if user_flag.is_empty() {
                     err_msg += "User flag is empty. Cannot solve.";
-                    log::log_info("solve", err_msg.as_str());
+                    log::log_warning("solve", err_msg.as_str());
                     err_msg
                 } else {
                     log::log_info(
