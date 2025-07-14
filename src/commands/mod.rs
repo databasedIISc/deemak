@@ -16,7 +16,7 @@ mod del;
 pub use del::del;
 
 mod go;
-pub use go::{go, navigate};
+pub use go::go;
 
 mod copy;
 

@@ -1,8 +1,4 @@
 use crate::SEKAI_DIR;
-use argon2::{
-    Argon2, PasswordHasher,
-    password_hash::{SaltString, rand_core::OsRng},
-};
 use once_cell::sync::{Lazy, OnceCell};
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -14,7 +10,7 @@ pub static SHELL_HISTORY: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec
 
 /// Gets the global if it has been set, otherwise returns None.
 pub fn get_global_once<T: Clone>(cell: &OnceCell<T>) -> &T {
-    &cell.get().unwrap()
+    cell.get().unwrap()
 }
 
 /// Sets the global variable if it has not been set yet.

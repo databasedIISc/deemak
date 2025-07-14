@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use thiserror::Error;
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
@@ -28,12 +28,13 @@ impl ObjectInfo {
             .insert("locked".to_string(), Value::String(locked));
         obj
     }
-    
+
     pub fn with_decrypt_me(decrypt_me: String) -> Self {
         let mut obj = Self::new();
         obj.properties
             .insert("decrypt_me".to_string(), Value::String(decrypt_me));
-        obj }
+        obj
+    }
 
     pub fn with_obj_salt(obj_salt: String) -> Self {
         let mut obj = Self::new();
@@ -153,7 +154,8 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
                     "Invalid 'locked' value, must be a 2-bit string".to_string(),
                 ));
             }
-            if s.chars().nth(1)==Some('1')//locked ->level/chest
+            if s.chars().nth(1) == Some('1')
+            //locked ->level/chest
             {
                 // If locked is '1', ensure it has a 'decrypt_me' property
                 if !obj_info.properties.contains_key("decrypt_me") {
@@ -167,7 +169,6 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
                         "Locked objects must have an 'obj_salt' property".to_string(),
                     ));
                 }
-                
             } else {
                 // If not locked, ensure 'decrypt_me' is not present
                 obj_info.properties.remove("decrypt_me");
@@ -280,24 +281,22 @@ pub fn read_get_obj_info(info_path: &Path, obj_name: &str) -> Result<ObjectInfo,
         .unwrap_or_default())
 }
 
-pub fn get_encrypted_flag(path: &PathBuf,level_name:&str) -> Result<String, String> {
+pub fn get_encrypted_flag(path: &Path, level_name: &str) -> Result<String, String> {
     //the flag is stored in ./dir_info/info.json of parent directory
     match read_get_obj_info(path.parent().unwrap(), level_name) {
         Ok(obj_info) => {
             if let Some(decrypt_me) = obj_info.properties.get("decrypt_me") {
                 if let serde_json::Value::String(flag_str) = decrypt_me {
-                    return Ok(flag_str.clone());
+                    Ok(flag_str.clone())
                 } else {
-                    return Err("decrypt_me property is not a string.".to_string());
+                    Err("decrypt_me property is not a string.".to_string())
                 }
-            }
-            else {
-                return Err("decrypt_me property not found in object info.".to_string());
+            } else {
+                Err("decrypt_me property not found in object info.".to_string())
             }
         }
-        Err(e) => Err(format!("Error reading object info"))
+        Err(e) => Err("Error reading object info".to_string()),
     }
-
 }
 
 #[cfg(test)]

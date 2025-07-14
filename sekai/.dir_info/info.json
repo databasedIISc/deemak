@@ -2,37 +2,16 @@
   "location": "HOME",
   "about": "You are in 'HOME'. Look around and explore!",
   "objects": {
+    "room_5": {
+      "locked": "00"
+    },
     "cat.txt": {
       "locked": "00"
     },
-    ".DS_Store": {
-      "locked": "00"
-    },
-    "room_8": {
-      "locked": "00"
-    },
-    "room_9": {
+    "room_10": {
       "locked": "00"
     },
     "room_3": {
-      "locked": "00"
-    },
-    "room_1": {
-      "locked": "00"
-    },
-    "some1": {
-      "locked": "00"
-    },
-    "room_4": {
-      "locked": "00"
-    },
-    "README": {
-      "locked": "00"
-    },
-    "dog.txt": {
-      "locked": "00"
-    },
-    "room_2": {
       "locked": "00"
     },
     "room_6": {
@@ -41,10 +20,28 @@
     "room_7": {
       "locked": "00"
     },
-    "room_5": {
+    "room_9": {
       "locked": "00"
     },
-    "room_10": {
+    "dog.txt": {
+      "locked": "00"
+    },
+    "room_4": {
+      "locked": "00"
+    },
+    "room_1": {
+      "locked": "00"
+    },
+    "room_2": {
+      "locked": "00"
+    },
+    "room_8": {
+      "locked": "00"
+    },
+    "some1": {
+      "locked": "00"
+    },
+    "README": {
       "locked": "00"
     }
   }
