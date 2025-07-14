@@ -158,8 +158,6 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
 
             // If is_level is '1', further checks are needed
             if let Some(is_locked) = s.chars().nth(1).map(|c| c == '1') {
-                println!("is_locked: {}", is_locked);
-                println!("obj_info: {:?}", obj_info);
                 if !is_locked {
                     continue; // Not locked, skip further checks
                 }

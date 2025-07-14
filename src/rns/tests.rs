@@ -8,7 +8,7 @@ mod test {
     /// Test to ensure that the can_restore and can_save functionality works correctly
     #[test]
     fn test_can_restore_and_can_save_functionality() {
-        let (_temp_dir, root_path) = setup_test_dir();
+        let (_temp_dir, root_path) = setup_test_dir(false);
 
         assert!(!can_restore(&root_path));
         assert!(!can_save(&root_path));
@@ -26,7 +26,7 @@ mod test {
     /// Test to ensure that backup and restore functionality handles errors correctly
     #[test]
     fn test_invalid_usage_errors() {
-        let (_temp_dir, root_path) = setup_test_dir();
+        let (_temp_dir, root_path) = setup_test_dir(false);
 
         let backup_result = backup_sekai("invalid_usage", &root_path);
         assert!(backup_result.is_err());
@@ -47,7 +47,7 @@ mod test {
     /// multiple times does not create duplicate restore points
     #[test]
     fn test_backup_restore_idempotency() {
-        let (_temp_dir, root_path) = setup_test_dir();
+        let (_temp_dir, root_path) = setup_test_dir(false);
 
         let first_backup_result = backup_sekai("restore", &root_path).unwrap();
         assert!(first_backup_result.contains("created"));
@@ -60,7 +60,7 @@ mod test {
     /// Test to ensure that backup and restore functionality works correctly
     #[test]
     fn test_backup_and_restore() {
-        let (_temp_dir, root_path) = setup_test_dir();
+        let (_temp_dir, root_path) = setup_test_dir(false);
         let initial_contents = get_dir_contents(&root_path, false);
 
         // Create a restore point
@@ -84,7 +84,7 @@ mod test {
     /// Test to ensure that backup and save functionality works correctly
     #[test]
     fn test_backup_and_save_flow() {
-        let (_temp_dir, root_path) = setup_test_dir();
+        let (_temp_dir, root_path) = setup_test_dir(false);
 
         // 1. Create initial state and a restore point
         let initial_contents = get_dir_contents(&root_path, false);

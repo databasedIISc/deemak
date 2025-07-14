@@ -1,10 +1,10 @@
-use crate::metainfo::info_reader::read_validate_info;
+use crate::metainfo::info_reader::{InfoError, read_validate_info};
 use crate::utils::globals;
 use std::path::{Path, PathBuf};
 
 /// Find the root directory of a sekai by finding "location": "home"
 /// in nearest `.dir_info/info.json` without going outside the starting directory
-pub fn find_home(sekai_path: &Path) -> Option<PathBuf> {
+pub fn find_home(sekai_path: &Path) -> Result<Option<PathBuf>, InfoError> {
     let mut current = sekai_path.to_path_buf();
     let max_depth = 100; // Prevent infinite recursion
     let mut depth = 0;
@@ -12,10 +12,14 @@ pub fn find_home(sekai_path: &Path) -> Option<PathBuf> {
     while depth < max_depth {
         // Check for info.json in current directory
         let info_path = current.join(".dir_info/info.json");
-        if let Ok(info) = read_validate_info(&info_path) {
-            if info.location == "HOME" {
-                return Some(current);
+        match read_validate_info(&info_path) {
+            Ok(info) => {
+                if info.location == "HOME" {
+                    return Ok(Some(current));
+                }
             }
+            Err(InfoError::NotFound(_)) => (), // Ignore not found errors
+            Err(e) => return Err(e),           // Return other errors
         }
 
         // Check subdirectories
@@ -24,11 +28,14 @@ pub fn find_home(sekai_path: &Path) -> Option<PathBuf> {
                 let path = entry.path();
                 if path.is_dir() && path.file_name() != Some(std::ffi::OsStr::new(".dir_info")) {
                     let sub_info_path = path.join(".dir_info/info.json");
-                    if let Ok(info) = read_validate_info(&sub_info_path) {
-                        if info.location == "HOME" {
-                            // The message for home found exists in `main.rs`
-                            return Some(path);
+                    match read_validate_info(&sub_info_path) {
+                        Ok(info) => {
+                            if info.location == "HOME" {
+                                return Ok(Some(path));
+                            }
                         }
+                        Err(InfoError::NotFound(_)) => (), // Ignore not found errors
+                        Err(e) => return Err(e),           // Return other errors
                     }
                 }
             }
@@ -45,8 +52,17 @@ pub fn find_home(sekai_path: &Path) -> Option<PathBuf> {
         depth += 1;
     }
 
-    // The message for no home found exists in `main.rs`
-    None
+    Ok(None)
+}
+
+/// Returns the home directory of a sekai if it exists
+/// Use this when you have gaurantee that sekai home exists.
+pub fn get_home(sekai_path: &Path) -> Option<PathBuf> {
+    match find_home(sekai_path) {
+        Ok(Some(home)) => Some(home),
+        Ok(None) => None,
+        Err(e) => None,
+    }
 }
 
 /// Converts an absolute path to a path relative to WORLD_DIR

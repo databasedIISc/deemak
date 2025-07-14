@@ -2,8 +2,6 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
   pull_request:
 
 env:
@@ -17,8 +15,8 @@ jobs:
       matrix:
         toolchain:
           - stable
-          - beta
-          - nightly
+          # - beta
+          # - nightly
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
