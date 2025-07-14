@@ -88,7 +88,7 @@
 //             "location": "invalid",
 //             "about": "invalid",
 //             "objects": {
-//                 "invalid.txt": {"locked": "012"} 
+//                 "invalid.txt": {"locked": "012"}
 //             }
 //         }"#;
 //         create_file(&info_path, invalid_json);
