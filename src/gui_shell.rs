@@ -111,7 +111,7 @@ impl<'a> ShellScreen<'a> {
         }
     }
 
-    pub fn run(&mut self) -> bool {
+    pub fn run(&mut self) {
         //add to output lines the banner
         let limit: usize = ((self.window_width as f32 * (self.term_split_ratio - 0.12))
             / self.char_width)
@@ -127,7 +127,6 @@ impl<'a> ShellScreen<'a> {
             self.update();
             self.draw();
         }
-        false
     }
 
     pub fn window_should_close(&self) -> bool {
@@ -470,10 +469,10 @@ impl<'a> ShellScreen<'a> {
         self.output_lines.clone()
     }
 
-    pub fn process_shell_input(&mut self, input: &str) -> bool {
+    pub fn process_shell_input(&mut self, input: &str) {
         // If input is empty, do nothing
         if input.trim().is_empty() {
-            return false;
+            return;
         }
         self.output_lines = self.process_input(input, Some(">"));
 
@@ -486,27 +485,21 @@ impl<'a> ShellScreen<'a> {
                 self.current_dir = new_dir;
                 self.output_lines
                     .extend(message.split("\n").map(|s| s.to_string()));
-                false
             }
             CommandResult::Output(output) => {
                 self.output_lines
                     .extend(output.split("\n").map(|s| s.to_string()));
-                false
             }
             CommandResult::Clear => {
                 self.output_lines.clear();
                 self.output_lines.push(INITIAL_MSG.to_string());
-                false
             }
             CommandResult::Exit => {
                 run_gui_loop(self.rl, self.thread, self.root_dir.clone(), self.font_size);
-                false
             }
             CommandResult::NotFound => {
                 self.output_lines
                     .push("Command not found. Try `help`.".to_string());
-
-                false
             }
         }
     }
@@ -602,9 +595,7 @@ pub fn run_gui_loop(
             Some(0) => {
                 // Shell mode
                 let mut shell = ShellScreen::new_sekai(rl, thread, sekai_dir.clone(), font_size);
-                if shell.run() {
-                    continue;
-                }
+                shell.run();
             }
             Some(1) => {
                 // About screen
