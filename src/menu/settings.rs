@@ -15,14 +15,18 @@ pub fn show_settings(rl: &mut RaylibHandle, thread: &RaylibThread) {
     while !rl.window_should_close() {
         // Handle input
         if last_change.elapsed() > Duration::from_millis(150) {
-            if rl.is_key_pressed(KeyboardKey::KEY_UP) {
-                selected = selected.saturating_sub(1);
-                last_change = Instant::now();
-            } else if rl.is_key_pressed(KeyboardKey::KEY_DOWN) {
-                selected = (selected + 1).min(SETTINGS_OPTIONS.len() - 1);
-                last_change = Instant::now();
-            } else if rl.is_key_pressed(KeyboardKey::KEY_ENTER) && selected == 0 {
-                return;
+            if let Some(key) = rl.get_key_pressed() {
+                if key == KeyboardKey::KEY_UP {
+                    selected = selected.saturating_sub(1);
+                    last_change = Instant::now();
+                } else if key == KeyboardKey::KEY_DOWN {
+                    selected = (selected + 1).min(SETTINGS_OPTIONS.len() - 1);
+                    last_change = Instant::now();
+                } else if key == KeyboardKey::KEY_ENTER && selected == 0 {
+                    return; // Exit settings
+                } else {
+                    continue; // Ignore other keys
+                }
             }
         }
 

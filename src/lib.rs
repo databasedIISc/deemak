@@ -1,5 +1,7 @@
 #![allow(unused_variables, unused_mut, dead_code)]
 pub mod commands;
+pub mod gui_shell;
+pub mod keys;
 pub mod menu;
 pub mod metainfo;
 pub mod rns;

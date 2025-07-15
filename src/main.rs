@@ -10,6 +10,7 @@ mod utils;
 use crate::metainfo::valid_sekai::validate_or_create_sekai;
 use crate::rns::restore_comp;
 use crate::utils::{debug_mode, find_root, globals, log};
+use deemak::gui_shell::run_gui_loop;
 use deemak::menu;
 use deemak::{DEBUG_MODE, SEKAI_DIR};
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
@@ -213,36 +214,7 @@ Continuing..."
         log::log_info("Application", "Login aborted by user.");
         return; // Exit if window closed during login
     }
-    // Initialize save_me specific to the user and copy to .dir_info inside HOME
 
-    // Main menu loop
-    loop {
-        match menu::show_menu(&mut rl, &thread) {
-            Some(0) => {
-                // Shell mode
-                let mut shell = gui_shell::ShellScreen::new_sekai(
-                    rl,
-                    thread,
-                    sekai_dir.clone().unwrap(),
-                    font_size,
-                );
-                shell.run();
-                break; // Exit after shell closes
-            }
-            Some(1) => {
-                // About screen
-                menu::about::show_about(&mut rl, &thread);
-            }
-            Some(2) => {
-                // Settings screen
-                menu::settings::show_settings(&mut rl, &thread);
-            }
-            Some(3) | None => {
-                // Exit
-                break;
-            }
-            _ => unreachable!(),
-        }
-    }
-    //copy the current save_me file to  home./.config/user_name/save_me
+    // Run the GUI loop
+    run_gui_loop(&mut rl, &thread, sekai_dir.unwrap(), font_size);
 }
