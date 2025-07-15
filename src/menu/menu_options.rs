@@ -19,14 +19,18 @@ pub fn show_menu(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<usize> 
     while !rl.window_should_close() && show_menu {
         // Handle input with wrapping around
         if last_change.elapsed() > Duration::from_millis(150) {
-            if rl.is_key_pressed(KeyboardKey::KEY_UP) {
-                selected = (selected + MENU_OPTIONS.len() - 1) % MENU_OPTIONS.len();
-                last_change = Instant::now();
-            } else if rl.is_key_pressed(KeyboardKey::KEY_DOWN) {
-                selected = (selected + 1) % MENU_OPTIONS.len();
-                last_change = Instant::now();
-            } else if rl.is_key_pressed(KeyboardKey::KEY_ENTER) {
-                return Some(selected);
+            if let Some(key) = rl.get_key_pressed() {
+                if key == KeyboardKey::KEY_UP {
+                    selected = (selected + MENU_OPTIONS.len() - 1) % MENU_OPTIONS.len();
+                    last_change = Instant::now();
+                } else if rl.is_key_pressed(KeyboardKey::KEY_DOWN) {
+                    selected = (selected + 1) % MENU_OPTIONS.len();
+                    last_change = Instant::now();
+                } else if rl.is_key_pressed(KeyboardKey::KEY_ENTER) {
+                    return Some(selected);
+                } else {
+                    continue;
+                }
             }
         }
 

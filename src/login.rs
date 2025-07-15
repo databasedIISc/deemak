@@ -2,7 +2,7 @@ use crate::keys::key_to_char;
 use crate::utils::auth::verify_password;
 use crate::utils::globals::{USER_NAME, USER_PASSWORD};
 use deemak::utils::auth::load_users;
-use raylib::ffi::{DrawTextEx, LoadFontEx, MeasureTextEx, Vector2};
+use raylib::ffi::{DrawTextEx, LoadFontEx, MeasureTextEx, SetExitKey, Vector2};
 use raylib::prelude::*;
 use std::ffi::CString;
 use std::time::{Duration, Instant};
@@ -25,6 +25,10 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
     let mut animation_done = false;
     let mut show_input = false;
     let mut pause_start = None;
+
+    unsafe {
+        SetExitKey(0i32); // Disable exit key (ESC) to prevent accidental exit during login
+    }
 
     let font = unsafe {
         let path = CString::new("fontbook/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();

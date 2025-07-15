@@ -25,7 +25,7 @@ pub fn show_about(rl: &mut RaylibHandle, thread: &RaylibThread) {
     let mut displayed_text = String::new();
     let mut char_index = 0;
     let mut last_char_time = Instant::now();
-    let char_delay = Duration::from_millis(5);
+    let char_delay = Duration::from_millis(1);
     let mut should_exit = false;
     let mut input_ready = false;
 

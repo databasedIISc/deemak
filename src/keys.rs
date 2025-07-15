@@ -10,6 +10,7 @@ pub fn key_to_char(key: KeyboardKey, shift: bool) -> Option<char> {
         KeyboardKey::KEY_RIGHT_CONTROL => return None,
         KeyboardKey::KEY_LEFT_SUPER => return None,
         KeyboardKey::KEY_RIGHT_SUPER => return None,
+        KeyboardKey::KEY_ESCAPE => return None,
         key if ((key as u8) >= KeyboardKey::KEY_A as u8)
             && ((key as u8) <= KeyboardKey::KEY_Z as u8) =>
         {

@@ -6,7 +6,8 @@ use crate::utils::prompt::UserPrompter;
 use crate::utils::tab_completion::{TabCompletionResult, process_tab_completion};
 use crate::utils::{find_root, shell_history, wrapit::wrapit};
 use raylib::ffi::{
-    ColorFromHSV, DrawLineEx, DrawRectangle, DrawTextEx, LoadFontEx, MeasureTextEx, Vector2,
+    ColorFromHSV, DrawLineEx, DrawRectangle, DrawTextEx, LoadFontEx, MeasureTextEx, SetExitKey,
+    Vector2,
 };
 use raylib::prelude::*;
 use std::cmp::max;
@@ -78,7 +79,9 @@ impl<'a> ShellScreen<'a> {
                 0,
             )
         };
-
+        unsafe {
+            SetExitKey(0i32); // No exit key
+        }
         let window_width = rl.get_screen_width();
         let window_height = rl.get_screen_height();
         let char_width = unsafe {
@@ -123,14 +126,6 @@ impl<'a> ShellScreen<'a> {
         while !self.window_should_close() {
             self.update();
             self.draw();
-
-            // Check for Escape key to exit
-            if self
-                .rl
-                .is_key_pressed(raylib::consts::KeyboardKey::KEY_ESCAPE)
-            {
-                return true; // Signal to exit
-            }
         }
         false
     }
@@ -625,7 +620,7 @@ pub fn run_gui_loop(
             }
             Some(3) | None => {
                 // Exit
-                break;
+                std::process::exit(0); // Exit the application
             }
             _ => unreachable!(),
         }
