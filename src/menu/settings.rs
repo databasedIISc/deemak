@@ -1,7 +1,22 @@
 use raylib::prelude::*;
 use std::time::{Duration, Instant};
 
-const SETTINGS_OPTIONS: [&str; 1] = ["Back"];
+#[derive(Debug, Clone, Copy)]
+pub enum SettingsOption {
+    Back,
+}
+
+impl SettingsOption {
+    pub fn opts() -> &'static [Self] {
+        &[Self::Back]
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Back => "Back To Menu",
+        }
+    }
+}
 
 pub fn show_settings(rl: &mut RaylibHandle, thread: &RaylibThread) {
     let mut selected: usize = 0;
@@ -20,7 +35,7 @@ pub fn show_settings(rl: &mut RaylibHandle, thread: &RaylibThread) {
                     selected = selected.saturating_sub(1);
                     last_change = Instant::now();
                 } else if key == KeyboardKey::KEY_DOWN {
-                    selected = (selected + 1).min(SETTINGS_OPTIONS.len() - 1);
+                    selected = (selected + 1).min(SettingsOption::opts().len() - 1);
                     last_change = Instant::now();
                 } else if key == KeyboardKey::KEY_ENTER && selected == 0 {
                     return; // Exit settings
@@ -49,7 +64,7 @@ pub fn show_settings(rl: &mut RaylibHandle, thread: &RaylibThread) {
         );
 
         // Draw settings options
-        for (i, option) in SETTINGS_OPTIONS.iter().enumerate() {
+        for (i, option) in SettingsOption::opts().iter().enumerate() {
             let color = if i == selected {
                 Color::GOLD
             } else {
@@ -58,7 +73,7 @@ pub fn show_settings(rl: &mut RaylibHandle, thread: &RaylibThread) {
 
             d.draw_text_ex(
                 &font,
-                option,
+                option.as_str(),
                 Vector2::new(200.0, 300.0 + (i as f32 * 50.0)),
                 30.0,
                 1.0,

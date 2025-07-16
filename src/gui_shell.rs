@@ -2,9 +2,11 @@ use crate::commands::cmds::{CommandResult, cmd_manager};
 use crate::commands::ls::list_directory_entries;
 use crate::keys::key_to_char;
 use crate::menu;
-use crate::utils::prompt::UserPrompter;
+use crate::menu::menu_options::MenuOption;
+use crate::metainfo::info_reader::read_validate_info;
 use crate::utils::tab_completion::{TabCompletionResult, process_tab_completion};
 use crate::utils::{find_root, shell_history, wrapit::wrapit};
+use crate::utils::{log, prompt::UserPrompter};
 use raylib::ffi::{
     ColorFromHSV, DrawLineEx, DrawRectangle, DrawTextEx, LoadFontEx, MeasureTextEx, SetExitKey,
     Vector2,
@@ -14,7 +16,11 @@ use std::cmp::max;
 use std::cmp::min;
 use std::ffi::CString;
 use std::os::raw::c_char;
-use std::{mem::take, os::raw::c_int, path::PathBuf};
+use std::{
+    mem::take,
+    os::raw::c_int,
+    path::{Path, PathBuf},
+};
 use textwrap::wrap;
 
 pub struct ShellScreen<'a> {
@@ -123,6 +129,18 @@ impl<'a> ShellScreen<'a> {
         self.output_lines
             .extend(wrapped_initial.into_iter().map(|c| c.into_owned()));
 
+        if unsafe { FIRST_RUN } {
+            let info_path = self.root_dir.join(".dir_info").join("info.json");
+            let home_about = read_validate_info(&info_path).ok().map(|info| info.about);
+            let mut home_about =
+                home_about.unwrap_or_else(|| "Welcome User to Deemak!".to_string());
+            home_about = "\nYou are in 'HOME'\n\nAbout:\n".to_string() + &home_about + "\n";
+            let wrapped_home_about = wrap(&home_about, limit);
+            unsafe { FIRST_RUN = false };
+            self.output_lines
+                .extend(wrapped_home_about.into_iter().map(|c| c.into_owned()));
+        }
+
         while !self.window_should_close() {
             self.update();
             self.draw();
@@ -144,13 +162,6 @@ impl<'a> ShellScreen<'a> {
                     shell_history::add_to_history(&input);
                     self.history_index = None;
                     self.working_buffer = None; // Clear working buffer after command execution
-                } else {
-                    // If input is empty, just add a new line
-                    if !unsafe { FIRST_RUN } {
-                        self.output_lines.push("> ".to_string());
-                    } else {
-                        unsafe { FIRST_RUN = false };
-                    }
                 }
                 self.cursor_pos = 0; // Reset cursor position
             }
@@ -592,28 +603,36 @@ pub fn run_gui_loop(
         let menu_selection = menu::show_menu(rl, thread);
 
         match menu_selection {
-            Some(0) => {
+            Some(MenuOption::StartShell) => {
                 // Shell mode
                 let mut shell = ShellScreen::new_sekai(rl, thread, sekai_dir.clone(), font_size);
                 shell.run();
             }
-            Some(1) => {
+            Some(MenuOption::About) => {
                 // About screen
                 menu::about::show_about(rl, thread);
                 // After about screen closes, return to menu
                 continue;
             }
-            Some(2) => {
+            Some(MenuOption::Tutorial) => {
+                // Tutorial screen
+                let tutorial_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("_tutorial");
+                log::log_info("Deemak", "Loading Tutorial");
+                let mut tutorial_shell =
+                    ShellScreen::new_sekai(rl, thread, tutorial_dir, font_size);
+                tutorial_shell.run();
+                continue;
+            }
+            Some(MenuOption::Settings) => {
                 // Settings screen
                 menu::settings::show_settings(rl, thread);
                 // After settings screen closes, return to menu
                 continue;
             }
-            Some(3) | None => {
+            Some(MenuOption::Exit) | None => {
                 // Exit
                 std::process::exit(0); // Exit the application
             }
-            _ => unreachable!(),
         }
     }
 }

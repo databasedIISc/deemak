@@ -1,9 +1,38 @@
 use raylib::prelude::*;
 use std::time::{Duration, Instant};
 
-const MENU_OPTIONS: [&str; 4] = ["Start Shell", "About", "Settings", "Exit"];
+#[derive(Debug, Clone, Copy)]
+pub enum MenuOption {
+    StartShell,
+    About,
+    Tutorial,
+    Settings,
+    Exit,
+}
 
-pub fn show_menu(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<usize> {
+impl MenuOption {
+    pub fn opts() -> &'static [Self] {
+        &[
+            Self::StartShell,
+            Self::About,
+            Self::Tutorial,
+            Self::Settings,
+            Self::Exit,
+        ]
+    }
+
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::StartShell => "Start Shell",
+            Self::About => "About",
+            Self::Tutorial => "Tutorial",
+            Self::Settings => "Settings",
+            Self::Exit => "Exit",
+        }
+    }
+}
+
+pub fn show_menu(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<MenuOption> {
     let mut selected: usize = 0;
     let mut last_change = Instant::now();
     let mut alpha = 0.0f32;
@@ -20,16 +49,23 @@ pub fn show_menu(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<usize> 
         // Handle input with wrapping around
         if last_change.elapsed() > Duration::from_millis(150) {
             if let Some(key) = rl.get_key_pressed() {
-                if key == KeyboardKey::KEY_UP {
-                    selected = (selected + MENU_OPTIONS.len() - 1) % MENU_OPTIONS.len();
-                    last_change = Instant::now();
-                } else if rl.is_key_pressed(KeyboardKey::KEY_DOWN) {
-                    selected = (selected + 1) % MENU_OPTIONS.len();
-                    last_change = Instant::now();
-                } else if rl.is_key_pressed(KeyboardKey::KEY_ENTER) {
-                    return Some(selected);
-                } else {
-                    continue;
+                match key {
+                    KeyboardKey::KEY_UP => {
+                        selected =
+                            (selected + MenuOption::opts().len() - 1) % MenuOption::opts().len();
+                        last_change = Instant::now();
+                    }
+                    KeyboardKey::KEY_DOWN => {
+                        selected = (selected + 1) % MenuOption::opts().len();
+                        last_change = Instant::now();
+                    }
+                    KeyboardKey::KEY_ENTER => {
+                        return Some(MenuOption::opts()[selected]);
+                    }
+                    KeyboardKey::KEY_ESCAPE => {
+                        return Some(MenuOption::Exit);
+                    }
+                    _ => continue,
                 }
             }
         }
@@ -53,7 +89,7 @@ pub fn show_menu(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<usize> 
         );
 
         // Menu options
-        for (i, option) in MENU_OPTIONS.iter().enumerate() {
+        for (i, option) in MenuOption::opts().iter().enumerate() {
             let color = if i == selected {
                 Color::GOLD
             } else {
@@ -62,7 +98,7 @@ pub fn show_menu(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<usize> 
 
             d.draw_text_ex(
                 &font,
-                option,
+                option.as_str(),
                 Vector2::new(200.0, 280.0 + (i as f32 * 50.0)),
                 30.0,
                 1.0,
