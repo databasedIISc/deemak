@@ -1,5 +1,11 @@
-Hello User!
+ ____                            _    
+|  _ \  ___  ___ _ __ ___   __ _| | __
+| | | |/ _ \/ _ \ '_ ` _ \ / _` | |/ /
+| |_| |  __/  __/ | | | | | (_| |   < 
+|____/ \___|\___|_| |_| |_|\__,_|_|\_\
 
+
+Hello User!
 Welcome to deemak shell. This is a small tutorial to help you get started with basics of deemak shell.
 
 ## Motivation
@@ -12,7 +18,7 @@ Then you can use `go <directory_name>` to go into a directory. Complete the task
 ## NOTE: These tasks are not checked by the game. It is just to help you learn the basics of deemak shell. Good Luck!
 
 ## Story Line
-You are a second year student, who is about to start his third semester in the college. He is not allowed to go to other places which are restricted for first year students. Unravel your story for today!
+You are a second-year student about to begin your third semester of college. As you progress, new opportunities and areas become accessible—places that were off-limits during your first year. Unravel your story for today!
 
 ** TASK 1: Go to mess and talk to your friend **
 

@@ -1,7 +1,26 @@
 ...(friend) Hi! 
-...Do you know how to how to access OPB?
-...Ah well, I think it is locked. You have to find the password somewhere. If you have any issues, just ask for `help`. Always there for help.
+...Do you know how to how to go inside OPB?
+...Ah well, you need a passkey for it and show it to the guard. You will have to find the passkey. If you have any issues, just ask for `help`.
 ...Thanks!
 ...Now might as well have your food before it goes cold. :)
 
-** Task 2: Eat your food. Try out the `help` command with `read` and `go` command, like `help read`, etc. **
+      ////^\\\\
+      | ^   ^ |
+     @ (o) (o) @
+      |   <   |
+      |  ___  |
+       \_____/
+     ____|  |____
+    /    \__/    \
+   /              \
+  /\_/|        |\_/\
+ / /  |        |  \ \
+( <   |        |   > )
+ \ \  |        |  / /
+  \ \ |________| / /
+   \ \|
+
+
+** Task 2: Eat your food. Try out the `help` command with `read` and `go`, like `help read`, etc. **
+
+- Tip: All the objects are either files or directories. To know more into the file, use the `read` command.
