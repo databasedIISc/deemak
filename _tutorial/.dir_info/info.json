@@ -1,0 +1,26 @@
+{
+  "location": "HOME",
+  "about": "Welcome to Deemak Tutorial! This is friendly tutorial to get you familiar with all the commands and functionalities of Deemak.\nTo begin, please read the README file. To do this, input `read README` and Enter!",
+  "objects": {
+    "mess": {
+      "locked": "00"
+    },
+    "main_building": {
+      "obj_salt": "abcdef1234567890",
+      "locked": "01",
+      "compare_me": "abcdef1234567890"
+    },
+    "README": {
+      "locked": "00"
+    },
+    "library": {
+      "locked": "00"
+    },
+    "opb": {
+      "decrypt_me": "blah",
+      "obj_salt": "1234567890abcdef",
+      "locked": "11",
+      "compare_me": "1234567890abcdef"
+    }
+  }
+}
