@@ -12,6 +12,7 @@ Lists the objects and places you can go to in the specified(current by default) 
 Example:
 - ls                        : Lists the contents of the current directory. 
 - ls directory_name         : Lists the contents of specified directory
+- ls -a | --all directory_name   : Lists all contents including hidden files and directories in the specified directory
 "#;
 
 /// Lists all files and directories in the given path, excluding .dir_info and info.json
@@ -51,7 +52,7 @@ pub fn list_directory_entries(target_path: &Path, root_dir: &Path) -> (Vec<Strin
 
 pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
     let args_string: Vec<String> = args.iter().map(|s| s.to_string()).collect();
-    let mut parser = ArgParser::new(&[]);
+    let mut parser = ArgParser::new(&["--all", "-a"]);
 
     match parser.parse(&args_string, "ls") {
         Ok(_) => {
@@ -95,7 +96,15 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
                 }
             };
 
-            let (files_vec, directories_vec) = list_directory_entries(&target_path, root_dir);
+            let (mut files_vec, mut directories_vec) =
+                list_directory_entries(&target_path, root_dir);
+
+            if !args.contains(&"--all") || !args.contains(&"-a") {
+                // Remove all hidden files and directories starting with '.'
+                let is_hidden = |name: &str| name.starts_with('.');
+                files_vec.retain(|f| !is_hidden(f));
+                directories_vec.retain(|d| !is_hidden(d));
+            }
 
             if files_vec.is_empty() && directories_vec.is_empty() {
                 if let Err(e) = std::fs::read_dir(&target_path) {
