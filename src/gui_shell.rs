@@ -1,23 +1,31 @@
+use crate::commands::cmds::{CommandResult, cmd_manager};
+use crate::commands::ls::list_directory_entries;
 use crate::keys::key_to_char;
+use crate::menu;
+use crate::menu::menu_options::MenuOption;
+use crate::metainfo::info_reader::read_validate_info;
 use crate::utils::tab_completion::{TabCompletionResult, process_tab_completion};
 use crate::utils::{find_root, shell_history, wrapit::wrapit};
-use deemak::commands::cmds::{CommandResult, cmd_manager};
-use deemak::commands::ls::list_directory_entries;
-use deemak::utils::prompt::UserPrompter;
+use crate::utils::{log, prompt::UserPrompter};
 use raylib::ffi::{
-    ColorFromHSV, DrawLineEx, DrawRectangle, DrawTextEx, LoadFontEx, MeasureTextEx, Vector2,
+    ColorFromHSV, DrawLineEx, DrawRectangle, DrawTextEx, LoadFontEx, MeasureTextEx, SetExitKey,
+    Vector2,
 };
 use raylib::prelude::*;
 use std::cmp::max;
 use std::cmp::min;
 use std::ffi::CString;
 use std::os::raw::c_char;
-use std::{mem::take, os::raw::c_int, path::PathBuf, process::exit};
+use std::{
+    mem::take,
+    os::raw::c_int,
+    path::{Path, PathBuf},
+};
 use textwrap::wrap;
 
-pub struct ShellScreen {
-    rl: RaylibHandle,
-    thread: RaylibThread,
+pub struct ShellScreen<'a> {
+    rl: &'a mut RaylibHandle,
+    thread: &'a RaylibThread,
     input_buffer: String,
     working_buffer: Option<String>,
     output_lines: Vec<String>,
@@ -35,7 +43,7 @@ pub struct ShellScreen {
     cursor_pos: usize,
 }
 
-impl UserPrompter for ShellScreen {
+impl UserPrompter for ShellScreen<'_> {
     fn confirm(&mut self, message: &str) -> bool {
         self.prompt_yes_no(message)
     }
@@ -59,10 +67,10 @@ Official Github Repo: https://github.com/databasedIISc/deemak
 
 pub const INITIAL_MSG: &str = "Type commands and press Enter. Try `help` for more info.";
 
-impl ShellScreen {
+impl<'a> ShellScreen<'a> {
     pub fn new_sekai(
-        rl: RaylibHandle,
-        thread: RaylibThread,
+        rl: &'a mut RaylibHandle,
+        thread: &'a RaylibThread,
         sekai_dir: PathBuf,
         font_size: f32,
     ) -> Self {
@@ -77,7 +85,9 @@ impl ShellScreen {
                 0,
             )
         };
-
+        unsafe {
+            SetExitKey(0i32); // No exit key
+        }
         let window_width = rl.get_screen_width();
         let window_height = rl.get_screen_height();
         let char_width = unsafe {
@@ -86,7 +96,6 @@ impl ShellScreen {
         };
         let root_dir =
             find_root::get_home(&sekai_dir).expect("Could not find sekai home directory");
-
         Self {
             rl,
             thread,
@@ -120,6 +129,18 @@ impl ShellScreen {
         self.output_lines
             .extend(wrapped_initial.into_iter().map(|c| c.into_owned()));
 
+        if unsafe { FIRST_RUN } {
+            let info_path = self.root_dir.join(".dir_info").join("info.json");
+            let home_about = read_validate_info(&info_path).ok().map(|info| info.about);
+            let mut home_about =
+                home_about.unwrap_or_else(|| "Welcome User to Deemak!".to_string());
+            home_about = "\nYou are in 'HOME'\n\nAbout:\n".to_string() + &home_about + "\n";
+            let wrapped_home_about = wrap(&home_about, limit);
+            unsafe { FIRST_RUN = false };
+            self.output_lines
+                .extend(wrapped_home_about.into_iter().map(|c| c.into_owned()));
+        }
+
         while !self.window_should_close() {
             self.update();
             self.draw();
@@ -141,13 +162,6 @@ impl ShellScreen {
                     shell_history::add_to_history(&input);
                     self.history_index = None;
                     self.working_buffer = None; // Clear working buffer after command execution
-                } else {
-                    // If input is empty, just add a new line
-                    if !unsafe { FIRST_RUN } {
-                        self.output_lines.push("> ".to_string());
-                    } else {
-                        unsafe { FIRST_RUN = false };
-                    }
                 }
                 self.cursor_pos = 0; // Reset cursor position
             }
@@ -339,7 +353,7 @@ impl ShellScreen {
         self.scroll_offset = max(self.scroll_offset, min_scroll_offset);
         self.scroll_offset = min(self.scroll_offset, 0); // Never go below bottom
 
-        let mut d = self.rl.begin_drawing(&self.thread);
+        let mut d = self.rl.begin_drawing(self.thread);
         d.clear_background(Color::BLACK);
 
         // Input
@@ -492,7 +506,7 @@ impl ShellScreen {
                 self.output_lines.push(INITIAL_MSG.to_string());
             }
             CommandResult::Exit => {
-                exit(1);
+                run_gui_loop(self.rl, self.thread, self.root_dir.clone(), self.font_size);
             }
             CommandResult::NotFound => {
                 self.output_lines
@@ -574,5 +588,51 @@ impl ShellScreen {
             }
         }
         // Reset cursor position after input
+    }
+}
+
+/// Runs the main GUI loop for the Sekai shell
+pub fn run_gui_loop(
+    rl: &mut RaylibHandle,
+    thread: &RaylibThread,
+    sekai_dir: PathBuf,
+    font_size: f32,
+) {
+    loop {
+        // Show main menu and get user selection
+        let menu_selection = menu::show_menu(rl, thread);
+
+        match menu_selection {
+            Some(MenuOption::StartShell) => {
+                // Shell mode
+                let mut shell = ShellScreen::new_sekai(rl, thread, sekai_dir.clone(), font_size);
+                shell.run();
+            }
+            Some(MenuOption::About) => {
+                // About screen
+                menu::about::show_about(rl, thread);
+                // After about screen closes, return to menu
+                continue;
+            }
+            Some(MenuOption::Tutorial) => {
+                // Tutorial screen
+                let tutorial_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("_tutorial");
+                log::log_info("Deemak", "Loading Tutorial");
+                let mut tutorial_shell =
+                    ShellScreen::new_sekai(rl, thread, tutorial_dir, font_size);
+                tutorial_shell.run();
+                continue;
+            }
+            Some(MenuOption::Settings) => {
+                // Settings screen
+                menu::settings::show_settings(rl, thread);
+                // After settings screen closes, return to menu
+                continue;
+            }
+            Some(MenuOption::Exit) | None => {
+                // Exit
+                std::process::exit(0); // Exit the application
+            }
+        }
     }
 }

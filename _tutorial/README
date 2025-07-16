@@ -1,0 +1,24 @@
+ ____                            _    
+|  _ \  ___  ___ _ __ ___   __ _| | __
+| | | |/ _ \/ _ \ '_ ` _ \ / _` | |/ /
+| |_| |  __/  __/ | | | | | (_| |   < 
+|____/ \___|\___|_| |_| |_|\__,_|_|\_\
+
+
+Hello User!
+Welcome to deemak shell. This is a small tutorial to help you get started with basics of deemak shell.
+
+## Motivation
+This is a game based approach of a usual terminal you work with in real world. But many people find it difficult to work with terminal. So this is a game based approach to help you learn the basics of terminal and also Crack some COOL Puzzles!
+
+## Basics
+For starters, you can read objects and go into directories. Try running `ls` to see the list of objects and directories in your current location.
+
+Then you can use `go <directory_name>` to go into a directory. Complete the tasks to move forward in the tutorial.
+## NOTE: These tasks are not checked by the game. It is just to help you learn the basics of deemak shell. Good Luck!
+
+## Story Line
+You are a second-year student about to begin your third semester of college. As you progress, new opportunities and areas become accessible—places that were off-limits during your first year. Unravel your story for today!
+
+** TASK 1: Go to mess and talk to your friend **
+

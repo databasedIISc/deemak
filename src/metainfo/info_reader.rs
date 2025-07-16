@@ -157,27 +157,33 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
             }
 
             // If is_level is '1', further checks are needed
-            if let Some(is_locked) = s.chars().nth(1).map(|c| c == '1') {
+            if let (Some(is_level), Some(is_locked)) = (
+                s.chars().next().map(|c| c == '1'),
+                s.chars().nth(1).map(|c| c == '1'),
+            ) {
                 if !is_locked {
                     continue; // Not locked, skip further checks
                 }
                 // ensure it has a 'decrypt_me' property
-                if !obj_info.properties.contains_key("decrypt_me") {
-                    return Err(InfoError::ValidationError(
-                        "Locked objects must have a 'decrypt_me' property".to_string(),
-                    ));
+                if is_level && !obj_info.properties.contains_key("decrypt_me") {
+                    return Err(InfoError::ValidationError(format!(
+                        "Locked objects must have a 'decrypt_me' property. Object Info: {:?}",
+                        obj_info.properties
+                    )));
                 }
                 // obj_salt is required for locked objects
                 if !obj_info.properties.contains_key("obj_salt") {
-                    return Err(InfoError::ValidationError(
-                        "Locked objects must have an 'obj_salt' property".to_string(),
-                    ));
+                    return Err(InfoError::ValidationError(format!(
+                        "Locked objects must have an 'obj_salt' property. Object Info: {:?}",
+                        obj_info.properties
+                    )));
                 }
                 // enure it has a "compare me property
                 if !obj_info.properties.contains_key("compare_me") {
-                    return Err(InfoError::ValidationError(
-                        "Locked objects must have a 'compare_me' property".to_string(),
-                    ));
+                    return Err(InfoError::ValidationError(format!(
+                        "Locked objects must have a 'compare_me' property. Object Info: {:?}",
+                        obj_info.properties
+                    )));
                 }
             } else {
                 // If not locked, ensure 'decrypt_me' is not present

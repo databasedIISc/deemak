@@ -20,7 +20,7 @@ dotenvy = "0.15"       # For environment variables
 rocket = { version = "0.5.1", features = ["json","tls"]} # For  backend server
 jsonwebtoken = "9"     # For JWT
 argon2 = "0.5"         # For hashing passwords
-rand = "0.8"           # Salt generation
+rand = "0.9.1"           # Salt generation
 rocket_cors = "0.6"    # for frontend requests
 ring = "0.17"
 data-encoding = "2.4.0"
@@ -37,3 +37,6 @@ tempfile = "3.10.1"
 [profile.release]
 lto = true
 codegen-units = 1
+
+[profile.dev]
+opt-level = 3

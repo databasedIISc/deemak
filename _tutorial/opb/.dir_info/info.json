@@ -1,0 +1,21 @@
+{
+  "location": "HOME/opb",
+  "about": "You are in 'HOME/opb'. Look around and explore!",
+  "objects": {
+    "wifiroom": {
+      "locked": "00"
+    },
+    "ugcl": {
+      "locked": "00"
+    },
+    ".lost_notebook": {
+      "locked": "00"
+    },
+    "senpai": {
+      "locked": "00"
+    },
+    "labs": {
+      "locked": "00"
+    }
+  }
+}

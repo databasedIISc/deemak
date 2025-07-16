@@ -1,5 +1,6 @@
 use crate::metainfo::info_reader::{InfoError, read_validate_info};
 use crate::utils::globals;
+use crate::utils::log;
 use std::path::{Path, PathBuf};
 
 /// Find the root directory of a sekai by finding "location": "home"
@@ -61,7 +62,10 @@ pub fn get_home(sekai_path: &Path) -> Option<PathBuf> {
     match find_home(sekai_path) {
         Ok(Some(home)) => Some(home),
         Ok(None) => None,
-        Err(e) => None,
+        Err(e) => {
+            log::log_error("SEKAI", &format!("Error finding Sekai home: {e}"));
+            None
+        }
     }
 }
 
