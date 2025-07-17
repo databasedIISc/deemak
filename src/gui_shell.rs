@@ -162,6 +162,13 @@ impl<'a> ShellScreen<'a> {
                     shell_history::add_to_history(&input);
                     self.history_index = None;
                     self.working_buffer = None; // Clear working buffer after command execution
+                } else {
+                    // If input is empty, just add a new line
+                    if !unsafe { FIRST_RUN } {
+                        self.output_lines.push("> ".to_string());
+                    } else {
+                        unsafe { FIRST_RUN = false };
+                    }
                 }
                 self.cursor_pos = 0; // Reset cursor position
             }
@@ -605,6 +612,7 @@ pub fn run_gui_loop(
         match menu_selection {
             Some(MenuOption::StartShell) => {
                 // Shell mode
+                unsafe { FIRST_RUN = true }; // Reset first run flag
                 let mut shell = ShellScreen::new_sekai(rl, thread, sekai_dir.clone(), font_size);
                 shell.run();
             }
@@ -618,6 +626,7 @@ pub fn run_gui_loop(
                 // Tutorial screen
                 let tutorial_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("_tutorial");
                 log::log_info("Deemak", "Loading Tutorial");
+                unsafe { FIRST_RUN = true }; // Reset first run flag
                 let mut tutorial_shell =
                     ShellScreen::new_sekai(rl, thread, tutorial_dir, font_size);
                 tutorial_shell.run();
