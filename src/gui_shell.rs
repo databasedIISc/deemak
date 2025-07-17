@@ -409,9 +409,9 @@ impl<'a> ShellScreen<'a> {
 
         // Add input lines
         let input_line = if let Some(prompt) = active_prompt {
-            format!("{} {}", prompt, input_buffer)
+            format!("{prompt} {input_buffer}")
         } else {
-            format!("> {}", input_buffer)
+            format!("> {input_buffer}")
         };
 
         let input_lines: Vec<String> = wrapit(&input_line, limit)
