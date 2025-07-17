@@ -191,14 +191,6 @@ impl<'a> ShellScreen<'a> {
         {
             self.mouse_dragging = false;
         }
-
-        // Handle Ctrl+C for copying
-        let ctrl_pressed = self.rl.is_key_down(KeyboardKey::KEY_LEFT_CONTROL)
-            || self.rl.is_key_down(KeyboardKey::KEY_RIGHT_CONTROL);
-
-        if ctrl_pressed && self.rl.is_key_pressed(KeyboardKey::KEY_C) {
-            self.copy_selected_text();
-        }
         // Handle keyboard input
         match self.rl.get_key_pressed() {
             Some(KeyboardKey::KEY_ENTER) => {
@@ -351,9 +343,11 @@ impl<'a> ShellScreen<'a> {
                             self.selection_end = None;
                         }
                         KeyboardKey::KEY_C => {
-                            if self.selection_start.is_some() && self.selection_end.is_some() {
+                            if let (Some(start), Some(end)) =
+                                (self.selection_start, self.selection_end)
+                            {
                                 // Copy selected text
-                                self.copy_selected_text();
+                                self.copy_selected_text(start, end);
                             } else {
                                 // Next prompt (original behavior)
                                 self.output_lines.push(format!("> {}", self.input_buffer));
@@ -389,6 +383,44 @@ impl<'a> ShellScreen<'a> {
         if scroll_y != 0.0 {
             self.scroll_offset -= (scroll_y / 2.00) as i32;
         }
+    }
+
+    pub fn get_window_lines(&self) -> Vec<String> {
+        // First get all the data you need
+        let char_width = self.char_width; // Assuming char_width is stored in the struct
+        let limit = ((self.window_width as f32 * (self.term_split_ratio - 0.12)) / char_width)
+            .floor() as usize;
+
+        // Take immutable borrows first
+        let output_lines = &self.output_lines;
+        let active_prompt = &self.active_prompt;
+        let input_buffer = &self.input_buffer;
+
+        // Then build the lines
+        let mut all_lines = Vec::<String>::new();
+        for line in output_lines.iter() {
+            let lines = if line.len() > limit {
+                wrapit(line, limit)
+            } else {
+                vec![line.to_string()]
+            };
+            all_lines.extend(lines);
+        }
+
+        // Add input lines
+        let input_line = if let Some(prompt) = active_prompt {
+            format!("{} {}", prompt, input_buffer)
+        } else {
+            format!("> {}", input_buffer)
+        };
+
+        let input_lines: Vec<String> = wrapit(&input_line, limit)
+            .into_iter()
+            .map(|line| line.to_owned())
+            .collect();
+
+        all_lines.extend(input_lines);
+        all_lines
     }
     pub fn draw(&mut self) {
         // Draw output lines
@@ -487,7 +519,8 @@ impl<'a> ShellScreen<'a> {
 
             // Calculate visible range based on scroll
             let visible_start = (-self.scroll_offset).max(0) as usize;
-            let visible_end = (visible_start + (self.window_height / font_size as i32) as usize)
+            let visible_end = (visible_start
+                + (self.window_height / self.font_size as i32) as usize)
                 .min(all_lines.len());
 
             for line_idx in start.0..=end.0 {
@@ -507,14 +540,15 @@ impl<'a> ShellScreen<'a> {
                     let end_x = 10.0
                         + (end_char as f32 * char_width)
                             .min(10.0 + (line.len() as f32 * char_width));
-                    let y = 10.0 + ((line_idx as i32 - (-self.scroll_offset)) as f32 * font_size);
+                    let y =
+                        10.0 + ((line_idx as i32 - (-self.scroll_offset)) as f32 * self.font_size);
 
                     unsafe {
                         DrawRectangle(
                             start_x as c_int,
                             y as c_int,
                             (end_x - start_x) as c_int,
-                            font_size as c_int,
+                            self.font_size as c_int,
                             ColorFromHSV(210.0, 0.5, 0.5), // Blue selection color
                         );
                     }
@@ -731,39 +765,9 @@ impl<'a> ShellScreen<'a> {
 
     /// Helper method to get character index at screen position
     fn get_char_index_at_pos(&self, pos: Vector2) -> Option<(usize, usize)> {
-        let char_width = self.char_width;
-        let font_size = self.font_size;
-
-        // Calculate visible lines (similar to draw method)
-        let limit = ((self.window_width as f32 * (self.term_split_ratio - 0.12)) / char_width)
-            .floor() as usize;
-
-        let mut all_lines = Vec::<String>::new();
-        for line in self.output_lines.iter() {
-            let lines = if line.len() > limit {
-                wrapit(line, limit)
-            } else {
-                vec![line.to_string()]
-            };
-            all_lines.extend(lines);
-        }
-
-        // Add input lines
-        let input_line = if let Some(ref prompt) = self.active_prompt {
-            format!("{} {}", prompt, self.input_buffer)
-        } else {
-            format!("> {}", self.input_buffer)
-        };
-
-        let input_lines: Vec<String> = wrapit(&input_line, limit)
-            .into_iter()
-            .map(|line| line.to_owned())
-            .collect();
-
-        all_lines.extend(input_lines);
-
+        let all_lines = self.get_window_lines();
         // Calculate which line we're on (accounting for scroll offset)
-        let line_index = ((pos.y - 10.0) / font_size).floor() as i32 + (-self.scroll_offset);
+        let line_index = ((pos.y - 10.0) / self.font_size).floor() as i32 + (-self.scroll_offset);
         if line_index < 0 || line_index >= all_lines.len() as i32 {
             return None;
         }
@@ -771,74 +775,45 @@ impl<'a> ShellScreen<'a> {
 
         // Calculate which character in the line
         let line = &all_lines[line_index];
-        let char_index = ((pos.x - 10.0) / char_width).floor() as usize;
+        let char_index = ((pos.x - 10.0) / self.char_width).floor() as usize;
         let char_index = char_index.min(line.len());
 
         Some((line_index, char_index))
     }
 
     // Copy selected text to clipboard
-    fn copy_selected_text(&mut self) {
-        if let (Some(start), Some(end)) = (self.selection_start, self.selection_end) {
-            let (start, end) = if start <= end {
-                (start, end)
-            } else {
-                (end, start)
-            };
+    fn copy_selected_text(&mut self, start: (usize, usize), end: (usize, usize)) {
+        let (start, end) = if start <= end {
+            (start, end)
+        } else {
+            (end, start)
+        };
 
-            let char_width = self.char_width;
-            let limit = ((self.window_width as f32 * (self.term_split_ratio - 0.12)) / char_width)
-                .floor() as usize;
+        let all_lines = self.get_window_lines();
+        // Build the selected text
+        let mut selected_text = String::new();
 
-            let mut all_lines = Vec::<String>::new();
-            for line in self.output_lines.iter() {
-                let lines = if line.len() > limit {
-                    wrapit(line, limit)
-                } else {
-                    vec![line.to_string()]
-                };
-                all_lines.extend(lines);
+        for line_idx in start.0..=end.0 {
+            if line_idx >= all_lines.len() {
+                break;
             }
 
-            // Add input lines
-            let input_line = if let Some(ref prompt) = self.active_prompt {
-                format!("{} {}", prompt, self.input_buffer)
-            } else {
-                format!("> {}", self.input_buffer)
-            };
+            let line = &all_lines[line_idx];
+            let start_char = if line_idx == start.0 { start.1 } else { 0 };
+            let end_char = if line_idx == end.0 { end.1 } else { line.len() };
 
-            let input_lines: Vec<String> = wrapit(&input_line, limit)
-                .into_iter()
-                .map(|line| line.to_owned())
-                .collect();
+            if start_char < line.len() {
+                let slice = &line[start_char..end_char.min(line.len())];
+                selected_text.push_str(slice);
 
-            all_lines.extend(input_lines);
-
-            // Build the selected text
-            let mut selected_text = String::new();
-
-            for line_idx in start.0..=end.0 {
-                if line_idx >= all_lines.len() {
-                    break;
-                }
-
-                let line = &all_lines[line_idx];
-                let start_char = if line_idx == start.0 { start.1 } else { 0 };
-                let end_char = if line_idx == end.0 { end.1 } else { line.len() };
-
-                if start_char < line.len() {
-                    let slice = &line[start_char..end_char.min(line.len())];
-                    selected_text.push_str(slice);
-
-                    if line_idx != end.0 {
-                        selected_text.push('\n');
-                    }
+                if line_idx != end.0 {
+                    selected_text.push('\n');
                 }
             }
+        }
 
-            if !selected_text.is_empty() {
-                self.rl.set_clipboard_text(&selected_text);
-            }
+        if !selected_text.is_empty() {
+            let _ = self.rl.set_clipboard_text(&selected_text);
         }
     }
 }
