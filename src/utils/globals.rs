@@ -8,6 +8,7 @@ pub static USER_PASSWORD: OnceCell<String> = OnceCell::new();
 // Shell history to store the commands executed by the user.
 pub static SHELL_HISTORY: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
 
+
 /// Gets the global if it has been set, otherwise returns None.
 pub fn get_global_once<T: Clone>(cell: &OnceCell<T>) -> &T {
     cell.get().unwrap()

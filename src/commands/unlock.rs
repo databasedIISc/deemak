@@ -178,6 +178,7 @@ pub fn unlock(
                             "changes regarding lock status of object made to info.json successfully",
                         );
                         //update obj_info_lock_perm
+                        
                         format!("{} is unlocked", locked_obj_name)
                     } else {
                         //flag incorrect or faced some error

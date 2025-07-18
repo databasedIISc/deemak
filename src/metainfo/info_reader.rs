@@ -162,7 +162,10 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
                 s.chars().nth(1).map(|c| c == '1'),
             ) {
                 if !is_locked {
-                    continue; // Not locked, skip further checks
+                    //delete obj_salt,decrypt_me,compare_me
+                    obj_info.properties.remove("obj_salt");
+                    obj_info.properties.remove("decrypt_me");     
+                    obj_info.properties.remove("compare_me");
                 }
                 // ensure it has a 'decrypt_me' property
                 if is_level && !obj_info.properties.contains_key("decrypt_me") {
