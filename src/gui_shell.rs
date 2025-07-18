@@ -346,6 +346,9 @@ impl<'a> ShellScreen<'a> {
                 let ctrl_pressed = self.rl.is_key_down(KeyboardKey::KEY_LEFT_CONTROL)
                     || self.rl.is_key_down(KeyboardKey::KEY_RIGHT_CONTROL);
 
+                let shift_pressed = self.rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT)
+                    || self.rl.is_key_down(KeyboardKey::KEY_RIGHT_SHIFT);
+
                 if ctrl_pressed {
                     match key {
                         KeyboardKey::KEY_K => {
@@ -359,42 +362,48 @@ impl<'a> ShellScreen<'a> {
                             self.selection_end = None;
                         }
                         KeyboardKey::KEY_C => {
-                            if let (Some(start), Some(end)) =
-                                (self.selection_start, self.selection_end)
-                            {
+                            if shift_pressed {
                                 // Copy selected text
-                                self.copy_selected_text(start, end);
+                                if let (Some(start), Some(end)) =
+                                    (self.selection_start, self.selection_end)
+                                {
+                                    // Copy selected text
+                                    self.copy_selected_text(start, end);
+                                } else {
+                                    // Next prompt (original behavior)
+                                    self.output_lines.push(format!("> {}", self.input_buffer));
+                                    self.working_buffer = None;
+                                    self.input_buffer.clear();
+                                    self.scroll_offset = 0;
+                                    self.cursor_pos = 0;
+                                }
                             } else {
-                                // Next prompt (original behavior)
+                                // Next prompt
                                 self.output_lines.push(format!("> {}", self.input_buffer));
                                 self.working_buffer = None;
                                 self.input_buffer.clear();
                                 self.scroll_offset = 0;
-                                self.cursor_pos = 0;
                             }
                         }
                         KeyboardKey::KEY_V => {
-                            // Paste from clipboard
-                            let clipboard_text = self.rl.get_clipboard_text().unwrap_or_default();
-                            if !clipboard_text.is_empty() {
-                                // Remove newlines and carriage returns
-                                let filtered_text = clipboard_text.replace(['\n', '\r'], "");
-                                self.input_buffer
-                                    .insert_str(self.cursor_pos, &filtered_text);
-                                self.cursor_pos += filtered_text.len();
+                            if shift_pressed {
+                                // Paste from clipboard
+                                let clipboard_text =
+                                    self.rl.get_clipboard_text().unwrap_or_default();
+                                if !clipboard_text.is_empty() {
+                                    // Remove newlines and carriage returns
+                                    let filtered_text = clipboard_text.replace(['\n', '\r'], "");
+                                    self.input_buffer
+                                        .insert_str(self.cursor_pos, &filtered_text);
+                                    self.cursor_pos += filtered_text.len();
+                                }
                             }
                         }
                         _ => {}
                     }
-                } else {
-                    // Handle regular key input when Ctrl is not pressed
-                    let shift = self.rl.is_key_down(KeyboardKey::KEY_LEFT_SHIFT)
-                        || self.rl.is_key_down(KeyboardKey::KEY_RIGHT_SHIFT);
-
-                    if let Some(c) = key_to_char(key, shift) {
-                        self.input_buffer.insert(self.cursor_pos, c);
-                        self.cursor_pos += 1;
-                    }
+                } else if let Some(c) = key_to_char(key, shift_pressed) {
+                    self.input_buffer.insert(self.cursor_pos, c);
+                    self.cursor_pos += 1;
                 }
             }
             None => {}
