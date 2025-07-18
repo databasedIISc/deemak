@@ -220,5 +220,4 @@ Continuing..."
 
     // Run the GUI loop
     run_gui_loop(&mut rl, &thread, sekai_dir.unwrap(), font_size);
-
 }

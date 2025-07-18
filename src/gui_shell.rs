@@ -6,7 +6,7 @@ use crate::menu::menu_options::MenuOption;
 use crate::metainfo::info_reader::read_validate_info;
 use crate::utils::config::{self, FONT_OPTIONS};
 use crate::utils::tab_completion::{TabCompletionResult, process_tab_completion};
-use crate::utils::{find_root, shell_history, wrapit::wrapit};
+use crate::utils::{find_root, shell_history, wrapit::wrapit,prompt::DummyPrompter};
 use crate::utils::{log, prompt::UserPrompter};
 use raylib::ffi::{
     ColorFromHSV, DrawLineEx, DrawRectangle, DrawTextEx, LoadFontEx, MeasureTextEx, SetExitKey,
@@ -698,7 +698,8 @@ impl<'a> ShellScreen<'a> {
         let mut current_dir = self.current_dir.clone();
         let root_dir = self.root_dir.clone();
         let parts: Vec<&str> = input.split_whitespace().collect();
-        match cmd_manager(&parts, &current_dir, &root_dir, self) {
+        let mut prompter = DummyPrompter;
+        match cmd_manager(&parts, &current_dir, &root_dir, &mut prompter) {
             CommandResult::ChangeDirectory(new_dir, message) => {
                 self.current_dir = new_dir;
                 self.output_lines
