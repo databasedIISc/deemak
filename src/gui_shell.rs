@@ -158,6 +158,7 @@ impl<'a> ShellScreen<'a> {
     }
 
     pub fn update(&mut self) {
+        // MOUSE START
         // Handle mouse input for text selection
         let mouse_pos = self.rl.get_mouse_position();
 
@@ -172,6 +173,10 @@ impl<'a> ShellScreen<'a> {
         {
             // Start new selection
             if let Some((line_idx, char_idx)) = self.get_char_index_at_pos(mouse_pos.into()) {
+                // log::log_info(
+                //     "Deemak",
+                //     &format!("Mouse: line {}, char {}", line_idx, char_idx),
+                // );
                 self.selection_start = Some((line_idx, char_idx));
                 self.selection_end = Some((line_idx, char_idx));
                 self.mouse_dragging = true;
@@ -185,12 +190,15 @@ impl<'a> ShellScreen<'a> {
             }
         }
 
+        // Stop dragging when mouse button is released
         if self
             .rl
             .is_mouse_button_released(MouseButton::MOUSE_BUTTON_LEFT)
         {
             self.mouse_dragging = false;
         }
+        // MOUSE END
+
         // Handle keyboard input
         match self.rl.get_key_pressed() {
             Some(KeyboardKey::KEY_ENTER) => {
@@ -357,6 +365,17 @@ impl<'a> ShellScreen<'a> {
                                 self.cursor_pos = 0;
                             }
                         }
+                        KeyboardKey::KEY_V => {
+                            // Paste from clipboard
+                            let clipboard_text = self.rl.get_clipboard_text().unwrap_or_default();
+                            if !clipboard_text.is_empty() {
+                                // Remove newlines and carriage returns
+                                let filtered_text = clipboard_text.replace(['\n', '\r'], "");
+                                self.input_buffer
+                                    .insert_str(self.cursor_pos, &filtered_text);
+                                self.cursor_pos += filtered_text.len();
+                            }
+                        }
                         _ => {}
                     }
                 } else {
@@ -386,17 +405,15 @@ impl<'a> ShellScreen<'a> {
     }
 
     pub fn get_window_lines(&self) -> Vec<String> {
-        // First get all the data you need
         let char_width = self.char_width; // Assuming char_width is stored in the struct
         let limit = ((self.window_width as f32 * (self.term_split_ratio - 0.12)) / char_width)
             .floor() as usize;
 
-        // Take immutable borrows first
         let output_lines = &self.output_lines;
         let active_prompt = &self.active_prompt;
         let input_buffer = &self.input_buffer;
 
-        // Then build the lines
+        // build the lines
         let mut all_lines = Vec::<String>::new();
         for line in output_lines.iter() {
             let lines = if line.len() > limit {
@@ -478,7 +495,8 @@ impl<'a> ShellScreen<'a> {
         ) as usize;
         let display_lines = &visible_lines[index..];
 
-        // Draw Mouse text selection
+        // MOUSE TEXT SELECTION START
+        // This below is the same as get_window_lines function, but i wasnt able to use it directly
         if let (Some(start), Some(end)) = (self.selection_start, self.selection_end) {
             let (start, end) = if start <= end {
                 (start, end)
@@ -523,6 +541,8 @@ impl<'a> ShellScreen<'a> {
                 + (self.window_height / self.font_size as i32) as usize)
                 .min(all_lines.len());
 
+            const MOUSE_OFFSET: usize = 12;
+
             for line_idx in start.0..=end.0 {
                 if line_idx >= all_lines.len()
                     || line_idx < visible_start
@@ -533,16 +553,22 @@ impl<'a> ShellScreen<'a> {
 
                 let line = &all_lines[line_idx];
                 let start_char = if line_idx == start.0 { start.1 } else { 0 };
-                let end_char = if line_idx == end.0 { end.1 } else { line.len() };
+                let end_char = if line_idx == end.0 {
+                    end.1
+                } else {
+                    line.len() + MOUSE_OFFSET
+                };
 
-                if start_char < line.len() {
+                if start_char < line.len() + MOUSE_OFFSET {
                     let start_x = 10.0 + (start_char as f32 * char_width);
                     let end_x = 10.0
                         + (end_char as f32 * char_width)
-                            .min(10.0 + (line.len() as f32 * char_width));
+                            .min(10.0 + ((line.len()) as f32 * char_width))
+                        + MOUSE_OFFSET as f32;
                     let y =
                         10.0 + ((line_idx as i32 - (-self.scroll_offset)) as f32 * self.font_size);
 
+                    // Draw selection rectangle
                     unsafe {
                         DrawRectangle(
                             start_x as c_int,
@@ -555,6 +581,7 @@ impl<'a> ShellScreen<'a> {
                 }
             }
         }
+        // MOUSE TEXT SELECTION END
 
         // When drawing text, we need to ensure it appears above the selection
         for (i, line) in display_lines.iter().enumerate() {
