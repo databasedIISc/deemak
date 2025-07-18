@@ -75,7 +75,11 @@ pub fn unlock(
             //now check if it is a protected thing
             if let Ok((is_level, is_locked)) = read_lock_perm(&target) {
                 if !is_locked {
-                    err_msg += format!("{} is not locked, you can try accessing it directly.",pos_args[0]).as_str();
+                    err_msg += format!(
+                        "{} is not locked, you can try accessing it directly.",
+                        pos_args[0]
+                    )
+                    .as_str();
                     log::log_info("unlock", err_msg.as_str());
                     return err_msg;
                 }
@@ -112,7 +116,7 @@ pub fn unlock(
                 // take flag
                 let user_flag =
                     prompter.input(format!("Enter the flag for {locked_obj_name}:").as_str());
-                //read obj_salt 
+                //read obj_salt
                 let obj_salt = &locked_obj_info.properties["obj_salt"]
                     .as_str()
                     .ok_or_else(|| "Invalid 'obj_salt' property in info.json".to_string());
@@ -125,7 +129,7 @@ pub fn unlock(
                     return err_msg;
                 }
                 let obj_salt = obj_salt.as_ref().unwrap();
-                //read compare_me 
+                //read compare_me
                 let compare_me = &locked_obj_info.properties["compare_me"]
                     .as_str()
                     .ok_or_else(|| "Invalid 'compare_me' property in info.json".to_string());
@@ -137,7 +141,7 @@ pub fn unlock(
                 }
                 let compare_me = compare_me.as_ref().unwrap();
 
-                if is_level {                    
+                if is_level {
                     //reads decrypt_me from info.json
                     let decrypt_me = &locked_obj_info.properties["decrypt_me"]
                         .as_str()
@@ -151,16 +155,16 @@ pub fn unlock(
                     }
                     let decrypt_me = decrypt_me.as_ref().unwrap();
 
-                    let (result, message) = check_level(
-                        user_flag,
-                        locked_obj_name,
-                        obj_salt,
-                        decrypt_me,
-                        compare_me,
-                    );
+                    let (result, message) =
+                        check_level(user_flag, locked_obj_name, obj_salt, decrypt_me, compare_me);
                     if result {
                         //change lock status in info.json
-                        let update_attempt=update_obj_status(&target, locked_obj_name, "locked", Value::String("10".to_string()));
+                        let update_attempt = update_obj_status(
+                            &target,
+                            locked_obj_name,
+                            "locked",
+                            Value::String("10".to_string()),
+                        );
                         if update_attempt.is_err() {
                             err_msg += &format!(
                                 "Failed to update lock status for {locked_obj_name}: {}",
@@ -169,26 +173,32 @@ pub fn unlock(
                             log::log_error("unlock", err_msg.as_str());
                             return err_msg;
                         }
-                        log::log_info("unlock", "changes regarding lock status of object made to info.json successfully");
+                        log::log_info(
+                            "unlock",
+                            "changes regarding lock status of object made to info.json successfully",
+                        );
                         //update obj_info_lock_perm
-                        format!("{} is unlocked",locked_obj_name)
-
-                    } else { //flag incorrect or faced some error
+                        format!("{} is unlocked", locked_obj_name)
+                    } else {
+                        //flag incorrect or faced some error
                         err_msg += message.as_str();
                         err_msg += "Invalid flag. Try again.";
                         log::log_info("unlock", err_msg.as_str());
                         err_msg
                     }
-                } else { //if is chest
-                    
-                    let (result,message)=check_chest(
-                        user_flag,
-                        locked_obj_name,
-                        obj_salt, 
-                        compare_me);
+                } else {
+                    //if is chest
+
+                    let (result, message) =
+                        check_chest(user_flag, locked_obj_name, obj_salt, compare_me);
                     if result {
                         //update obj_info_lock_perm
-                        let update_attempt=update_obj_status(&target, locked_obj_name, "locked", Value::String("00".to_string()));
+                        let update_attempt = update_obj_status(
+                            &target,
+                            locked_obj_name,
+                            "locked",
+                            Value::String("00".to_string()),
+                        );
                         if update_attempt.is_err() {
                             err_msg += &format!(
                                 "Failed to update lock status for {locked_obj_name}: {}",
@@ -197,12 +207,15 @@ pub fn unlock(
                             log::log_error("unlock", err_msg.as_str());
                             return err_msg;
                         }
-                        log::log_info("unlock", "changes regarding lock status of object made to info.json successfully");
+                        log::log_info(
+                            "unlock",
+                            "changes regarding lock status of object made to info.json successfully",
+                        );
                         //return success message
-                        format!(" Chest {} is unlocked", locked_obj_name)   
+                        format!(" Chest {} is unlocked", locked_obj_name)
                         //change lock status in info.json
-
-                    } else { //flag incorrect or faced some error
+                    } else {
+                        //flag incorrect or faced some error
                         err_msg += message.as_str();
                         err_msg += "Invalid flag. Try again.";
 
@@ -229,17 +242,23 @@ fn check_level(
     level_salt: &str,
     encrypted_flag: &str,
     compare_me: &str,
-) -> (bool,String) {
-    let mut message= String::new();
+) -> (bool, String) {
+    let mut message = String::new();
     let obj_salt = SaltString::from_b64(level_salt);
     if obj_salt.is_err() {
-        return (false, format!("Error in salt for chest {level_name}. Please contact your provider"));
+        return (
+            false,
+            format!("Error in salt for chest {level_name}. Please contact your provider"),
+        );
     }
     let obj_salt = SaltString::from_b64(level_salt).unwrap();
     //read user salt from database using f
     let user_salt = SaltString::from_b64(USER_SALT);
     if user_salt.is_err() {
-        return (false, "Error in user salt. Please contact your provider".to_string());
+        return (
+            false,
+            "Error in user salt. Please contact your provider".to_string(),
+        );
     }
     let user_salt = user_salt.unwrap();
 
@@ -253,21 +272,27 @@ fn check_level(
     let l1_hashed_user_flag = argonhash(&obj_salt, decrypted_user_flag);
     let hashed_with_usersalt = argonhash(&user_salt, l1_hashed_user_flag);
     let compare_me_decrypted = decrypt(&characterise_enc_key(level_salt, level_name), compare_me);
-    message= format!("Flag processed for level {level_name}.");
-    log::log_info("unlock: processing user flag", "successfully processed user flag");
-    (compare_me_decrypted == hashed_with_usersalt,message)
+    message = format!("Flag processed for level {level_name}.");
+    log::log_info(
+        "unlock: processing user flag",
+        "successfully processed user flag",
+    );
+    (compare_me_decrypted == hashed_with_usersalt, message)
 }
 fn check_chest(
     user_flag: String,
     chest_name: &str,
     chest_salt: &str,
     encrypted_hashed_flag: &str,
-) -> (bool,String) {
-    let mut message= String::new();
+) -> (bool, String) {
+    let mut message = String::new();
     //read object salt from info.json
     let obj_salt = SaltString::from_b64(chest_salt);
     if obj_salt.is_err() {
-        return (false, format!("Error in salt for chest {chest_name}. Please contact your provider"));
+        return (
+            false,
+            format!("Error in salt for chest {chest_name}. Please contact your provider"),
+        );
     }
     let obj_salt = SaltString::from_b64(chest_salt).unwrap();
 
@@ -277,6 +302,9 @@ fn check_chest(
         &hashed_user_flag,
     );
     message = format!("Flag processed for chest {chest_name}.");
-    log::log_info("unlock: processing user flag", "successfully processed user flag");
-    (encryped_hashed_user_flag == encrypted_hashed_flag,message)
+    log::log_info(
+        "unlock: processing user flag",
+        "successfully processed user flag",
+    );
+    (encryped_hashed_user_flag == encrypted_hashed_flag, message)
 }
