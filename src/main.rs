@@ -10,7 +10,7 @@ mod utils;
 use crate::metainfo::valid_sekai::validate_or_create_sekai;
 use crate::rns::restore_comp;
 use crate::utils::{debug_mode, find_root, globals, log};
-use deemak::gui_shell::run_gui_loop;
+use crate::gui_shell::run_gui_loop;
 use deemak::menu;
 use deemak::{DEBUG_MODE, SEKAI_DIR};
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
@@ -218,3 +218,4 @@ Continuing..."
     // Run the GUI loop
     run_gui_loop(&mut rl, &thread, sekai_dir.unwrap(), font_size);
 }
+
