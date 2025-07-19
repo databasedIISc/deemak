@@ -7,6 +7,7 @@ mod metainfo;
 mod rns;
 mod server;
 mod utils;
+use crate::gui_shell::run_gui_loop;
 use crate::metainfo::valid_sekai::validate_or_create_sekai;
 use crate::rns::restore_comp;
 use crate::utils::{debug_mode, find_root, globals, log};

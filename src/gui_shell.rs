@@ -209,13 +209,6 @@ impl<'a> ShellScreen<'a> {
                     shell_history::add_to_history(&input);
                     self.history_index = None;
                     self.working_buffer = None; // Clear working buffer after command execution
-                } else {
-                    // If input is empty, just add a new line
-                    if !unsafe { FIRST_RUN } {
-                        self.output_lines.push("> ".to_string());
-                    } else {
-                        unsafe { FIRST_RUN = false };
-                    }
                 }
                 self.cursor_pos = 0; // Reset cursor position
             }
@@ -874,6 +867,52 @@ pub fn run_gui_loop(
                 let tutorial_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("_tutorial");
                 log::log_info("Deemak", "Loading Tutorial");
                 unsafe { FIRST_RUN = true }; // Reset first run flag
+                let mut tutorial_shell =
+                    ShellScreen::new_sekai(rl, thread, tutorial_dir, font_size);
+                tutorial_shell.run();
+                continue;
+            }
+            Some(MenuOption::Settings) => {
+                // Settings screen
+                menu::settings::show_settings(rl, thread);
+                // After settings screen closes, return to menu
+                continue;
+            }
+            Some(MenuOption::Exit) | None => {
+                // Exit
+                std::process::exit(0); // Exit the application
+            }
+        }
+    }
+}
+
+/// Runs the main GUI loop for the Sekai shell
+pub fn run_gui_loop(
+    rl: &mut RaylibHandle,
+    thread: &RaylibThread,
+    sekai_dir: PathBuf,
+    font_size: f32,
+) {
+    loop {
+        // Show main menu and get user selection
+        let menu_selection = menu::show_menu(rl, thread);
+
+        match menu_selection {
+            Some(MenuOption::StartShell) => {
+                // Shell mode
+                let mut shell = ShellScreen::new_sekai(rl, thread, sekai_dir.clone(), font_size);
+                shell.run();
+            }
+            Some(MenuOption::About) => {
+                // About screen
+                menu::about::show_about(rl, thread);
+                // After about screen closes, return to menu
+                continue;
+            }
+            Some(MenuOption::Tutorial) => {
+                // Tutorial screen
+                let tutorial_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("_tutorial");
+                log::log_info("Deemak", "Loading Tutorial");
                 let mut tutorial_shell =
                     ShellScreen::new_sekai(rl, thread, tutorial_dir, font_size);
                 tutorial_shell.run();
