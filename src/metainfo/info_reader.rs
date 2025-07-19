@@ -164,7 +164,7 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
                 if !is_locked {
                     //delete obj_salt,decrypt_me,compare_me
                     obj_info.properties.remove("obj_salt");
-                    obj_info.properties.remove("decrypt_me");     
+                    obj_info.properties.remove("decrypt_me");
                     obj_info.properties.remove("compare_me");
                 }
                 // ensure it has a 'decrypt_me' property
