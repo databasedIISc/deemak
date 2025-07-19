@@ -5,8 +5,6 @@ use std::sync::Mutex;
 
 /// Shell history to store the commands executed by the user.
 pub static SHELL_HISTORY: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
-
-
 /// Global user information instance
 pub static USER_INFO: OnceCell<UserInfo> = OnceCell::new();
 
@@ -84,6 +82,7 @@ impl UserInfo {
         }
     }
 }
+
 
 /// Gets the global if it has been set, otherwise returns None.
 pub fn get_global_once<T: Clone>(cell: &OnceCell<T>) -> &T {
