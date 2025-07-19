@@ -7,6 +7,7 @@ use crate::metainfo::info_reader::read_validate_info;
 use crate::utils::tab_completion::{TabCompletionResult, process_tab_completion};
 use crate::utils::{find_root, shell_history, wrapit::wrapit};
 use crate::utils::{log, prompt::UserPrompter};
+use crate::utils::config;
 use raylib::ffi::{
     ColorFromHSV, DrawLineEx, DrawRectangle, DrawTextEx, LoadFontEx, MeasureTextEx, SetExitKey,
     Vector2,
@@ -22,6 +23,20 @@ use std::{
     path::{Path, PathBuf},
 };
 use textwrap::wrap;
+
+const FONT_OPTIONS: [(&str, &str); 11] = [
+    ("Hack Nerd", "fontbook/fonts/ttf/HackNerdFont-Regular.ttf"),
+    ("Hack Nerd Mono", "fontbook/fonts/ttf/HackNerdFontMono-Regular.ttf"),
+    ("Hack Nerd Propo", "fontbook/fonts/ttf/HackNerdFontPropo-Regular.ttf"),
+    ("JetBrains Mono Medium", "fontbook/fonts/ttf/JetBrainsMono-Medium.ttf"),
+    ("JetBrains Mono Regular", "fontbook/fonts/ttf/JetBrainsMono-Regular.ttf"),
+    ("JetBrains Mono NL Light", "fontbook/fonts/ttf/JetBrainsMonoNL-Light.ttf"),
+    ("JetBrains Mono NL Medium", "fontbook/fonts/ttf/JetBrainsMonoNL-Medium.ttf"),
+    ("JetBrains Mono NL Regular", "fontbook/fonts/ttf/JetBrainsMonoNL-Regular.ttf"),
+    ("JetBrains Mono NL Thin", "fontbook/fonts/ttf/JetBrainsMonoNL-Thin.ttf"),
+    ("JetBrains Mono NL Thin Italic", "fontbook/fonts/ttf/JetBrainsMonoNL-ThinItalic.ttf"),
+    ("Meslo LGS NF Regular", "fontbook/fonts/ttf/MesloLGS NF Regular.ttf"),
+];
 
 pub struct ShellScreen<'a> {
     rl: &'a mut RaylibHandle,
@@ -77,9 +92,13 @@ impl<'a> ShellScreen<'a> {
         sekai_dir: PathBuf,
         font_size: f32,
     ) -> Self {
+        // Load font index from config
+        let font_index = config::load_config().font_index;
+        let font_path = FONT_OPTIONS.get(font_index).map(|(_, path)| *path)
+            .unwrap_or("fontbook/fonts/ttf/JetBrainsMono-Medium.ttf");
         // Loading Font
         let font = unsafe {
-            let path = CString::new("fontbook/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();
+            let path = CString::new(font_path).unwrap();
 
             LoadFontEx(
                 path.as_ptr() as *const c_char,
