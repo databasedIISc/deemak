@@ -3,9 +3,8 @@ use base64ct::Encoding; //used in deteministic salt for l1hashing
 use sha3::{Digest, Sha3_256}; //used in deteministic salt for l1hashing
 
 pub fn argonhash(salt_unique: &SaltString, user_input: String) -> String {
-    let salt = salt_unique;
     let argon2 = Argon2::default();
-    let hash = argon2.hash_password(user_input.as_bytes(), salt).unwrap();
+    let hash = argon2.hash_password(user_input.as_bytes(), salt_unique).unwrap();
     hash.to_string() //hash returned as string 
 }
 
