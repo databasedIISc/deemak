@@ -212,20 +212,16 @@ impl FieldPair {
         self.username.draw(
             d,
             font,
-            config.base_x,
-            user_y,
-            config.box_width,
-            config.box_height,
+            (config.base_x, user_y),
+            (config.box_width, config.box_height),
             highlight_color,
             false,
         );
         self.password.draw(
             d,
             font,
-            config.base_x,
-            pass_y,
-            config.box_width,
-            config.box_height,
+            (config.base_x, pass_y),
+            (config.box_width, config.box_height),
             highlight_color,
             true,
         );
@@ -381,10 +377,8 @@ impl InputField {
         &self,
         d: &mut RaylibDrawHandle,
         font: raylib::ffi::Font,
-        base_x: f32,
-        base_y: f32,
-        box_width: f32,
-        box_height: f32,
+        (base_x, base_y): (f32, f32),
+        (box_width, box_height): (f32, f32),
         highlight_color: Color,
         mask: bool, // true for password fields
     ) {
@@ -527,8 +521,8 @@ impl AuthHandler {
                             salt: salt.clone(),
                             password_hash: hash.clone(),
                         });
-                        if let Err(_) =
-                            std::panic::catch_unwind(|| crate::utils::auth::save_users(users))
+                        if std::panic::catch_unwind(|| crate::utils::auth::save_users(users))
+                            .is_err()
                         {
                             fields.username.warning = true;
                             fields.username.warning_text = "Failed to save user!".to_string();

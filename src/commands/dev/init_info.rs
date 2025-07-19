@@ -19,10 +19,10 @@ pub fn dev_info(args: &[&str], current_dir: &Path, root_dir: &Path) -> Result<St
     let mut write_mode = false;
     let mut read_mode = false;
 
-    let mut property_value = None;
+    let mut property_value: Option<String>;
 
     let path = current_dir;
-    let info_path = path.join("/.dir_info/info.json"); //where the locationa and about are stored
+    let info_path = path.join(".dir_info/info.json"); //where the locationa and about are stored
 
     //store positional args in order and create one string out of them
     let mut pos_args_str = String::new();

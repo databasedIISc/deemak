@@ -29,6 +29,7 @@ sha3 = "0.10.8"
 base64ct = "1.8.0"
 tempfile = "3.10.1"
 walkdir = "2.5.0"
+clap = { version = "4.5.41", features = ["derive"] }
 
 [dev-dependencies]
 tempfile = "3.10.1"

@@ -54,7 +54,7 @@ pub const FONT_OPTIONS: [(&str, &str); 11] = [
 ];
 
 /// User information structure with expandable functionality
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct UserInfo {
     pub username: String,
     pub salt: String,
@@ -70,17 +70,6 @@ impl UserInfo {
             username,
             salt,
             password_hash,
-            is_authenticated: false,
-            login_time: None,
-        }
-    }
-
-    /// Create a default UserInfo instance
-    pub fn default() -> Self {
-        Self {
-            username: String::new(),
-            salt: String::new(),
-            password_hash: String::new(),
             is_authenticated: false,
             login_time: None,
         }

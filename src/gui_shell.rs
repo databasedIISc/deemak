@@ -1,14 +1,14 @@
 use crate::commands::cmds::{CommandResult, cmd_manager};
 use crate::commands::ls::list_directory_entries;
+use crate::gui_main::run_gui_loop;
+use crate::gui_main::sekai_no_hajimari;
 use crate::keys::key_to_char;
-use crate::menu;
-use crate::menu::menu_options::MenuOption;
 use crate::metainfo::info_reader::read_validate_info;
 use crate::utils::config;
 use crate::utils::globals::FONT_OPTIONS;
+use crate::utils::prompt::UserPrompter;
 use crate::utils::tab_completion::{TabCompletionResult, process_tab_completion};
-use crate::utils::{find_root, shell_history, wrapit::wrapit};
-use crate::utils::{log, prompt::UserPrompter};
+use crate::utils::{shell_history, wrapit::wrapit};
 use raylib::ffi::{
     ColorFromHSV, DrawLineEx, DrawRectangle, DrawTextEx, LoadFontEx, MeasureTextEx, SetExitKey,
     Vector2,
@@ -18,11 +18,7 @@ use std::cmp::max;
 use std::cmp::min;
 use std::ffi::CString;
 use std::os::raw::c_char;
-use std::{
-    mem::take,
-    os::raw::c_int,
-    path::{Path, PathBuf},
-};
+use std::{mem::take, os::raw::c_int, path::PathBuf};
 use textwrap::wrap;
 
 pub struct ShellScreen<'a> {
@@ -57,7 +53,7 @@ impl UserPrompter for ShellScreen<'_> {
     }
 }
 
-static mut FIRST_RUN: bool = true;
+pub(crate) static mut FIRST_RUN: bool = true;
 pub const DEEMAK_BANNER: &str = r#"
  _____                            _
 |  __ \                          | |
@@ -105,16 +101,17 @@ impl<'a> ShellScreen<'a> {
             let cstr = CString::new("W").unwrap();
             MeasureTextEx(font, cstr.as_ptr(), font_size, 1.2).x
         };
-        let root_dir =
-            find_root::get_home(&sekai_dir).expect("Could not find sekai home directory");
+        // Initialize the sekai directory
+        sekai_no_hajimari(&sekai_dir);
+
         Self {
             rl,
             thread,
             input_buffer: String::new(),
             output_lines: Vec::<String>::new(),
             working_buffer: None,
-            root_dir: root_dir.clone(),
-            current_dir: root_dir, // Both point to same path initially
+            root_dir: sekai_dir.clone(),
+            current_dir: sekai_dir, // Both point to same path initially
             font,
             font_size,
             window_width,
@@ -723,7 +720,7 @@ impl<'a> ShellScreen<'a> {
                 self.output_lines.push(INITIAL_MSG.to_string());
             }
             CommandResult::Exit => {
-                run_gui_loop(self.rl, self.thread, self.root_dir.clone(), self.font_size);
+                run_gui_loop(self.rl, self.thread, self.font_size, &self.root_dir);
             }
             CommandResult::NotFound => {
                 self.output_lines
@@ -858,54 +855,6 @@ impl<'a> ShellScreen<'a> {
 
         if !selected_text.is_empty() {
             let _ = self.rl.set_clipboard_text(&selected_text);
-        }
-    }
-}
-
-/// Runs the main GUI loop for the Sekai shell
-pub fn run_gui_loop(
-    rl: &mut RaylibHandle,
-    thread: &RaylibThread,
-    sekai_dir: PathBuf,
-    font_size: f32,
-) {
-    loop {
-        // Show main menu and get user selection
-        let menu_selection = menu::show_menu(rl, thread);
-
-        match menu_selection {
-            Some(MenuOption::StartShell) => {
-                // Shell mode
-                unsafe { FIRST_RUN = true }; // Reset first run flag
-                let mut shell = ShellScreen::new_sekai(rl, thread, sekai_dir.clone(), font_size);
-                shell.run();
-            }
-            Some(MenuOption::About) => {
-                // About screen
-                menu::about::show_about(rl, thread);
-                // After about screen closes, return to menu
-                continue;
-            }
-            Some(MenuOption::Tutorial) => {
-                // Tutorial screen
-                let tutorial_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("_tutorial");
-                log::log_info("Deemak", "Loading Tutorial");
-                unsafe { FIRST_RUN = true }; // Reset first run flag
-                let mut tutorial_shell =
-                    ShellScreen::new_sekai(rl, thread, tutorial_dir, font_size);
-                tutorial_shell.run();
-                continue;
-            }
-            Some(MenuOption::Settings) => {
-                // Settings screen
-                menu::settings::show_settings(rl, thread);
-                // After settings screen closes, return to menu
-                continue;
-            }
-            Some(MenuOption::Exit) | None => {
-                // Exit
-                std::process::exit(0); // Exit the application
-            }
         }
     }
 }

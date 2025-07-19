@@ -2,7 +2,6 @@ pub mod find_root;
 pub use find_root::relative_deemak_path;
 
 pub mod log;
-pub use log::debug_mode;
 
 pub mod tab_completion;
 

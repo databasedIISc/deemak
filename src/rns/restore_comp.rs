@@ -10,7 +10,7 @@ use walkdir::WalkDir;
 const RESTORE_FILE: &str = "restore_me";
 const SAVE_FILE: &str = "save_me";
 
-fn generate_temp_path(usage: &str, root_path: &PathBuf) -> PathBuf {
+fn generate_temp_path(usage: &str, root_path: &Path) -> PathBuf {
     let mut hasher = DefaultHasher::new();
     root_path.hash(&mut hasher);
     let hash = hasher.finish();
@@ -67,7 +67,7 @@ pub fn backup_sekai(usage: &str, root_path: &PathBuf) -> std::io::Result<String>
     Ok(format!("Backup {usage} created at {backup_file:?}"))
 }
 
-pub fn restore_sekai(usage: &str, root_path: &PathBuf) -> std::io::Result<()> {
+pub fn restore_sekai(usage: &str, root_path: &Path) -> std::io::Result<()> {
     let source_file = match usage {
         "restore" => root_path.join(".dir_info").join(RESTORE_FILE),
         "save" => root_path.join(".dir_info").join(SAVE_FILE),

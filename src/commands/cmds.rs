@@ -113,7 +113,7 @@ pub fn cmd_manager(
         "dev" => {
             //check if dev mode allowed else give error-to be added
             //dev is a directory inside commands inside it dev.rs contains fn dev
-            let msg = dev::dev::dev(&parts[1..], current_dir, root_dir, prompter);
+            let msg = dev::dev_main::dev(&parts[1..], current_dir, root_dir, prompter);
             CommandResult::Output(msg)
         }
         _ => CommandResult::NotFound,

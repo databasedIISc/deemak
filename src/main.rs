@@ -1,6 +1,6 @@
 #![allow(unused_variables, unused_mut, dead_code)]
-// Import everything from the library crate instead of declaring separate modules
 mod commands;
+mod gui_main;
 mod gui_shell;
 mod keys;
 mod login;
@@ -9,171 +9,48 @@ mod metainfo;
 mod rns;
 mod server;
 mod utils;
+use crate::gui_main::{run_gui_loop, sekai_no_hajimari};
+use crate::utils::log::{self, debug_mode};
+use clap::Parser;
+use raylib::ffi::{SetConfigFlags, SetTargetFPS};
+use raylib::prelude::get_monitor_width;
 use std::sync::OnceLock;
 
 pub static DEBUG_MODE: OnceLock<bool> = OnceLock::new();
 pub static SEKAI_DIR: OnceLock<String> = OnceLock::new();
 
-use crate::gui_shell::run_gui_loop;
-use crate::metainfo::valid_sekai::validate_or_create_sekai;
-use crate::rns::restore_comp;
-use crate::utils::globals::set_world_dir;
-use crate::utils::{debug_mode, find_root, log};
-use raylib::ffi::{SetConfigFlags, SetTargetFPS};
-use raylib::prelude::get_monitor_width;
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct DeemakArgs {
+    /// Path to the Sekai directory to parse.
+    sekai_directory: std::path::PathBuf,
 
-pub const HELP_TXT: &str = r#"
-Usage: deemak <sekai_directory> [--debug] [--web]
+    /// Enable debug mode for more verbose logging.
+    #[arg(long, default_value_t = false)]
+    debug: bool,
 
-Options:
-  <sekai_directory> [Required]  :   Path to the Sekai directory to parse.
-  --debug [Optional]            :   Enable debug mode for more verbose logging.
-  --web [Optional]              :   Run the application in web mode (requires a web server).
-"#;
+    /// Run the application in web mode (requires a web server).
+    #[arg(long, default_value_t = false)]
+    web: bool,
+}
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    // first argument is sekai name to parse
-    DEBUG_MODE
-        .set(args.iter().any(|arg| arg == "--debug"))
-        .expect("DEBUG_MODE already set");
-    unsafe {
-        if DEBUG_MODE.get().unwrap_or(&false) == &true {
-            std::env::set_var("RUST_BACKTRACE", "1");
-        }
-    }
+    let args = DeemakArgs::parse();
+
     log::log_info("Application", "Starting DEEMAK Shell");
 
-    let sekai_dir = if args.len() > 1 {
-        // get absolute path to the sekai directory
-        let sekai_path = std::env::current_dir().unwrap().join(&args[1]);
-        log::log_info(
-            "SEKAI",
-            &format!("Sekai directory provided: {sekai_path:?}"),
-        );
+    // get absolute path to the sekai directory
+    let sekai_path = args.sekai_directory.clone();
+    log::log_info(
+        "SEKAI",
+        &format!("Sekai directory provided: {sekai_path:?}"),
+    );
 
-        if !validate_or_create_sekai(&sekai_path, true) {
-            log::log_error(
-                "SEKAI",
-                &format!(
-                    "Sekai directory is not valid. Creating default `.dir_info` at {sekai_path:?}"
-                ),
-            );
-        }
-        // Just check first for HOME directory validity and create if not.
-        let root_dir;
-        match find_root::find_home(&sekai_path) {
-            Ok(Some(sekai_dir)) => {
-                log::log_info(
-                    "SEKAI",
-                    &format!("Found root directory for Sekai: {}", sekai_dir.display()),
-                );
-                // Set the global Sekai directory
-                root_dir = Some(sekai_dir.clone());
-                set_world_dir(sekai_dir);
-            }
-            Ok(None) => {
-                log::log_error(
-                    "SEKAI",
-                    "Failed to find root directory for Sekai. No HOME location found. Exiting.",
-                );
-                eprintln!("Error: Failed to find root directory for Sekai. Exiting.");
-                return;
-            }
-            Err(e) => {
-                log::log_error(
-                    "SEKAI",
-                    &format!("Process failed while finding Sekai HOME. Error: {e}. Exiting."),
-                );
-                eprintln!("Process failed while finding Sekai HOME. Error: {e}. Exiting.");
-                return;
-            }
-        }
-        // If not valid, create .dir_info for each of them.
-        if !validate_or_create_sekai(&sekai_path, false) {
-            log::log_error(
-                "SEKAI",
-                &format!(
-                    "Sekai directory is not valid even after creating default `.dir_info`. Sekai: {sekai_path:?}"
-                ),
-            );
-            eprintln!(
-                "Error: Sekai directory is not valid even after creating default `.dir_info`. Please check the sekai validity. Sekai: {sekai_path:?}"
-            );
-            return;
-        } else {
-            // sekai is valid
-            log::log_info("SEKAI", &format!("Sekai is Valid {sekai_path:?}"));
-
-            // Create the restore file if it doesn't exist, since it is required for restoring. The
-            // progress will be saved as `save_me` and will be recreated every run.
-            log::log_info(
-                "SEKAI",
-                &format!(
-                    "Creating restore file for Sekai at {:?}",
-                    sekai_path.join(".dir_info/restore_me")
-                ),
-            );
-            // restore_me should be made initially if it doesnt exist, else it will not be created
-            match restore_comp::backup_sekai("restore", root_dir.as_ref().unwrap()) {
-                Err(e) => {
-                    log::log_error("SEKAI", &format!("Failed to create restore file: {e}"));
-                    eprintln!(
-                        "Error: Failed to create restore file: {e}
-Continuing..."
-                    );
-                    return;
-                }
-                Ok(msg) => {
-                    log::log_info("SEKAI", &msg);
-                }
-            }
-
-            // save_me should be made initially if it doesnt exist, it will be created every run
-            log::log_info(
-                "SEKAI",
-                &format!(
-                    "Creating save file for Sekai at {:?}",
-                    sekai_path.join(".dir_info/save_me")
-                ),
-            );
-            match restore_comp::backup_sekai("save", root_dir.as_ref().unwrap()) {
-                Err(e) => {
-                    log::log_error("SEKAI", &format!("Failed to create save file: {e}"));
-                    eprintln!(
-                        "Error: Failed to create save file: {e}
-Continuing..."
-                    );
-                    return;
-                }
-                Ok(msg) => {
-                    log::log_info("SEKAI", &msg);
-                }
-            }
-        }
-        Some(sekai_path)
-    } else {
-        // args.len() == 1
-        log::log_error("Application", "Invalid arguments provided.");
-        eprintln!("Error: At least one argument is required.");
-        println!("{HELP_TXT}");
-        return;
-    };
-
-    // If `save_me` already exists, then the sekai will be restored from it.
-    match restore_comp::restore_sekai("save", &sekai_dir.clone().unwrap()) {
-        Err(err) => {
-            log::log_error(
-                "SEKAI",
-                &format!("Failed to restore Sekai from save file: {err}"),
-            );
-            eprintln!(
-                "Error: Failed to restore Sekai from save file at {sekai_dir:?}
-Continuing..."
-            );
-        }
-        Ok(_) => {
-            log::log_info("SEKAI", "Sekai restored successfully from save file");
+    // Set Debug Mode if given
+    if args.debug {
+        DEBUG_MODE.set(true).expect("DEBUG_MODE already set");
+        unsafe {
+            std::env::set_var("RUST_BACKTRACE", "1");
         }
     }
 
@@ -182,10 +59,13 @@ Continuing..."
     // We have 2 modes, the web and the raylib gui. The web argument runs it on the web, else
     // raylib gui is set by default.
     //
-    // NOTE: #############    SERVER USAGE    #############
+    // NOTE: #############    WEB USAGE    #############
     //
     // Initialize the server if --web argument is provided
-    if args.iter().any(|arg| arg == "--web") {
+    if args.web {
+        // TODO: Remove the extra sekai_no_hajimari call, it will be shifted to the server module
+        // later on.
+        sekai_no_hajimari(&sekai_path);
         log::log_info("Application", "Running in web mode");
         // server::launch_web(sekai_dir.clone().unwrap());
         let _ = server::server();
@@ -225,5 +105,5 @@ Continuing..."
     }
 
     // Run the GUI loop
-    run_gui_loop(&mut rl, &thread, sekai_dir.unwrap(), font_size);
+    run_gui_loop(&mut rl, &thread, font_size, &sekai_path);
 }

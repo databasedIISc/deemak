@@ -262,7 +262,7 @@ fn check_level(
     let obj_salt = SaltString::from_b64(level_salt).expect("Invalid obj_salt format");
     //read user salt from database using f
 
-    let mut message = String::new();
+    let mut message: String;
     let obj_salt = SaltString::from_b64(level_salt);
     if obj_salt.is_err() {
         return (
@@ -308,7 +308,7 @@ fn check_chest(
     let obj_salt = SaltString::from_b64(chest_salt).expect("Invalid obj_salt format");
     //read user salt from database using f
     let user_salt = SaltString::from_b64(user_salt_hex).unwrap();
-    let mut message = String::new();
+    let mut message: String;
     //read object salt from info.json
     let obj_salt = SaltString::from_b64(chest_salt);
     if obj_salt.is_err() {
