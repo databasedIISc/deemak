@@ -3,7 +3,6 @@ use crate::utils::log;
 use crate::utils::relative_deemak_path;
 use std::path::Path;
 
-
 /// Reads the lock permissions from an object.
 /// Returns: (bool, bool) => (is_level, is_locked)
 ///
