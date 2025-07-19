@@ -6,16 +6,46 @@ use std::time::{Duration, Instant};
 
 const FONT_OPTIONS: [(&str, &str); 11] = [
     ("Hack Nerd", "fontbook/fonts/ttf/HackNerdFont-Regular.ttf"),
-    ("Hack Nerd Mono", "fontbook/fonts/ttf/HackNerdFontMono-Regular.ttf"),
-    ("Hack Nerd Propo", "fontbook/fonts/ttf/HackNerdFontPropo-Regular.ttf"),
-    ("JetBrains Mono Medium", "fontbook/fonts/ttf/JetBrainsMono-Medium.ttf"),
-    ("JetBrains Mono Regular", "fontbook/fonts/ttf/JetBrainsMono-Regular.ttf"),
-    ("JetBrains Mono NL Light", "fontbook/fonts/ttf/JetBrainsMonoNL-Light.ttf"),
-    ("JetBrains Mono NL Medium", "fontbook/fonts/ttf/JetBrainsMonoNL-Medium.ttf"),
-    ("JetBrains Mono NL Regular", "fontbook/fonts/ttf/JetBrainsMonoNL-Regular.ttf"),
-    ("JetBrains Mono NL Thin", "fontbook/fonts/ttf/JetBrainsMonoNL-Thin.ttf"),
-    ("JetBrains Mono NL Thin Italic", "fontbook/fonts/ttf/JetBrainsMonoNL-ThinItalic.ttf"),
-    ("Meslo LGS NF Regular", "fontbook/fonts/ttf/MesloLGS NF Regular.ttf"),
+    (
+        "Hack Nerd Mono",
+        "fontbook/fonts/ttf/HackNerdFontMono-Regular.ttf",
+    ),
+    (
+        "Hack Nerd Propo",
+        "fontbook/fonts/ttf/HackNerdFontPropo-Regular.ttf",
+    ),
+    (
+        "JetBrains Mono Medium",
+        "fontbook/fonts/ttf/JetBrainsMono-Medium.ttf",
+    ),
+    (
+        "JetBrains Mono Regular",
+        "fontbook/fonts/ttf/JetBrainsMono-Regular.ttf",
+    ),
+    (
+        "JetBrains Mono NL Light",
+        "fontbook/fonts/ttf/JetBrainsMonoNL-Light.ttf",
+    ),
+    (
+        "JetBrains Mono NL Medium",
+        "fontbook/fonts/ttf/JetBrainsMonoNL-Medium.ttf",
+    ),
+    (
+        "JetBrains Mono NL Regular",
+        "fontbook/fonts/ttf/JetBrainsMonoNL-Regular.ttf",
+    ),
+    (
+        "JetBrains Mono NL Thin",
+        "fontbook/fonts/ttf/JetBrainsMonoNL-Thin.ttf",
+    ),
+    (
+        "JetBrains Mono NL Thin Italic",
+        "fontbook/fonts/ttf/JetBrainsMonoNL-ThinItalic.ttf",
+    ),
+    (
+        "Meslo LGS NF Regular",
+        "fontbook/fonts/ttf/MesloLGS NF Regular.ttf",
+    ),
 ];
 
 #[derive(Debug, Clone, Copy)]
@@ -39,7 +69,11 @@ impl SettingsOption {
     }
 }
 
-pub fn show_font_selection(rl: &mut RaylibHandle, thread: &RaylibThread, selected_font: &mut usize) {
+pub fn show_font_selection(
+    rl: &mut RaylibHandle,
+    thread: &RaylibThread,
+    selected_font: &mut usize,
+) {
     let font = rl.get_font_default();
     let mut last_change = Instant::now();
     let mut is_back_selected = false;
@@ -74,15 +108,44 @@ pub fn show_font_selection(rl: &mut RaylibHandle, thread: &RaylibThread, selecte
 
         let mut d = rl.begin_drawing(thread);
         d.clear_background(Color::BLACK);
-        d.draw_text_ex(&font, "Select Font", Vector2::new(200.0, 100.0), 40.0, 2.0, Color::WHITE);
+        d.draw_text_ex(
+            &font,
+            "Select Font",
+            Vector2::new(200.0, 100.0),
+            40.0,
+            2.0,
+            Color::WHITE,
+        );
 
         for (i, (name, _)) in FONT_OPTIONS.iter().enumerate() {
-            let color = if i == *selected_font && !is_back_selected { Color::GOLD } else { Color::GRAY };
-            d.draw_text_ex(&font, name, Vector2::new(200.0, 180.0 + (i as f32 * 30.0)), 30.0, 1.0, color);
+            let color = if i == *selected_font && !is_back_selected {
+                Color::GOLD
+            } else {
+                Color::GRAY
+            };
+            d.draw_text_ex(
+                &font,
+                name,
+                Vector2::new(200.0, 180.0 + (i as f32 * 30.0)),
+                30.0,
+                1.0,
+                color,
+            );
         }
 
-        let back_color = if is_back_selected { Color::GOLD } else { Color::GRAY };
-        d.draw_text_ex(&font, "Back", Vector2::new(200.0, 180.0 + (FONT_OPTIONS.len() as f32 * 30.0)), 30.0, 1.0, back_color);
+        let back_color = if is_back_selected {
+            Color::GOLD
+        } else {
+            Color::GRAY
+        };
+        d.draw_text_ex(
+            &font,
+            "Back",
+            Vector2::new(200.0, 180.0 + (FONT_OPTIONS.len() as f32 * 30.0)),
+            30.0,
+            1.0,
+            back_color,
+        );
 
         let cursor_y = if is_back_selected {
             180 + FONT_OPTIONS.len() as i32 * 30
@@ -168,13 +231,8 @@ pub fn show_keybindings(rl: &mut RaylibHandle, thread: &RaylibThread) {
             unsafe {
                 let footer = "Press ENTER to go back";
                 let footer_content = std::ffi::CString::new(footer).unwrap();
-                let footer_width = raylib::ffi::MeasureTextEx(
-                    font,
-                    footer_content.as_ptr(),
-                    20.0,
-                    1.0,
-                )
-                .x;
+                let footer_width =
+                    raylib::ffi::MeasureTextEx(font, footer_content.as_ptr(), 20.0, 1.0).x;
                 let footer_pos = raylib::ffi::Vector2 {
                     x: (raylib::ffi::GetScreenWidth() as f32 - footer_width) / 2.0,
                     y: raylib::ffi::GetScreenHeight() as f32 - 50.0,

@@ -159,11 +159,18 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                                 } else if !password.is_empty() {
                                     USER_NAME.set(username.clone()).ok();
                                     USER_PASSWORD.set(password.clone()).ok();
-                                    let users: Vec<deemak::utils::auth::User> = deemak::utils::auth::load_users();
+                                    let users: Vec<deemak::utils::auth::User> =
+                                        deemak::utils::auth::load_users();
                                     let username = username.trim().to_string();
                                     let password = password.trim().to_string();
-                                    if let Some(user) = users.iter().find(|u| u.username == username) {
-                                        if verify_password(&password, &user.salt, &user.password_hash) {
+                                    if let Some(user) =
+                                        users.iter().find(|u| u.username == username)
+                                    {
+                                        if verify_password(
+                                            &password,
+                                            &user.salt,
+                                            &user.password_hash,
+                                        ) {
                                             return true;
                                         } else {
                                             warning = true;
@@ -201,7 +208,8 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                                             }
                                             Err(_) => {
                                                 reg_warning = true;
-                                                reg_warning_text = "Failed to hash password!".to_string();
+                                                reg_warning_text =
+                                                    "Failed to hash password!".to_string();
                                             }
                                         }
                                     }
@@ -224,11 +232,27 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
         }
 
         if stream_index > 0 {
-            d.draw_text(&displayed_text, 200, top_y as i32, 20, Color::alpha(&Color::GRAY, 1.0));
+            d.draw_text(
+                &displayed_text,
+                200,
+                top_y as i32,
+                20,
+                Color::alpha(&Color::GRAY, 1.0),
+            );
         }
 
         if stream_index >= full_text.len() {
-            d.draw_text_ex(&font_d, "DEEMAK SHELL", Vector2 { x: 200.0, y: y_offset }, 60.0, 2.0, Color::WHITE);
+            d.draw_text_ex(
+                &font_d,
+                "DEEMAK SHELL",
+                Vector2 {
+                    x: 200.0,
+                    y: y_offset,
+                },
+                60.0,
+                2.0,
+                Color::WHITE,
+            );
         }
 
         if show_input {
@@ -261,18 +285,32 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
             d.draw_text_ex(
                 &font_d,
                 "Login",
-                Vector2 { x: tab_x + 40.0, y: tab_y + 8.0 },
+                Vector2 {
+                    x: tab_x + 40.0,
+                    y: tab_y + 8.0,
+                },
                 24.0,
                 1.0,
-                if active_tab == 0 { Color::BLACK } else { Color::WHITE },
+                if active_tab == 0 {
+                    Color::BLACK
+                } else {
+                    Color::WHITE
+                },
             );
             d.draw_text_ex(
                 &font_d,
                 "Register",
-                Vector2 { x: tab_x + tab_w + 40.0, y: tab_y + 8.0 },
+                Vector2 {
+                    x: tab_x + tab_w + 40.0,
+                    y: tab_y + 8.0,
+                },
                 24.0,
                 1.0,
-                if active_tab == 1 { Color::BLACK } else { Color::WHITE },
+                if active_tab == 1 {
+                    Color::BLACK
+                } else {
+                    Color::WHITE
+                },
             );
             if active_tab == 0 {
                 let base_x = 200.0;
@@ -301,7 +339,11 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     (user_y + 40.0) as i32,
                     box_width as i32,
                     box_height as i32,
-                    if entering_username { highlight_color } else { Color::GRAY },
+                    if entering_username {
+                        highlight_color
+                    } else {
+                        Color::GRAY
+                    },
                 );
                 // Draw username
                 let mut total_width = 0.0;
@@ -309,7 +351,9 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                 for ch in username.chars().rev() {
                     let s = CString::new(ch.to_string()).unwrap();
                     let w = unsafe { MeasureTextEx(font, s.as_ptr(), 30.0, 1.0).x };
-                    if total_width + w + 10.0 > box_width { break; }
+                    if total_width + w + 10.0 > box_width {
+                        break;
+                    }
                     total_width += w;
                     visible.insert(0, ch);
                 }
@@ -346,7 +390,11 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     (pass_y + 40.0) as i32,
                     box_width as i32,
                     box_height as i32,
-                    if !entering_username { highlight_color } else { Color::GRAY },
+                    if !entering_username {
+                        highlight_color
+                    } else {
+                        Color::GRAY
+                    },
                 );
                 // Draw masked password
                 let masked = "*".repeat(password.len());
@@ -355,17 +403,26 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                 for ch in masked.chars().rev() {
                     let s = CString::new(ch.to_string()).unwrap();
                     let w = unsafe { MeasureTextEx(font, s.as_ptr(), 30.0, 1.0).x };
-                    if total_width + w + 10.0 > box_width { break; }
+                    if total_width + w + 10.0 > box_width {
+                        break;
+                    }
                     total_width += w;
                     visible_masked.insert(0, ch);
                 }
-                let pass_display = if !entering_username { format!("{visible_masked}|") } else { visible_masked.clone() };
+                let pass_display = if !entering_username {
+                    format!("{visible_masked}|")
+                } else {
+                    visible_masked.clone()
+                };
                 let pass_c = CString::new(pass_display).unwrap();
                 unsafe {
                     DrawTextEx(
                         font,
                         pass_c.as_ptr(),
-                        Vector2 { x: base_x + 5.0, y: pass_y + 45.0 },
+                        Vector2 {
+                            x: base_x + 5.0,
+                            y: pass_y + 45.0,
+                        },
                         30.0,
                         0.1,
                         highlight_color.into(),
@@ -391,9 +448,14 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                 let words: Vec<&str> = footer_note.split_whitespace().collect();
                 let mut line = String::new();
                 for word in words {
-                    let trial = if line.is_empty() { word.to_string() } else { format!("{line} {word}") };
+                    let trial = if line.is_empty() {
+                        word.to_string()
+                    } else {
+                        format!("{line} {word}")
+                    };
                     let trial_c = CString::new(trial.clone()).unwrap();
-                    let width = unsafe { MeasureTextEx(font, trial_c.as_ptr(), font_size, spacing).x };
+                    let width =
+                        unsafe { MeasureTextEx(font, trial_c.as_ptr(), font_size, spacing).x };
                     if width > max_width {
                         let line_c = CString::new(line.clone()).unwrap();
                         unsafe {
@@ -469,7 +531,11 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     (user_y + 40.0) as i32,
                     box_width as i32,
                     box_height as i32,
-                    if entering_reg_username { highlight_color } else { Color::GRAY },
+                    if entering_reg_username {
+                        highlight_color
+                    } else {
+                        Color::GRAY
+                    },
                 );
                 // Draw reg username
                 let mut total_width = 0.0;
@@ -477,17 +543,26 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                 for ch in reg_username.chars().rev() {
                     let s = CString::new(ch.to_string()).unwrap();
                     let w = unsafe { MeasureTextEx(font, s.as_ptr(), 30.0, 1.0).x };
-                    if total_width + w + 10.0 > box_width { break; }
+                    if total_width + w + 10.0 > box_width {
+                        break;
+                    }
                     total_width += w;
                     visible.insert(0, ch);
                 }
-                let user_display = if entering_reg_username { format!("{visible}|") } else { visible.clone() };
+                let user_display = if entering_reg_username {
+                    format!("{visible}|")
+                } else {
+                    visible.clone()
+                };
                 let user_c = CString::new(user_display).unwrap();
                 unsafe {
                     DrawTextEx(
                         font,
                         user_c.as_ptr(),
-                        Vector2 { x: base_x + 5.0, y: user_y + 45.0 },
+                        Vector2 {
+                            x: base_x + 5.0,
+                            y: user_y + 45.0,
+                        },
                         30.0,
                         0.1,
                         highlight_color.into(),
@@ -505,7 +580,11 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     (pass_y + 40.0) as i32,
                     box_width as i32,
                     box_height as i32,
-                    if !entering_reg_username { highlight_color } else { Color::GRAY },
+                    if !entering_reg_username {
+                        highlight_color
+                    } else {
+                        Color::GRAY
+                    },
                 );
                 // Draw masked reg password
                 let masked = "*".repeat(reg_password.len());
@@ -514,17 +593,26 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                 for ch in masked.chars().rev() {
                     let s = CString::new(ch.to_string()).unwrap();
                     let w = unsafe { MeasureTextEx(font, s.as_ptr(), 30.0, 1.0).x };
-                    if total_width + w + 10.0 > box_width { break; }
+                    if total_width + w + 10.0 > box_width {
+                        break;
+                    }
                     total_width += w;
                     visible_masked.insert(0, ch);
                 }
-                let pass_display = if !entering_reg_username { format!("{visible_masked}|") } else { visible_masked.clone() };
+                let pass_display = if !entering_reg_username {
+                    format!("{visible_masked}|")
+                } else {
+                    visible_masked.clone()
+                };
                 let pass_c = CString::new(pass_display).unwrap();
                 unsafe {
                     DrawTextEx(
                         font,
                         pass_c.as_ptr(),
-                        Vector2 { x: base_x + 5.0, y: pass_y + 45.0 },
+                        Vector2 {
+                            x: base_x + 5.0,
+                            y: pass_y + 45.0,
+                        },
                         30.0,
                         0.1,
                         highlight_color.into(),
@@ -550,9 +638,14 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                 let words: Vec<&str> = footer_note.split_whitespace().collect();
                 let mut line = String::new();
                 for word in words {
-                    let trial = if line.is_empty() { word.to_string() } else { format!("{line} {word}") };
+                    let trial = if line.is_empty() {
+                        word.to_string()
+                    } else {
+                        format!("{line} {word}")
+                    };
                     let trial_c = CString::new(trial.clone()).unwrap();
-                    let width = unsafe { MeasureTextEx(font, trial_c.as_ptr(), font_size, spacing).x };
+                    let width =
+                        unsafe { MeasureTextEx(font, trial_c.as_ptr(), font_size, spacing).x };
                     if width > max_width {
                         let line_c = CString::new(line.clone()).unwrap();
                         unsafe {
