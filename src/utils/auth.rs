@@ -58,14 +58,13 @@ pub fn load_users() -> Vec<User> {
     })
 }
 
-fn save_users(users: &[User]) {
+pub fn save_users(users: &[User]) {
     let data = serde_json::to_string_pretty(users).expect("Failed to serialize users");
     let mut file = File::create(USER_FILE).expect("Failed to write file");
     file.write_all(data.as_bytes()).unwrap();
 }
 
-// Password hashing
-fn hash_password(password: &str) -> Result<(String, String), ring::error::Unspecified> {
+pub fn hash_password(password: &str) -> Result<(String, String), ring::error::Unspecified> {
     let rng = rand::SystemRandom::new();
     let mut salt = [0u8; CREDENTIAL_LEN];
     rng.fill(&mut salt)?;
@@ -78,7 +77,6 @@ fn hash_password(password: &str) -> Result<(String, String), ring::error::Unspec
         password.as_bytes(),
         &mut hash,
     );
-
     Ok((HEXUPPER.encode(&salt), HEXUPPER.encode(&hash)))
 }
 

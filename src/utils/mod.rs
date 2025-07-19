@@ -17,3 +17,5 @@ pub mod prompt;
 pub mod auth;
 
 pub mod test_utils;
+
+pub mod config;
