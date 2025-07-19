@@ -73,6 +73,7 @@
     },
     "dog.txt": {
       "compare_me": "rhcenhruhce845c64684wah",
+
       "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK",
       "decrypt_me": "blah",
       "locked": "01"
