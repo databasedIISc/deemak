@@ -151,7 +151,7 @@ impl<'a> ShellScreen<'a> {
             .map(|info| info.location);
         let mut home_about = home_about.unwrap_or_else(|| "Welcome User to Deemak!".to_string());
         let home_location = home_location.unwrap_or_else(|| "HOME".to_string());
-        let home_about = format!("\nYou are in {}\n\nAbout:\n{}\n", home_location, home_about);
+        let home_about = format!("\nYou are in {home_location}\n\nAbout:\n{home_about}\n");
         let wrapped_home_about = wrap(&home_about, limit);
         unsafe { FIRST_RUN = false };
         self.output_lines
