@@ -458,7 +458,7 @@ const REGISTER_FOOTER: &str = "Welcome to Deemak by DBD! Use up/down keys to swi
 struct AuthHandler;
 
 impl AuthHandler {
-    fn handle_login(fields: &mut FieldPair, users: &[deemak::utils::auth::User]) -> Option<bool> {
+    fn handle_login(fields: &mut FieldPair, users: &[crate::utils::auth::User]) -> Option<bool> {
         if fields.username.entering {
             if !fields.username.value.is_empty() {
                 fields.username.entering = false;
@@ -470,7 +470,7 @@ impl AuthHandler {
                 let username = fields.username.value.trim();
                 let password = fields.password.value.trim();
                 if let Some(user) = users.iter().find(|u| u.username == username) {
-                    if deemak::utils::auth::verify_password(
+                    if crate::utils::auth::verify_password(
                         &password.to_string(),
                         &user.salt,
                         &user.password_hash,
@@ -508,7 +508,7 @@ impl AuthHandler {
 
     fn handle_register(
         fields: &mut FieldPair,
-        users: &mut Vec<deemak::utils::auth::User>,
+        users: &mut Vec<crate::utils::auth::User>,
     ) -> Option<bool> {
         if fields.username.entering {
             if !fields.username.value.is_empty() {
@@ -524,15 +524,15 @@ impl AuthHandler {
                     fields.username.warning = true;
                     fields.username.warning_text = "Username already exists!".to_string();
                 } else {
-                    match deemak::utils::auth::hash_password(password) {
+                    match crate::utils::auth::hash_password(password) {
                         Ok((salt, hash)) => {
-                            users.push(deemak::utils::auth::User {
+                            users.push(crate::utils::auth::User {
                                 username: username.to_string(),
                                 salt: salt.clone(),
                                 password_hash: hash.clone(),
                             });
                             if let Err(_) =
-                                std::panic::catch_unwind(|| deemak::utils::auth::save_users(users))
+                                std::panic::catch_unwind(|| crate::utils::auth::save_users(users))
                             {
                                 fields.username.warning = true;
                                 fields.username.warning_text = "Failed to save user!".to_string();
@@ -581,7 +581,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
     let font_d = rl.get_font_default();
 
     // Load users and initialize components
-    let users_result = std::panic::catch_unwind(|| deemak::utils::auth::load_users());
+    let users_result = std::panic::catch_unwind(|| crate::utils::auth::load_users());
     let mut users = match users_result {
         Ok(u) => u,
         Err(_) => {
@@ -687,7 +687,6 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
             // Draw tabs
             let tab_x = config.base_x;
             let tab_y = config.top_y + config.tab_spacing;
-
             d.draw_rectangle(
                 tab_x as i32,
                 tab_y as i32,

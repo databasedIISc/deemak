@@ -1,21 +1,13 @@
 #![allow(unused_variables, unused_mut, dead_code)]
-mod commands;
-mod gui_shell;
-mod keys;
-mod login;
-mod metainfo;
-mod rns;
-mod server;
-mod utils;
-use crate::metainfo::valid_sekai::validate_or_create_sekai;
-use crate::rns::restore_comp;
-use crate::utils::{debug_mode, find_root, globals, log};
+// Import everything from the library crate instead of declaring separate modules
+use deemak::metainfo::valid_sekai::validate_or_create_sekai;
+use deemak::rns::restore_comp;
+use deemak::utils::{debug_mode, find_root, log};
 use deemak::gui_shell::run_gui_loop;
-use deemak::menu;
-use deemak::{DEBUG_MODE, SEKAI_DIR};
+use deemak::DEBUG_MODE;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
-use utils::globals::set_world_dir;
+use deemak::utils::globals::set_world_dir;
 
 pub const HELP_TXT: &str = r#"
 Usage: deemak <sekai_directory> [--debug] [--web]
@@ -183,7 +175,7 @@ Continuing..."
     if args.iter().any(|arg| arg == "--web") {
         log::log_info("Application", "Running in web mode");
         // server::launch_web(sekai_dir.clone().unwrap());
-        let _ = server::server();
+        let _ = deemak::server::server();
         return;
     }
 
@@ -207,16 +199,14 @@ Continuing..."
         .build();
     let font_size = get_monitor_width(0) as f32 / 73.5;
     rl.set_trace_log(loglevel);
-
     // Disable escape key exit to prevent accidental application closure
     unsafe {
         raylib::ffi::SetExitKey(0i32);
     }
-
     log::log_info("Application", "DEEMAK initialized successfully");
 
     // Show login screen before menu
-    if !login::show_login(&mut rl, &thread, font_size) {
+    if !deemak::login::show_login(&mut rl, &thread, font_size) {
         log::log_info("Application", "Login aborted by user.");
         return; // Exit if window closed during login
     }

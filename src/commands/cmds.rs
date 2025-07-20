@@ -1,4 +1,5 @@
 use super::*;
+use crate::utils::auth::get_current_username;
 use crate::utils::prompt::UserPrompter;
 use std::path::Path;
 use std::path::PathBuf;
@@ -59,7 +60,10 @@ pub fn cmd_manager(
 
     match parts[0] {
         "echo" => CommandResult::Output(echo(&parts[1..])),
-        "whoami" => CommandResult::Output("Database Deemak User.".to_string()),
+        "whoami" => match get_current_username() {
+            Some(name) => CommandResult::Output(format!("Current user: {}", name)),
+            None => CommandResult::Output("Current user: [Not logged in] (Default User)".to_string()),
+        },
         "go" => {
             let (new_dir, msg) = go(&parts[1..], current_dir, root_dir);
             CommandResult::ChangeDirectory(new_dir, msg)

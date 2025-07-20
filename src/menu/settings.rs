@@ -39,6 +39,20 @@ pub fn show_font_selection(
     let font = rl.get_font_default();
     let mut last_change = Instant::now();
     let mut is_back_selected = false;
+    
+    // Store the current font selection at the start
+    let current_font_index = config::load_config().font_index;
+    
+    // Load the custom font for the footnote (same as keybindings)
+    let custom_font = unsafe {
+        let path = CString::new("fontbook/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();
+        raylib::ffi::LoadFontEx(
+            path.as_ptr() as *const c_char,
+            600 as c_int,
+            std::ptr::null_mut::<c_int>(),
+            0,
+        )
+    };
 
     // Store the current font selection at the start
     let current_font_index = config::load_config().font_index;
@@ -99,14 +113,12 @@ pub fn show_font_selection(
             } else {
                 Color::GRAY
             };
-
             // Create the display text with default label if it's the first option
             let display_text = if i == 0 {
                 format!("{} (default)", name)
             } else {
                 name.to_string()
             };
-
             // Draw tick mark for currently selected font
             if i == current_font_index {
                 d.draw_text_ex(
@@ -129,7 +141,6 @@ pub fn show_font_selection(
                     Color::GOLD,
                 );
             }
-
             d.draw_text_ex(
                 &font,
                 &display_text,
@@ -270,7 +281,6 @@ impl KeybindingsScreen {
         let header_y = 180.0;
         let key_header = CString::new("Keybinding").unwrap();
         let desc_header = CString::new("Function").unwrap();
-
         unsafe {
             raylib::ffi::DrawTextEx(
                 self.font,
@@ -319,7 +329,6 @@ impl KeybindingsScreen {
         let line_height = 25.0;
         let key_column_width = 200.0;
         let desc_column_width = d.get_screen_width() as f32 - 350.0; // Leave margin for wrapping
-
         for (key, description) in &self.keybindings {
             // Draw the keybinding (left column)
             let key_content = CString::new(key.as_str()).unwrap();
@@ -338,19 +347,16 @@ impl KeybindingsScreen {
             let words: Vec<&str> = description.split_whitespace().collect();
             let mut current_line = String::new();
             let mut desc_y = y_pos;
-
             for word in words {
                 let test_line = if current_line.is_empty() {
                     word.to_string()
                 } else {
                     format!("{} {}", current_line, word)
                 };
-
                 let test_content = CString::new(test_line.as_str()).unwrap();
                 let text_width = unsafe {
                     raylib::ffi::MeasureTextEx(self.font, test_content.as_ptr(), 18.0, 1.0).x
                 };
-
                 if text_width > desc_column_width && !current_line.is_empty() {
                     // Draw current line and start new one
                     let line_content = CString::new(current_line.as_str()).unwrap();
@@ -373,7 +379,6 @@ impl KeybindingsScreen {
                     current_line = test_line;
                 }
             }
-
             // Draw the last line
             if !current_line.is_empty() {
                 let line_content = CString::new(current_line.as_str()).unwrap();
@@ -391,7 +396,6 @@ impl KeybindingsScreen {
                     );
                 }
             }
-
             // Move to next keybinding (ensure proper spacing)
             y_pos = desc_y + line_height + 5.0;
         }
