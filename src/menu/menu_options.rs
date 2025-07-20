@@ -108,7 +108,8 @@ impl MenuInput {
             if let Some(key) = rl.get_key_pressed() {
                 match key {
                     KeyboardKey::KEY_UP => {
-                        self.selected = (self.selected + MenuOption::opts().len() - 1) % MenuOption::opts().len();
+                        self.selected = (self.selected + MenuOption::opts().len() - 1)
+                            % MenuOption::opts().len();
                         self.last_change = Instant::now();
                     }
                     KeyboardKey::KEY_DOWN => {
@@ -166,7 +167,10 @@ pub fn show_menu(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<MenuOpt
             d.draw_text_ex(
                 &font,
                 option.as_str(),
-                Vector2::new(config.menu_x, config.menu_start_y + (i as f32 * config.menu_item_height)),
+                Vector2::new(
+                    config.menu_x,
+                    config.menu_start_y + (i as f32 * config.menu_item_height),
+                ),
                 config.menu_font_size,
                 1.0,
                 color,
@@ -179,7 +183,12 @@ pub fn show_menu(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<MenuOpt
             config.cursor_x as i32,
             (config.menu_start_y + input.selected as f32 * config.menu_item_height) as i32,
             config.cursor_font_size,
-            Color::new(255, 255, 255, ((animation.alpha * 0.5).sin().abs() * 255.0) as u8),
+            Color::new(
+                255,
+                255,
+                255,
+                ((animation.alpha * 0.5).sin().abs() * 255.0) as u8,
+            ),
         );
 
         // Draw footer

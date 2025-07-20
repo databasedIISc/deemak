@@ -1,4 +1,4 @@
-use crate::utils::globals::{get_user_info, set_user_info, UserInfo};
+use crate::utils::globals::{UserInfo, get_user_info, set_user_info};
 use chrono::{Duration, Utc};
 use data_encoding::HEXUPPER;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
@@ -202,9 +202,13 @@ pub fn login(input: Form<AuthInput>) -> Json<AuthResponse> {
                     &EncodingKey::from_secret(JWT_SECRET),
                 )
                 .expect("Failed to create token");
-                
+
                 // Create and set the global UserInfo
-                let mut user_info = UserInfo::new(user.username.clone(), user.salt.clone(), user.password_hash.clone());
+                let mut user_info = UserInfo::new(
+                    user.username.clone(),
+                    user.salt.clone(),
+                    user.password_hash.clone(),
+                );
                 user_info.authenticate();
                 set_user_info(user_info).ok(); // Set the global user info, ignoring error if already set
 
