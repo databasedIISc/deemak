@@ -44,10 +44,7 @@ pub const FONT_OPTIONS: [(&str, &str); 11] = [
         "JetBrains Mono NL Thin Italic",
         "fontbook/fonts/ttf/JetBrainsMonoNL-ThinItalic.ttf",
     ),
-    (
-        "Hack Nerd",
-        "fontbook/fonts/ttf/HackNerdFont-Regular.ttf",
-    ),
+    ("Hack Nerd", "fontbook/fonts/ttf/HackNerdFont-Regular.ttf"),
     (
         "Hack Nerd Mono",
         "fontbook/fonts/ttf/HackNerdFontMono-Regular.ttf",

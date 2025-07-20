@@ -1,6 +1,6 @@
 use crate::utils::config::{self, FONT_OPTIONS};
 use raylib::prelude::*;
-use std::{time::{Duration, Instant}};
+use std::time::{Duration, Instant};
 
 /// A trait for a UI screen, defining a common interface for running and managing screens.
 trait Screen {
@@ -191,14 +191,7 @@ pub fn show_font_selection(
             (d.get_screen_width() as f32 - footnote_width as f32) / 2.0,
             d.get_screen_height() as f32 - 50.0,
         );
-        d.draw_text_ex(
-            &custom_font,
-            footnote,
-            footnote_pos,
-            18.0,
-            1.0,
-            Color::GRAY,
-        );
+        d.draw_text_ex(&custom_font, footnote, footnote_pos, 18.0, 1.0, Color::GRAY);
     }
     // Fonts are automatically unloaded when `loaded_fonts` and `custom_font` go out of scope.
 }
@@ -364,13 +357,7 @@ impl Drop for KeybindingsScreen {
 }
 
 /// Wraps text to fit within a maximum width.
-fn wrap_text(
-    font: &Font,
-    text: &str,
-    font_size: f32,
-    spacing: f32,
-    max_width: f32,
-) -> Vec<String> {
+fn wrap_text(font: &Font, text: &str, font_size: f32, spacing: f32, max_width: f32) -> Vec<String> {
     let mut lines = Vec::new();
     if text.is_empty() {
         return lines;
