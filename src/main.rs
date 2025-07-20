@@ -207,6 +207,12 @@ Continuing..."
         .build();
     let font_size = get_monitor_width(0) as f32 / 73.5;
     rl.set_trace_log(loglevel);
+    
+    // Disable escape key exit to prevent accidental application closure
+    unsafe {
+        raylib::ffi::SetExitKey(0i32);
+    }
+    
     log::log_info("Application", "DEEMAK initialized successfully");
 
     // Show login screen before menu

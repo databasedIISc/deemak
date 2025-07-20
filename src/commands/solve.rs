@@ -3,7 +3,7 @@ use super::cmds::normalize_path;
 use crate::metainfo::info_reader::read_get_obj_info;
 use crate::metainfo::lock_perm::read_lock_perm;
 use crate::rns::security::{characterise_enc_key, decrypt, encrypt};
-use crate::utils::{log, prompt::UserPrompter};
+use crate::utils::{auth::get_current_username, log, prompt::UserPrompter};
 use std::path::Path;
 pub const HELP_TEXT: &str = r#"
 Usage: solve [OPTIONS] <LEVEL_NAME> <
@@ -13,8 +13,6 @@ Options:
 
 Examples:
 "#;
-
-pub static USER_NAME: &str = "1234";
 
 pub fn solve(
     args: &[&str],
@@ -90,7 +88,8 @@ pub fn solve(
                 log::log_info("solve", err_msg.as_str());
                 err_msg
             } else {
-                let user_flag = check_solve_input(user_input, &target, level_name);
+                let username = get_current_username().unwrap_or("default_user");
+                let user_flag = check_solve_input(user_input, &target, level_name, username);
                 match user_flag {
                     Ok(flag) => {
                         log::log_info(
@@ -119,6 +118,7 @@ fn check_solve_input(
     user_input: String,
     path_to_level: &Path,
     level_name: &str,
+    username: &str,
 ) -> Result<String, String> {
     let info_path = path_to_level.parent().unwrap().join(".dir_info/info.json");
     println!("info_path: {}", info_path.display());
@@ -131,8 +131,8 @@ fn check_solve_input(
         .map(|s| s.to_string())
     {
         println!("text_decrypt_me: {text_decrypt_me}");
-        println!("Username: {USER_NAME}");
-        let user_inp_enc_key = characterise_enc_key(USER_NAME, level_name);
+        println!("Username: {username}");
+        let user_inp_enc_key = characterise_enc_key(username, level_name);
         let decrypted_user_input = decrypt(&user_inp_enc_key, &user_input);
         println!("decrypted _user input: {decrypted_user_input}");
 
@@ -145,8 +145,8 @@ fn check_solve_input(
         println!("decrypted _decrypt me : {decrypted_decrypt_me}");
         let user_flag: String = encrypt(
             &characterise_enc_key(
-                &format!("{}_{}", USER_NAME, USER_NAME.len()),
-                &format!("{USER_NAME}_{level_name}"),
+                &format!("{}_{}", username, username.len()),
+                &format!("{username}_{level_name}"),
             ),
             &decrypted_decrypt_me,
         );

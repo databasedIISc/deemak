@@ -4,7 +4,7 @@ use crate::keys::key_to_char;
 use crate::menu;
 use crate::menu::menu_options::MenuOption;
 use crate::metainfo::info_reader::read_validate_info;
-use crate::utils::config;
+use crate::utils::config::{self, FONT_OPTIONS};
 use crate::utils::tab_completion::{TabCompletionResult, process_tab_completion};
 use crate::utils::{find_root, shell_history, wrapit::wrapit};
 use crate::utils::{log, prompt::UserPrompter};
@@ -23,50 +23,6 @@ use std::{
     path::{Path, PathBuf},
 };
 use textwrap::wrap;
-
-const FONT_OPTIONS: [(&str, &str); 11] = [
-    ("Hack Nerd", "fontbook/fonts/ttf/HackNerdFont-Regular.ttf"),
-    (
-        "Hack Nerd Mono",
-        "fontbook/fonts/ttf/HackNerdFontMono-Regular.ttf",
-    ),
-    (
-        "Hack Nerd Propo",
-        "fontbook/fonts/ttf/HackNerdFontPropo-Regular.ttf",
-    ),
-    (
-        "JetBrains Mono Medium",
-        "fontbook/fonts/ttf/JetBrainsMono-Medium.ttf",
-    ),
-    (
-        "JetBrains Mono Regular",
-        "fontbook/fonts/ttf/JetBrainsMono-Regular.ttf",
-    ),
-    (
-        "JetBrains Mono NL Light",
-        "fontbook/fonts/ttf/JetBrainsMonoNL-Light.ttf",
-    ),
-    (
-        "JetBrains Mono NL Medium",
-        "fontbook/fonts/ttf/JetBrainsMonoNL-Medium.ttf",
-    ),
-    (
-        "JetBrains Mono NL Regular",
-        "fontbook/fonts/ttf/JetBrainsMonoNL-Regular.ttf",
-    ),
-    (
-        "JetBrains Mono NL Thin",
-        "fontbook/fonts/ttf/JetBrainsMonoNL-Thin.ttf",
-    ),
-    (
-        "JetBrains Mono NL Thin Italic",
-        "fontbook/fonts/ttf/JetBrainsMonoNL-ThinItalic.ttf",
-    ),
-    (
-        "Meslo LGS NF Regular",
-        "fontbook/fonts/ttf/MesloLGS NF Regular.ttf",
-    ),
-];
 
 pub struct ShellScreen<'a> {
     rl: &'a mut RaylibHandle,

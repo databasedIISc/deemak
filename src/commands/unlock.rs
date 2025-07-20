@@ -4,15 +4,10 @@ use crate::metainfo::info_reader::read_get_obj_info;
 use crate::metainfo::lock_perm::operation_locked_perm;
 use crate::metainfo::read_lock_perm;
 use crate::rns::security::{argonhash, characterise_enc_key, decrypt, encrypt};
-use crate::utils::{
-    //globals::{USER_NAME, USER_SALT},
-    log,
-    prompt::UserPrompter,
-};
+use crate::utils::{auth::get_current_user, log, prompt::UserPrompter};
 use argon2::password_hash::SaltString;
 use std::path::Path;
-pub static USER_NAME: &str = "1234";
-pub static USER_SALT: &str = "salt"; // Placeholder, should be replaced with actual salt retrieval logic
+
 pub const HELP_TXT: &str = r#"
 Usage: unlock [OPTIONS] <LEVEL/CHEST_NAME>
 
@@ -45,6 +40,17 @@ pub fn unlock(
     );
     match parser.parse(&args_string, "unlock") {
         Ok(_) => {
+            let user_info = match get_current_user() {
+                Some(info) => info,
+                None => {
+                    err_msg += "User not authenticated. Please log in.";
+                    log::log_error("unlock", err_msg.as_str());
+                    return err_msg;
+                }
+            };
+            let username = &user_info.username;
+            let user_salt_hex = &user_info.salt;
+
             let pos_args = parser.get_positional_args();
             if pos_args.len() != 1 {
                 err_msg += "Exactly one positional argument -giving path to directory/file to be unlocked -is expected.";
@@ -145,7 +151,15 @@ pub fn unlock(
                 let compare_me = compare_me.as_ref().unwrap();
 
                 if is_level {
-                    if check_level(user_flag, locked_obj_name, obj_salt, decrypt_me, compare_me) {
+                    if check_level(
+                        user_flag,
+                        locked_obj_name,
+                        obj_salt,
+                        decrypt_me,
+                        compare_me,
+                        username,
+                        user_salt_hex,
+                    ) {
                         //update obj_info_lock_perm
                         "{} is unlocked".to_string()
                     } else {
@@ -155,7 +169,13 @@ pub fn unlock(
                     }
                 } else {
                     //is chest
-                    if check_chest(user_flag, locked_obj_name, obj_salt, compare_me) {
+                    if check_chest(
+                        user_flag,
+                        locked_obj_name,
+                        obj_salt,
+                        compare_me,
+                        user_salt_hex,
+                    ) {
                         //update obj_info_lock_perm
                         " Chest {} is unlocked".to_string()
                     } else {
@@ -183,15 +203,17 @@ fn check_level(
     level_salt: &str,
     encrypted_flag: &str,
     compare_me: &str,
+    username: &str,
+    user_salt_hex: &str,
 ) -> bool {
     let obj_salt = SaltString::from_b64(level_salt).expect("Invalid obj_salt format");
     //read user salt from database using f
-    let user_salt = SaltString::from_b64(USER_SALT).unwrap();
+    let user_salt = SaltString::from_b64(user_salt_hex).unwrap();
 
     let decrypted_user_flag = decrypt(
         &characterise_enc_key(
-            &format!("{}_{}", USER_NAME, USER_NAME.len()),
-            &format!("{USER_NAME}_{level_name}"),
+            &format!("{}_{}", username, username.len()),
+            &format!("{username}_{level_name}"),
         ),
         &user_flag,
     );
@@ -205,10 +227,11 @@ fn check_chest(
     chest_name: &str,
     chest_salt: &str,
     encrypted_hashed_flag: &str,
+    user_salt_hex: &str,
 ) -> bool {
     let obj_salt = SaltString::from_b64(chest_salt).expect("Invalid obj_salt format");
     //read user salt from database using f
-    let user_salt = SaltString::from_b64(USER_SALT);
+    let user_salt = SaltString::from_b64(user_salt_hex).unwrap();
 
     let hashed_user_flag = argonhash(&obj_salt, user_flag);
     let encryped_hshed_user_flag = encrypt(

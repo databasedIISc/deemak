@@ -1,4 +1,4 @@
-use crate::utils::globals::{USER_NAME, USER_PASSWORD, USER_SALT};
+use crate::utils::globals::{get_user_info, set_user_info, UserInfo};
 use chrono::{Duration, Utc};
 use data_encoding::HEXUPPER;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
@@ -202,16 +202,12 @@ pub fn login(input: Form<AuthInput>) -> Json<AuthResponse> {
                     &EncodingKey::from_secret(JWT_SECRET),
                 )
                 .expect("Failed to create token");
-                // Set global USER_ID and USER_SALT
-                USER_NAME
-                    .set(user.username.clone())
-                    .expect("Failed to set USER_ID");
-                USER_SALT
-                    .set(user.salt.clone())
-                    .expect("Failed to set USER_SALT");
-                USER_PASSWORD
-                    .set(input.password.clone())
-                    .expect("Failed to set USER_PASSWORD");
+                
+                // Create and set the global UserInfo
+                let mut user_info = UserInfo::new(user.username.clone(), user.salt.clone(), user.password_hash.clone());
+                user_info.authenticate();
+                set_user_info(user_info).ok(); // Set the global user info, ignoring error if already set
+
                 return Json(AuthResponse {
                     status: true,
                     message: "Login successful".into(),
@@ -237,4 +233,53 @@ pub fn login(input: Form<AuthInput>) -> Json<AuthResponse> {
         message: "Invalid request".into(),
         token: None,
     })
+}
+
+// UserInfo integration functions
+/// Get current authenticated user info
+pub fn get_current_user() -> Option<&'static UserInfo> {
+    get_user_info()
+}
+
+/// Check if user is currently authenticated
+pub fn is_user_authenticated() -> bool {
+    if let Some(user_info) = get_user_info() {
+        user_info.is_authenticated()
+    } else {
+        false
+    }
+}
+
+/// Get current user's username safely
+pub fn get_current_username() -> Option<&'static str> {
+    get_user_info().map(|user| user.get_username())
+}
+
+/// Get user session duration
+pub fn get_session_duration() -> Option<std::time::Duration> {
+    get_user_info()?.get_login_duration()
+}
+
+/// Logout current user
+pub fn logout_user() {
+    // For now, we create a new empty UserInfo to "logout"
+    // In a more complex system, you might want to modify the existing one
+    let empty_user = UserInfo::empty();
+    let _ = set_user_info(empty_user);
+}
+
+/// Create a UserInfo from existing user data
+pub fn create_user_info_from_user(user: &User) -> UserInfo {
+    UserInfo::new(
+        user.username.clone(),
+        user.salt.clone(),
+        user.password_hash.clone(),
+    )
+}
+
+/// Authenticate a user and set global UserInfo
+pub fn authenticate_user(user: &User) -> Result<(), UserInfo> {
+    let mut user_info = create_user_info_from_user(user);
+    user_info.authenticate();
+    set_user_info(user_info)
 }
