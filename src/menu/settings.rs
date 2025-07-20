@@ -39,10 +39,10 @@ pub fn show_font_selection(
     let font = rl.get_font_default();
     let mut last_change = Instant::now();
     let mut is_back_selected = false;
-    
+
     // Store the current font selection at the start
     let current_font_index = config::load_config().font_index;
-    
+
     // Load the custom font for the footnote (same as keybindings)
     let custom_font = unsafe {
         let path = CString::new("fontbook/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();

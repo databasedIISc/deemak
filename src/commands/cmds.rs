@@ -62,7 +62,9 @@ pub fn cmd_manager(
         "echo" => CommandResult::Output(echo(&parts[1..])),
         "whoami" => match get_current_username() {
             Some(name) => CommandResult::Output(format!("Current user: {}", name)),
-            None => CommandResult::Output("Current user: [Not logged in] (Default User)".to_string()),
+            None => {
+                CommandResult::Output("Current user: [Not logged in] (Default User)".to_string())
+            }
         },
         "go" => {
             let (new_dir, msg) = go(&parts[1..], current_dir, root_dir);

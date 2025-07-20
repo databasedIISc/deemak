@@ -1,13 +1,13 @@
 #![allow(unused_variables, unused_mut, dead_code)]
 // Import everything from the library crate instead of declaring separate modules
+use deemak::DEBUG_MODE;
+use deemak::gui_shell::run_gui_loop;
 use deemak::metainfo::valid_sekai::validate_or_create_sekai;
 use deemak::rns::restore_comp;
+use deemak::utils::globals::set_world_dir;
 use deemak::utils::{debug_mode, find_root, log};
-use deemak::gui_shell::run_gui_loop;
-use deemak::DEBUG_MODE;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
-use deemak::utils::globals::set_world_dir;
 
 pub const HELP_TXT: &str = r#"
 Usage: deemak <sekai_directory> [--debug] [--web]

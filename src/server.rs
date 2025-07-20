@@ -12,9 +12,9 @@ use rocket::serde::{Serialize, json::Json};
 use rocket::{Config, Request, Response, get, options, routes};
 
 // === Local Modules ===
-use crate::utils::globals::get_world_dir;
-use crate::utils::auth;
 use crate::commands::cmds;
+use crate::utils::auth;
+use crate::utils::globals::get_world_dir;
 use crate::utils::{find_root, prompt::DummyPrompter};
 
 // === Data Structures ===
