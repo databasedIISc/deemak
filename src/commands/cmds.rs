@@ -1,8 +1,7 @@
 use super::*;
 use crate::utils::auth::get_current_username;
 use crate::utils::prompt::UserPrompter;
-use std::path::Path;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// CommandResult enum to represent the result of a command execution
 pub enum CommandResult {
@@ -50,8 +49,8 @@ pub fn check_dir_info(path: &Path) -> bool {
 /// Command manager that processes commands and processed to return appropriate outputs
 pub fn cmd_manager(
     parts: &[&str],
-    current_dir: &PathBuf,
-    root_dir: &PathBuf,
+    current_dir: &Path,
+    root_dir: &Path,
     prompter: &mut dyn UserPrompter,
 ) -> CommandResult {
     if parts.is_empty() {
@@ -67,7 +66,7 @@ pub fn cmd_manager(
             }
         },
         "go" => {
-            let (new_dir, msg) = go(&parts[1..], current_dir, root_dir);
+            let (new_dir, msg) = go(&parts[1..], &current_dir.to_path_buf(), root_dir);
             CommandResult::ChangeDirectory(new_dir, msg)
         }
         "ls" => CommandResult::Output(ls(&parts[1..], current_dir, root_dir)),
