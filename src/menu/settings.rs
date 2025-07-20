@@ -1,8 +1,6 @@
 use crate::utils::config::{self, FONT_OPTIONS};
 use raylib::prelude::*;
-use std::ffi::{CString, c_char};
-use std::os::raw::c_int;
-use std::time::{Duration, Instant};
+use std::{time::{Duration, Instant}};
 
 /// A trait for a UI screen, defining a common interface for running and managing screens.
 trait Screen {
@@ -10,7 +8,7 @@ trait Screen {
     fn run(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread);
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum SettingsOption {
     Font,
     Keybindings,
@@ -36,61 +34,62 @@ pub fn show_font_selection(
     thread: &RaylibThread,
     selected_font: &mut usize,
 ) {
-    let font = rl.get_font_default();
+    // Load all fonts to be displayed for the preview.
+    let loaded_fonts: Vec<Font> = FONT_OPTIONS
+        .iter()
+        .map(|(_, path)| {
+            rl.load_font_ex(thread, path, 30, None)
+                .unwrap_or_else(|e| panic!("Failed to load font: {}. Error: {}", path, e))
+        })
+        .collect();
+
+    let default_font = rl.get_font_default();
     let mut last_change = Instant::now();
-    let mut is_back_selected = false;
 
-    // Store the current font selection at the start
-    let current_font_index = config::load_config().font_index;
+    // The total number of selectable items is the number of fonts plus the "Back" button.
+    let options_count = FONT_OPTIONS.len() + 1;
+    // The current selection can be any font index, or the index for the "Back" button.
+    let mut current_selection = *selected_font;
 
-    // Load the custom font for the footnote (same as keybindings)
-    let custom_font = unsafe {
-        let path = CString::new("fontbook/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();
-        raylib::ffi::LoadFontEx(
-            path.as_ptr() as *const c_char,
-            600 as c_int,
-            std::ptr::null_mut::<c_int>(),
-            0,
+    // Store the currently configured font to display the '*' marker.
+    let mut saved_font_index = config::load_config().font_index;
+
+    // Load the custom font for the footnote.
+    let custom_font = rl
+        .load_font_ex(
+            thread,
+            "fontbook/fonts/ttf/JetBrainsMono-Medium.ttf",
+            18,
+            None,
         )
-    };
-
-    // Store the current font selection at the start
-    let current_font_index = config::load_config().font_index;
-
-    // Load the custom font for the footnote (same as keybindings)
-    let custom_font = unsafe {
-        let path = CString::new("fontbook/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();
-        raylib::ffi::LoadFontEx(
-            path.as_ptr() as *const c_char,
-            600 as c_int,
-            std::ptr::null_mut::<c_int>(),
-            0,
-        )
-    };
+        .expect("Failed to load custom font");
 
     while !rl.window_should_close() {
-        if last_change.elapsed() > Duration::from_millis(150) {
+        if last_change.elapsed() > Duration::from_millis(100) {
             if rl.is_key_pressed(KeyboardKey::KEY_UP) {
-                if is_back_selected {
-                    is_back_selected = false;
+                if current_selection > 0 {
+                    current_selection -= 1;
                 } else {
-                    *selected_font = selected_font.saturating_sub(1);
+                    current_selection = options_count - 1; // Wrap around
                 }
                 last_change = Instant::now();
             } else if rl.is_key_pressed(KeyboardKey::KEY_DOWN) {
-                if *selected_font == FONT_OPTIONS.len() - 1 && !is_back_selected {
-                    is_back_selected = true;
-                } else if !is_back_selected {
-                    *selected_font = (*selected_font + 1).min(FONT_OPTIONS.len() - 1);
+                if current_selection < options_count - 1 {
+                    current_selection += 1;
+                } else {
+                    current_selection = 0; // Wrap around
                 }
                 last_change = Instant::now();
             } else if rl.is_key_pressed(KeyboardKey::KEY_ENTER) {
-                if is_back_selected {
-                    return;
-                } else {
+                // If the selection index is within the font list, it's a font change.
+                if current_selection < FONT_OPTIONS.len() {
+                    *selected_font = current_selection;
                     let mut cfg = config::load_config();
                     cfg.font_index = *selected_font;
                     config::save_config(&cfg);
+                    saved_font_index = *selected_font; // Update saved index for immediate feedback
+                } else {
+                    // Otherwise, it's the "Back" button, so we exit.
                     return;
                 }
             }
@@ -99,7 +98,7 @@ pub fn show_font_selection(
         let mut d = rl.begin_drawing(thread);
         d.clear_background(Color::BLACK);
         d.draw_text_ex(
-            &font,
+            &default_font,
             "Select Font",
             Vector2::new(200.0, 100.0),
             40.0,
@@ -108,102 +107,105 @@ pub fn show_font_selection(
         );
 
         for (i, (name, _)) in FONT_OPTIONS.iter().enumerate() {
-            let color = if i == *selected_font && !is_back_selected {
+            let color = if i == current_selection {
                 Color::GOLD
             } else {
                 Color::GRAY
             };
-            // Create the display text with default label if it's the first option
+
+            // Create the display text with the "(default)" label for the first option.
             let display_text = if i == 0 {
                 format!("{} (default)", name)
             } else {
                 name.to_string()
             };
-            // Draw tick mark for currently selected font
-            if i == current_font_index {
+
+            // Draw a marker for the currently saved font.
+            if i == saved_font_index {
                 d.draw_text_ex(
-                    &font,
-                    "*",
+                    &default_font,
+                    "*", // Using a checkmark symbol for clarity
                     Vector2::new(170.0, 180.0 + (i as f32 * 30.0)),
-                    30.0,
+                    25.0,
                     1.0,
                     Color::GREEN,
                 );
             }
-            // Draw cursor '>' only if this item is selected AND it's not the currently active font
-            else if i == *selected_font && !is_back_selected {
+            // Draw a cursor for the currently hovered selection.
+            else if i == current_selection {
                 d.draw_text_ex(
-                    &font,
+                    &default_font,
                     ">",
                     Vector2::new(170.0, 180.0 + (i as f32 * 30.0)),
-                    30.0,
+                    25.0,
                     1.0,
                     Color::GOLD,
                 );
             }
+
+            // Use the specific font for this option to draw its name.
+            let option_font = &loaded_fonts[i];
             d.draw_text_ex(
-                &font,
+                option_font,
                 &display_text,
                 Vector2::new(200.0, 180.0 + (i as f32 * 30.0)),
-                30.0,
+                25.0,
                 1.0,
                 color,
             );
         }
 
+        // Determine if the "Back" option is currently selected.
+        let is_back_selected = current_selection == FONT_OPTIONS.len();
         let back_color = if is_back_selected {
             Color::GOLD
         } else {
             Color::GRAY
         };
         d.draw_text_ex(
-            &font,
+            &default_font,
             "Back",
             Vector2::new(200.0, 180.0 + (FONT_OPTIONS.len() as f32 * 30.0)),
-            30.0,
+            25.0,
             1.0,
             back_color,
         );
 
-        // Draw cursor for "Back" option only when it's selected
+        // Draw the cursor for the "Back" option when it's selected.
         if is_back_selected {
-            let cursor_y = 180 + FONT_OPTIONS.len() as i32 * 30;
+            let cursor_y = 180.0 + (FONT_OPTIONS.len() as f32 * 30.0);
             d.draw_text_ex(
-                &font,
+                &default_font,
                 ">",
-                Vector2::new(170.0, cursor_y as f32),
-                30.0,
+                Vector2::new(170.0, cursor_y),
+                25.0,
                 1.0,
                 Color::GOLD,
             );
         }
 
-        // Draw footnote explaining the '*' symbol (same format as keybindings footer)
-        let footnote = "* represents currently selected font";
-        let footnote_content = CString::new(footnote).unwrap();
-        let footnote_width = unsafe {
-            raylib::ffi::MeasureTextEx(custom_font, footnote_content.as_ptr(), 18.0, 1.0).x
-        };
-        let footnote_pos = raylib::ffi::Vector2 {
-            x: (d.get_screen_width() as f32 - footnote_width) / 2.0,
-            y: d.get_screen_height() as f32 - 50.0,
-        };
-        unsafe {
-            raylib::ffi::DrawTextEx(
-                custom_font,
-                footnote_content.as_ptr(),
-                footnote_pos,
-                18.0,
-                1.0,
-                Color::GRAY.into(),
-            );
-        }
+        // Draw the footnote explaining the '*' symbol.
+        let footnote = "* Represents currently selected font";
+        let footnote_width = d.measure_text(footnote, 18);
+        let footnote_pos = Vector2::new(
+            (d.get_screen_width() as f32 - footnote_width as f32) / 2.0,
+            d.get_screen_height() as f32 - 50.0,
+        );
+        d.draw_text_ex(
+            &custom_font,
+            footnote,
+            footnote_pos,
+            18.0,
+            1.0,
+            Color::GRAY,
+        );
     }
+    // Fonts are automatically unloaded when `loaded_fonts` and `custom_font` go out of scope.
 }
 
 /// A screen to display the application's keybindings.
 struct KeybindingsScreen {
-    font: raylib::ffi::Font,
+    font: Font,
     keybindings: Vec<(String, String)>,
     last_change: Instant,
     alpha: f32,
@@ -213,16 +215,16 @@ struct KeybindingsScreen {
 
 impl KeybindingsScreen {
     /// Creates a new `KeybindingsScreen`.
-    fn new() -> Self {
-        let font = unsafe {
-            let path = CString::new("fontbook/fonts/ttf/JetBrainsMono-Medium.ttf").unwrap();
-            raylib::ffi::LoadFontEx(
-                path.as_ptr() as *const c_char,
-                600 as c_int,
-                std::ptr::null_mut::<c_int>(),
-                0,
+    fn new(rl: &mut RaylibHandle, thread: &RaylibThread) -> Self {
+        let font = rl
+            .load_font_ex(
+                thread,
+                "fontbook/fonts/ttf/JetBrainsMono-Medium.ttf",
+                20,
+                None,
             )
-        };
+            .expect("Failed to load keybindings font");
+
         let keybindings = [
             ("Keyboard characters", "Keyboard chars"),
             ("Ctrl+Shift+C ", "Copy (Linux/MacOS)"),
@@ -279,155 +281,130 @@ impl KeybindingsScreen {
 
         // Draw column headers
         let header_y = 180.0;
-        let key_header = CString::new("Keybinding").unwrap();
-        let desc_header = CString::new("Function").unwrap();
-        unsafe {
-            raylib::ffi::DrawTextEx(
-                self.font,
-                key_header.as_ptr(),
-                raylib::ffi::Vector2 {
-                    x: 100.0,
-                    y: header_y,
-                },
-                20.0,
-                1.0,
-                Color::GOLD.into(),
-            );
-            raylib::ffi::DrawTextEx(
-                self.font,
-                desc_header.as_ptr(),
-                raylib::ffi::Vector2 {
-                    x: 320.0,
-                    y: header_y,
-                },
-                20.0,
-                1.0,
-                Color::GOLD.into(),
-            );
-        }
+        d.draw_text_ex(
+            &self.font,
+            "Keybinding",
+            Vector2::new(100.0, header_y),
+            20.0,
+            1.0,
+            Color::LIGHTGRAY,
+        );
+        d.draw_text_ex(
+            &self.font,
+            "Function",
+            Vector2::new(400.0, header_y),
+            20.0,
+            1.0,
+            Color::LIGHTGRAY,
+        );
 
         // Draw separator line
         let separator_y = header_y + 25.0;
-        let separator =
-            CString::new("-------------------------------------------------------").unwrap();
-        unsafe {
-            raylib::ffi::DrawTextEx(
-                self.font,
-                separator.as_ptr(),
-                raylib::ffi::Vector2 {
-                    x: 100.0,
-                    y: separator_y,
-                },
-                16.0,
-                1.0,
-                Color::GRAY.into(),
-            );
-        }
+        d.draw_line(
+            100,
+            separator_y as i32,
+            650,
+            separator_y as i32,
+            Color::GRAY,
+        );
 
-        // Draw keybindings list with proper formatting and wrapping
-        let mut y_pos = separator_y + 35.0;
-        let line_height = 25.0;
-        let key_column_width = 200.0;
-        let desc_column_width = d.get_screen_width() as f32 - 350.0; // Leave margin for wrapping
-        for (key, description) in &self.keybindings {
-            // Draw the keybinding (left column)
-            let key_content = CString::new(key.as_str()).unwrap();
-            unsafe {
-                raylib::ffi::DrawTextEx(
-                    self.font,
-                    key_content.as_ptr(),
-                    raylib::ffi::Vector2 { x: 100.0, y: y_pos },
-                    18.0,
-                    1.0,
-                    Color::WHITE.into(),
-                );
-            }
+        // Draw keybindings with wrapping for descriptions
+        let mut y = separator_y + 20.0;
+        let max_desc_width = d.get_screen_width() as f32 - 400.0 - 20.0; // 20px padding
 
-            // Handle text wrapping for description (right column)
-            let words: Vec<&str> = description.split_whitespace().collect();
-            let mut current_line = String::new();
-            let mut desc_y = y_pos;
-            for word in words {
-                let test_line = if current_line.is_empty() {
-                    word.to_string()
-                } else {
-                    format!("{} {}", current_line, word)
-                };
-                let test_content = CString::new(test_line.as_str()).unwrap();
-                let text_width = unsafe {
-                    raylib::ffi::MeasureTextEx(self.font, test_content.as_ptr(), 18.0, 1.0).x
-                };
-                if text_width > desc_column_width && !current_line.is_empty() {
-                    // Draw current line and start new one
-                    let line_content = CString::new(current_line.as_str()).unwrap();
-                    unsafe {
-                        raylib::ffi::DrawTextEx(
-                            self.font,
-                            line_content.as_ptr(),
-                            raylib::ffi::Vector2 {
-                                x: 320.0,
-                                y: desc_y,
-                            },
-                            18.0,
-                            1.0,
-                            Color::LIGHTGRAY.into(),
-                        );
-                    }
-                    desc_y += line_height;
-                    current_line = word.to_string();
-                } else {
-                    current_line = test_line;
-                }
-            }
-            // Draw the last line
-            if !current_line.is_empty() {
-                let line_content = CString::new(current_line.as_str()).unwrap();
-                unsafe {
-                    raylib::ffi::DrawTextEx(
-                        self.font,
-                        line_content.as_ptr(),
-                        raylib::ffi::Vector2 {
-                            x: 320.0,
-                            y: desc_y,
-                        },
-                        18.0,
-                        1.0,
-                        Color::LIGHTGRAY.into(),
-                    );
-                }
-            }
-            // Move to next keybinding (ensure proper spacing)
-            y_pos = desc_y + line_height + 5.0;
-        }
-
-        // Draw footer
-        let footer = "Press ENTER to go back";
-        let footer_content = CString::new(footer).unwrap();
-        let footer_width =
-            unsafe { raylib::ffi::MeasureTextEx(self.font, footer_content.as_ptr(), 20.0, 1.0).x };
-        let footer_pos = raylib::ffi::Vector2 {
-            x: (d.get_screen_width() as f32 - footer_width) / 2.0,
-            y: d.get_screen_height() as f32 - 50.0,
-        };
-        unsafe {
-            raylib::ffi::DrawTextEx(
-                self.font,
-                footer_content.as_ptr(),
-                footer_pos,
+        for (key, desc) in &self.keybindings {
+            d.draw_text_ex(
+                &self.font,
+                key,
+                Vector2::new(100.0, y),
                 20.0,
                 1.0,
-                Color::GRAY.into(),
+                Color::WHITE,
             );
+
+            let wrapped_lines = wrap_text(&self.font, desc, 20.0, 1.0, max_desc_width);
+            let mut line_y = y;
+            for line in &wrapped_lines {
+                d.draw_text_ex(
+                    &self.font,
+                    line,
+                    Vector2::new(400.0, line_y),
+                    20.0,
+                    1.0,
+                    Color::WHITE,
+                );
+                line_y += 25.0; // Line height
+            }
+
+            y += (wrapped_lines.len() as f32 * 25.0).max(30.0); // Move to the next entry
         }
+
+        // Draw "Press Enter to go back" message
+        let back_msg = "Press Enter to go back";
+        let back_msg_width = d.measure_text(back_msg, 20);
+        d.draw_text_ex(
+            &font_heading,
+            back_msg,
+            Vector2::new(
+                (d.get_screen_width() as f32 - back_msg_width as f32) / 2.0,
+                d.get_screen_height() as f32 - 50.0,
+            ),
+            20.0,
+            1.0,
+            Color::GRAY,
+        );
     }
 }
 
+impl Drop for KeybindingsScreen {
+    fn drop(&mut self) {
+        // Unload font to prevent memory leaks.
+        // This is handled automatically by raylib-rs wrapper's Drop implementation.
+    }
+}
+
+/// Wraps text to fit within a maximum width.
+fn wrap_text(
+    font: &Font,
+    text: &str,
+    font_size: f32,
+    spacing: f32,
+    max_width: f32,
+) -> Vec<String> {
+    let mut lines = Vec::new();
+    if text.is_empty() {
+        return lines;
+    }
+
+    let mut current_line = String::new();
+    let words: Vec<&str> = text.split_whitespace().collect();
+
+    for word in words {
+        let test_line = if current_line.is_empty() {
+            word.to_string()
+        } else {
+            format!("{} {}", current_line, word)
+        };
+
+        let text_size = font.measure_text(&test_line, font_size, spacing);
+
+        if text_size.x > max_width && !current_line.is_empty() {
+            lines.push(current_line);
+            current_line = word.to_string();
+        } else {
+            current_line = test_line;
+        }
+    }
+    lines.push(current_line);
+
+    lines
+}
+
 impl Screen for KeybindingsScreen {
-    /// Runs the main loop for the keybindings screen.
     fn run(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
         while !rl.window_should_close() {
             if self.handle_input(rl) {
-                return;
+                break;
             }
             self.update();
 
@@ -438,7 +415,7 @@ impl Screen for KeybindingsScreen {
 }
 
 pub fn show_keybindings(rl: &mut RaylibHandle, thread: &RaylibThread) {
-    let mut screen = KeybindingsScreen::new();
+    let mut screen = KeybindingsScreen::new(rl, thread);
     screen.run(rl, thread);
 }
 

@@ -3,10 +3,10 @@ use once_cell::sync::{Lazy, OnceCell};
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-// Shell history to store the commands executed by the user.
+/// Shell history to store the commands executed by the user.
 pub static SHELL_HISTORY: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
 
-// Global user information instance
+/// Global user information instance
 pub static USER_INFO: OnceCell<UserInfo> = OnceCell::new();
 
 /// User information structure with expandable functionality
@@ -31,8 +31,8 @@ impl UserInfo {
         }
     }
 
-    /// Create an empty UserInfo instance
-    pub fn empty() -> Self {
+    /// Create a default UserInfo instance
+    pub fn default() -> Self {
         Self {
             username: String::new(),
             salt: String::new(),

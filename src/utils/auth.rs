@@ -266,10 +266,9 @@ pub fn get_session_duration() -> Option<std::time::Duration> {
 
 /// Logout current user
 pub fn logout_user() {
-    // For now, we create a new empty UserInfo to "logout"
-    // In a more complex system, you might want to modify the existing one
-    let empty_user = UserInfo::empty();
-    let _ = set_user_info(empty_user);
+    // For now, we create a new  UserInfo to "logout"
+    let default_user = UserInfo::default();
+    let _ = set_user_info(default_user);
 }
 
 /// Create a UserInfo from existing user data

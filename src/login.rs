@@ -1,5 +1,5 @@
 use crate::keys::key_to_char;
-use crate::utils::globals::{UserInfo, set_user_info};
+use crate::utils::globals::{set_user_info, UserInfo};
 use raylib::ffi::{DrawTextEx, LoadFontEx, MeasureTextEx, SetExitKey, Vector2};
 use raylib::prelude::*;
 use std::ffi::CString;
@@ -111,11 +111,7 @@ struct TabManager {
 impl TabManager {
     fn new(users_empty: bool) -> Self {
         Self {
-            active_tab: if users_empty {
-                TabType::Register
-            } else {
-                TabType::Login
-            },
+            active_tab: if users_empty { TabType::Register } else { TabType::Login },
             login_fields: FieldPair::new(),
             register_fields: FieldPair::new(),
         }
@@ -199,45 +195,15 @@ impl FieldPair {
         }
     }
 
-    fn draw_fields(
-        &self,
-        d: &mut RaylibDrawHandle,
-        font: raylib::ffi::Font,
-        config: &LoginConfig,
-        highlight_color: Color,
-    ) {
+    fn draw_fields(&self, d: &mut RaylibDrawHandle, font: raylib::ffi::Font, config: &LoginConfig, highlight_color: Color) {
         let user_y = config.top_y + config.field_spacing;
         let pass_y = user_y + 100.0;
 
-        self.username.draw(
-            d,
-            font,
-            config.base_x,
-            user_y,
-            config.box_width,
-            config.box_height,
-            highlight_color,
-            false,
-        );
-        self.password.draw(
-            d,
-            font,
-            config.base_x,
-            pass_y,
-            config.box_width,
-            config.box_height,
-            highlight_color,
-            true,
-        );
+        self.username.draw(d, font, config.base_x, user_y, config.box_width, config.box_height, highlight_color, false);
+        self.password.draw(d, font, config.base_x, pass_y, config.box_width, config.box_height, highlight_color, true);
 
         if self.has_warning() {
-            d.draw_text(
-                self.get_warning_text(),
-                config.base_x as i32,
-                (pass_y + 90.0) as i32,
-                20,
-                Color::RED,
-            );
+            d.draw_text(self.get_warning_text(), config.base_x as i32, (pass_y + 90.0) as i32, 20, Color::RED);
         }
     }
 }
@@ -249,73 +215,47 @@ impl MouseHandler {
     fn handle_clicks(rl: &mut RaylibHandle, tab_manager: &mut TabManager, config: &LoginConfig) {
         if rl.is_mouse_button_pressed(MouseButton::MOUSE_BUTTON_LEFT) {
             let mouse_pos = rl.get_mouse_position();
-
+            
             if Self::handle_tab_clicks(mouse_pos, tab_manager, config) {
                 return;
             }
-
+            
             Self::handle_field_clicks(mouse_pos, tab_manager, config);
         }
     }
 
-    fn handle_tab_clicks(
-        mouse_pos: raylib::prelude::Vector2,
-        tab_manager: &mut TabManager,
-        config: &LoginConfig,
-    ) -> bool {
+    fn handle_tab_clicks(mouse_pos: raylib::prelude::Vector2, tab_manager: &mut TabManager, config: &LoginConfig) -> bool {
         let tab_x = config.base_x;
         let tab_y = config.top_y + config.tab_spacing;
-
+        
         // Login tab
         if Self::point_in_rect(mouse_pos, tab_x, tab_y, config.tab_width, config.tab_height) {
             tab_manager.switch_tab(TabType::Login);
             return true;
         }
-
+        
         // Register tab
-        if Self::point_in_rect(
-            mouse_pos,
-            tab_x + config.tab_width,
-            tab_y,
-            config.tab_width,
-            config.tab_height,
-        ) {
+        if Self::point_in_rect(mouse_pos, tab_x + config.tab_width, tab_y, config.tab_width, config.tab_height) {
             tab_manager.switch_tab(TabType::Register);
             return true;
         }
-
+        
         false
     }
 
-    fn handle_field_clicks(
-        mouse_pos: raylib::prelude::Vector2,
-        tab_manager: &mut TabManager,
-        config: &LoginConfig,
-    ) {
+    fn handle_field_clicks(mouse_pos: raylib::prelude::Vector2, tab_manager: &mut TabManager, config: &LoginConfig) {
         let user_y = config.top_y + config.field_spacing;
         let pass_y = user_y + 100.0;
-
+        
         let fields = tab_manager.get_current_fields();
-
+        
         // Username field
-        if Self::point_in_rect(
-            mouse_pos,
-            config.base_x,
-            user_y,
-            config.box_width,
-            config.box_height,
-        ) {
+        if Self::point_in_rect(mouse_pos, config.base_x, user_y, config.box_width, config.box_height) {
             fields.username.entering = true;
             fields.password.entering = false;
         }
         // Password field
-        else if Self::point_in_rect(
-            mouse_pos,
-            config.base_x,
-            pass_y,
-            config.box_width,
-            config.box_height,
-        ) {
+        else if Self::point_in_rect(mouse_pos, config.base_x, pass_y, config.box_width, config.box_height) {
             fields.username.entering = false;
             fields.password.entering = true;
         }
@@ -412,21 +352,27 @@ impl InputField {
         } else {
             self.value.clone()
         };
-        let mut total_width = 0.0;
-        let mut visible = String::new();
-        for ch in text.chars().rev() {
-            let s = CString::new(ch.to_string()).unwrap();
-            let w = unsafe { MeasureTextEx(font, s.as_ptr(), 30.0, 1.0).x };
-            if total_width + w + 10.0 > box_width {
+
+        // Find the starting byte index for the substring that fits in the box.
+        let mut start_byte_index = 0;
+        let mut current_width = 0.0;
+        for (i, c) in text.char_indices().rev() {
+            let s = CString::new(c.to_string()).unwrap();
+            let char_width = unsafe { MeasureTextEx(font, s.as_ptr(), 30.0, 1.0).x };
+            if current_width + char_width + 10.0 > box_width {
+                start_byte_index = i + c.len_utf8();
                 break;
             }
-            total_width += w;
-            visible.insert(0, ch);
+            current_width += char_width;
         }
+        
+        // Get the visible part of the string using the safe byte index.
+        let visible = &text[start_byte_index..];
+
         let display = if self.entering {
             format!("{visible}|")
         } else {
-            visible.clone()
+            visible.to_string()
         };
         let display_c = CString::new(display).unwrap();
         let text_color = if self.entering {
@@ -438,10 +384,7 @@ impl InputField {
             DrawTextEx(
                 font,
                 display_c.as_ptr(),
-                Vector2 {
-                    x: base_x + 5.0,
-                    y: base_y + 45.0,
-                },
+                Vector2 { x: base_x + 5.0, y: base_y + 45.0 },
                 30.0,
                 0.1,
                 text_color.into(),
@@ -484,14 +427,7 @@ impl AuthHandler {
                         user_info.authenticate(); // Mark as authenticated with timestamp
 
                         // Set global user info
-                        if let Err(_) = set_user_info(user_info) {
-                            // UserInfo already exists, update individual globals for compatibility
-                            crate::utils::globals::init_user_info(
-                                username.to_string(),
-                                user.salt.clone(),
-                                user.password_hash.clone(),
-                            );
-                        }
+                        set_user_info(user_info).ok();
                         return Some(true);
                     } else {
                         fields.password.warning = true;
@@ -538,19 +474,15 @@ impl AuthHandler {
                                 fields.username.warning_text = "Failed to save user!".to_string();
                             } else {
                                 // Create and authenticate UserInfo
-                                let mut user_info =
-                                    UserInfo::new(username.to_string(), salt.clone(), hash.clone());
+                                let mut user_info = UserInfo::new(
+                                    username.to_string(),
+                                    salt.clone(),
+                                    hash.clone(),
+                                );
                                 user_info.authenticate(); // Mark as authenticated with timestamp
 
                                 // Set global user info
-                                if let Err(_) = set_user_info(user_info) {
-                                    // UserInfo already exists, update individual globals for compatibility
-                                    crate::utils::globals::init_user_info(
-                                        username.to_string(),
-                                        salt,
-                                        hash,
-                                    );
-                                }
+                                set_user_info(user_info).ok();
                                 return Some(true);
                             }
                         }
@@ -624,9 +556,10 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
                     }
                     KeyboardKey::KEY_ENTER => {
                         let result = match tab_manager.active_tab {
-                            TabType::Login => {
-                                AuthHandler::handle_login(&mut tab_manager.login_fields, &users)
-                            }
+                            TabType::Login => AuthHandler::handle_login(
+                                &mut tab_manager.login_fields,
+                                &users,
+                            ),
                             TabType::Register => AuthHandler::handle_register(
                                 &mut tab_manager.register_fields,
                                 &mut users,
@@ -670,10 +603,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
             d.draw_text_ex(
                 &font_d,
                 "DEEMAK SHELL",
-                raylib::prelude::Vector2 {
-                    x: 200.0,
-                    y: animation.y_offset,
-                },
+                raylib::prelude::Vector2 { x: 200.0, y: animation.y_offset },
                 60.0,
                 2.0,
                 Color::WHITE,
@@ -687,92 +617,53 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
             // Draw tabs
             let tab_x = config.base_x;
             let tab_y = config.top_y + config.tab_spacing;
+            
             d.draw_rectangle(
                 tab_x as i32,
                 tab_y as i32,
                 config.tab_width as i32,
                 config.tab_height as i32,
-                if tab_manager.active_tab == TabType::Login {
-                    highlight_color
-                } else {
-                    Color::alpha(&Color::GRAY, 0.3)
-                },
+                if tab_manager.active_tab == TabType::Login { highlight_color } else { Color::alpha(&Color::GRAY, 0.3) },
             );
             d.draw_rectangle(
                 (tab_x + config.tab_width) as i32,
                 tab_y as i32,
                 config.tab_width as i32,
                 config.tab_height as i32,
-                if tab_manager.active_tab == TabType::Register {
-                    highlight_color
-                } else {
-                    Color::alpha(&Color::GRAY, 0.3)
-                },
+                if tab_manager.active_tab == TabType::Register { highlight_color } else { Color::alpha(&Color::GRAY, 0.3) },
             );
-
+            
             d.draw_text_ex(
                 &font_d,
                 "Login",
-                raylib::prelude::Vector2 {
-                    x: tab_x + 40.0,
-                    y: tab_y + 8.0,
-                },
+                raylib::prelude::Vector2 { x: tab_x + 40.0, y: tab_y + 8.0 },
                 24.0,
                 1.0,
-                if tab_manager.active_tab == TabType::Login {
-                    Color::BLACK
-                } else {
-                    Color::WHITE
-                },
+                if tab_manager.active_tab == TabType::Login { Color::BLACK } else { Color::WHITE },
             );
             d.draw_text_ex(
                 &font_d,
                 "Register",
-                raylib::prelude::Vector2 {
-                    x: tab_x + config.tab_width + 40.0,
-                    y: tab_y + 8.0,
-                },
+                raylib::prelude::Vector2 { x: tab_x + config.tab_width + 40.0, y: tab_y + 8.0 },
                 24.0,
                 1.0,
-                if tab_manager.active_tab == TabType::Register {
-                    Color::BLACK
-                } else {
-                    Color::WHITE
-                },
+                if tab_manager.active_tab == TabType::Register { Color::BLACK } else { Color::WHITE },
             );
-
+            
             // Draw current tab's fields
             let fields = tab_manager.get_current_fields();
             fields.draw_fields(&mut d, font, &config, highlight_color);
-
+            
             // Draw divider and footer
             let footer_text = tab_manager.get_footer_text();
             let footer_height = calculate_footer_height(font, footer_text, screen_width);
             let divider_y = screen_height as f32 - footer_height - config.divider_margin;
-            d.draw_line(
-                30,
-                divider_y as i32,
-                screen_width - 30,
-                divider_y as i32,
-                Color::alpha(&Color::GRAY, 0.5),
-            );
-            draw_footer_legacy(
-                &mut d,
-                font,
-                footer_text,
-                screen_width,
-                screen_height as f32,
-            );
-
+            d.draw_line(30, divider_y as i32, screen_width - 30, divider_y as i32, Color::alpha(&Color::GRAY, 0.5));
+            draw_footer_legacy(&mut d, font, footer_text, screen_width, screen_height as f32);
+            
             // Draw version
             let version = "Version 1.0";
-            d.draw_text(
-                version,
-                10,
-                d.get_screen_height() - 30,
-                16,
-                Color::alpha(&Color::GRAY, 0.4),
-            );
+            d.draw_text(version, 10, d.get_screen_height() - 30, 16, Color::alpha(&Color::GRAY, 0.4));
         }
     }
 
@@ -787,7 +678,7 @@ fn calculate_footer_height(font: raylib::ffi::Font, note: &str, screen_width: i3
     let words: Vec<&str> = note.split_whitespace().collect();
     let mut lines = Vec::new();
     let mut current_line = String::new();
-
+    
     // Calculate all lines to know total height
     for word in words {
         let trial = if current_line.is_empty() {
@@ -807,20 +698,14 @@ fn calculate_footer_height(font: raylib::ffi::Font, note: &str, screen_width: i3
     if !current_line.is_empty() {
         lines.push(current_line);
     }
-
+    
     let line_height = font_size + 5.0;
     let total_height = lines.len() as f32 * line_height;
     total_height + 50.0 // Include the 50px bottom margin
 }
 
 // Draws a multi-line footer note, wrapping text to fit the screen width, positioned at bottom of screen
-fn draw_footer_legacy(
-    d: &mut RaylibDrawHandle,
-    font: raylib::ffi::Font,
-    note: &str,
-    screen_width: i32,
-    screen_height: f32,
-) {
+fn draw_footer_legacy(d: &mut RaylibDrawHandle, font: raylib::ffi::Font, note: &str, screen_width: i32, screen_height: f32) {
     let max_width = screen_width as f32 - 80.0;
     let font_size = 20.0;
     let spacing = 0.1;
@@ -828,7 +713,7 @@ fn draw_footer_legacy(
     let words: Vec<&str> = note.split_whitespace().collect();
     let mut lines = Vec::new();
     let mut current_line = String::new();
-
+    
     // Calculate all lines first to know total height
     for word in words {
         let trial = if current_line.is_empty() {
@@ -848,12 +733,12 @@ fn draw_footer_legacy(
     if !current_line.is_empty() {
         lines.push(current_line);
     }
-
+    
     // Calculate starting y position to align footer to bottom
     let line_height = font_size + 5.0;
     let total_height = lines.len() as f32 * line_height;
     let start_y = screen_height - total_height - 50.0; // 50px margin from bottom
-
+    
     // Draw all lines
     for (i, line) in lines.iter().enumerate() {
         let y = start_y + (i as f32 * line_height);
