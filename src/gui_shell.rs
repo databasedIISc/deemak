@@ -1,7 +1,7 @@
 use crate::commands::cmds::{CommandResult, cmd_manager};
 use crate::commands::ls::list_directory_entries;
 use crate::gui_main::run_gui_loop;
-use crate::gui_main::sekai_no_hajimari;
+use crate::gui_main::sekai_intialize;
 use crate::keys::key_to_char;
 use crate::metainfo::info_reader::read_validate_info;
 use crate::utils::config;
@@ -102,7 +102,7 @@ impl<'a> ShellScreen<'a> {
             MeasureTextEx(font, cstr.as_ptr(), font_size, 1.2).x
         };
         // Initialize the sekai directory
-        sekai_no_hajimari(&sekai_dir);
+        sekai_intialize(&sekai_dir);
 
         Self {
             rl,
@@ -128,7 +128,11 @@ impl<'a> ShellScreen<'a> {
         }
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread) {
+        // Clean up the output lines
+        self.output_lines.clear();
+        self.input_buffer.clear();
+        self.current_dir = self.root_dir.clone();
         //add to output lines the banner
         let limit: usize = ((self.window_width as f32 * (self.term_split_ratio - 0.12))
             / self.char_width)
@@ -140,17 +144,18 @@ impl<'a> ShellScreen<'a> {
         self.output_lines
             .extend(wrapped_initial.into_iter().map(|c| c.into_owned()));
 
-        if unsafe { FIRST_RUN } {
-            let info_path = self.root_dir.join(".dir_info").join("info.json");
-            let home_about = read_validate_info(&info_path).ok().map(|info| info.about);
-            let mut home_about =
-                home_about.unwrap_or_else(|| "Welcome User to Deemak!".to_string());
-            home_about = "\nYou are in 'HOME'\n\nAbout:\n".to_string() + &home_about + "\n";
-            let wrapped_home_about = wrap(&home_about, limit);
-            unsafe { FIRST_RUN = false };
-            self.output_lines
-                .extend(wrapped_home_about.into_iter().map(|c| c.into_owned()));
-        }
+        let info_path = self.root_dir.join(".dir_info").join("info.json");
+        let home_about = read_validate_info(&info_path).ok().map(|info| info.about);
+        let home_location = read_validate_info(&info_path)
+            .ok()
+            .map(|info| info.location);
+        let mut home_about = home_about.unwrap_or_else(|| "Welcome User to Deemak!".to_string());
+        let home_location = home_location.unwrap_or_else(|| "HOME".to_string());
+        let home_about = format!("\nYou are in {}\n\nAbout:\n{}\n", home_location, home_about);
+        let wrapped_home_about = wrap(&home_about, limit);
+        unsafe { FIRST_RUN = false };
+        self.output_lines
+            .extend(wrapped_home_about.into_iter().map(|c| c.into_owned()));
 
         while !self.window_should_close() {
             self.update();

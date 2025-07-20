@@ -14,7 +14,7 @@ use rocket::{Config, Request, Response, get, options, routes};
 // === Local Modules ===
 use crate::commands::cmds;
 use crate::utils::auth;
-use crate::utils::globals::get_world_dir;
+use crate::utils::globals::get_sekai_dir;
 use crate::utils::{find_root, prompt::DummyPrompter};
 
 // === Data Structures ===
@@ -29,7 +29,7 @@ struct CommandResponse {
 fn response(command: &str, current_dir: &str) -> Json<CommandResponse> {
     use cmds::{CommandResult, cmd_manager};
 
-    let world_dir = &get_world_dir();
+    let world_dir = &get_sekai_dir();
     let parts: Vec<&str> = command.split_whitespace().collect();
     let root_dir = find_root::get_home(world_dir).expect("Could not find sekai home directory");
     let mut current_dir = if current_dir.is_empty() {

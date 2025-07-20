@@ -1,15 +1,17 @@
-use crate::gui_shell::{FIRST_RUN, ShellScreen};
+use crate::gui_shell::ShellScreen;
 use crate::menu::{self, menu_options::MenuOption};
 use crate::metainfo::valid_sekai::validate_or_create_sekai;
 use crate::rns::restore_comp;
-use crate::utils::globals::get_world_dir;
-use crate::utils::log;
-use crate::utils::{find_root, globals::set_world_dir};
+use crate::utils::{globals::get_sekai_dir, log};
 use raylib::prelude::{RaylibHandle, RaylibThread};
 use std::path::Path;
 
 /// Validates the Sekai directory and sets it as the world directory
-pub fn sekai_no_hajimari(sekai_path: &Path) {
+pub fn sekai_initialize(sekai_path: &Path) {
+    log::log_info(
+        "SEKAI",
+        format!("Starting Sekai validation for: {}", sekai_path.display()).as_str(),
+    );
     // First Validate Home
     if !validate_or_create_sekai(sekai_path, true) {
         log::log_error(
@@ -20,34 +22,6 @@ pub fn sekai_no_hajimari(sekai_path: &Path) {
         );
     }
     // Just check first for HOME directory validity and create if not.
-    let root_dir;
-    match find_root::find_home(sekai_path) {
-        Ok(Some(sekai_dir)) => {
-            log::log_info(
-                "SEKAI",
-                &format!("Found root directory for Sekai: {}", sekai_dir.display()),
-            );
-            // Set the global Sekai directory
-            root_dir = Some(sekai_dir.clone());
-            set_world_dir(sekai_dir);
-        }
-        Ok(None) => {
-            log::log_error(
-                "SEKAI",
-                "Failed to find root directory for Sekai. No HOME location found. Exiting.",
-            );
-            eprintln!("Error: Failed to find root directory for Sekai. Exiting.");
-            return;
-        }
-        Err(e) => {
-            log::log_error(
-                "SEKAI",
-                &format!("Process failed while finding Sekai HOME. Error: {e}. Exiting."),
-            );
-            eprintln!("Process failed while finding Sekai HOME. Error: {e}. Exiting.");
-            return;
-        }
-    }
     // If not valid, create .dir_info for each of them.
     if !validate_or_create_sekai(sekai_path, false) {
         log::log_error(
@@ -70,16 +44,18 @@ pub fn sekai_no_hajimari(sekai_path: &Path) {
             "SEKAI",
             &format!(
                 "Creating restore file for Sekai at {:?}",
-                sekai_path.join(".dir_info/restore_me")
+                sekai_path.join(".dir_info/restore_me.deemak")
             ),
         );
         // restore_me should be made initially if it doesnt exist, else it will not be created
-        match restore_comp::backup_sekai("restore", root_dir.as_ref().unwrap()) {
+        match restore_comp::backup_sekai("restore", sekai_path) {
             Err(e) => {
-                log::log_error("SEKAI", &format!("Failed to create restore file: {e}"));
+                log::log_error(
+                    "SEKAI",
+                    &format!("Failed to create restore file for: {sekai_path:?} Error: {e}"),
+                );
                 eprintln!(
-                    "Error: Failed to create restore file: {e}
-Continuing..."
+                    "Error: Failed to create restore file for: {sekai_path:?} Error: {e}.\nContinuing..."
                 );
                 return;
             }
@@ -93,15 +69,18 @@ Continuing..."
             "SEKAI",
             &format!(
                 "Creating save file for Sekai at {:?}",
-                sekai_path.join(".dir_info/save_me")
+                sekai_path.join(".dir_info/save_me.deemak")
             ),
         );
-        match restore_comp::backup_sekai("save", root_dir.as_ref().unwrap()) {
+        // Not copying the restore file to save file, since the password will be different.
+        match restore_comp::backup_sekai("save", sekai_path) {
             Err(e) => {
-                log::log_error("SEKAI", &format!("Failed to create save file: {e}"));
+                log::log_error(
+                    "SEKAI",
+                    &format!("Failed to create save file for: {sekai_path:?} Error: {e}"),
+                );
                 eprintln!(
-                    "Error: Failed to create save file: {e}
-Continuing..."
+                    "Error: Failed to create save file for: {sekai_path:?} Error: {e}.\nContinuing..."
                 );
                 return;
             }
@@ -119,7 +98,7 @@ Continuing..."
                 &format!("Failed to restore Sekai from save file: {err}"),
             );
             eprintln!(
-                "Error: Failed to restore Sekai from save file at {sekai_path:?}
+                "Error: Failed to restore Sekai from save file at {sekai_path:?}. Error: {err}
 Continuing..."
             );
         }
@@ -129,28 +108,39 @@ Continuing..."
     }
 }
 
+#[derive(Debug, Clone, Default)]
+struct InitBools {
+    tutorial_initialized: bool,
+    sekai_initialized: bool,
+}
+
 /// Runs the main GUI loop for the Sekai shell
-pub fn run_gui_loop(
-    rl: &mut RaylibHandle,
-    thread: &RaylibThread,
-    font_size: f32,
-    sekai_path: &Path,
-) {
+pub fn run_gui_loop(rl: &mut RaylibHandle, thread: &RaylibThread, font_size: f32) {
+    let mut init_state = InitBools::default();
+    // This will exist, since sekai directory is set in main.rs
+    let sekai_path = &get_sekai_dir();
+    let mut sekai_shell = ShellScreen::new_sekai(rl, thread, sekai_path.to_path_buf(), font_size);
+
+    // Initialize the Tutorial directory
+    let tutorial_dir = &Path::new(env!("CARGO_MANIFEST_DIR")).join("_tutorial");
+    let mut tutorial_shell =
+        ShellScreen::new_sekai(rl, thread, tutorial_dir.to_path_buf(), font_size);
+
     loop {
         // Show main menu and get user selection
         let menu_selection = menu::show_menu(rl, thread);
-
         match menu_selection {
             Some(MenuOption::StartShell) => {
                 // Shell mode
-                unsafe { FIRST_RUN = true }; // Reset first run flag
-                let sekai_dir = get_world_dir();
                 log::log_info(
                     "Deemak",
-                    format!("Starting Shell: Sekai: {}", sekai_dir.display()).as_str(),
+                    format!("Starting Shell: Sekai: {}", sekai_path.display()).as_str(),
                 );
-                let mut shell = ShellScreen::new_sekai(rl, thread, sekai_dir.clone(), font_size);
-                shell.run();
+                if !init_state.sekai_initialized {
+                    sekai_initialize(sekai_path);
+                    init_state.sekai_initialized = true;
+                }
+                sekai_shell.run(rl, thread);
             }
             Some(MenuOption::About) => {
                 // About screen
@@ -160,12 +150,14 @@ pub fn run_gui_loop(
             }
             Some(MenuOption::Tutorial) => {
                 // Tutorial screen
-                let tutorial_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("_tutorial");
                 log::log_info("Deemak", "Loading Tutorial");
-                unsafe { FIRST_RUN = true }; // Reset first run flag
-                let mut tutorial_shell =
-                    ShellScreen::new_sekai(rl, thread, tutorial_dir, font_size);
-                tutorial_shell.run();
+                if !init_state.tutorial_initialized {
+                    sekai_initialize(tutorial_dir);
+                    tutorial_shell =
+                        ShellScreen::new_sekai(rl, thread, tutorial_dir.to_path_buf(), font_size);
+                    init_state.tutorial_initialized = true;
+                }
+                tutorial_shell.run(rl, thread);
                 continue;
             }
             Some(MenuOption::Settings) => {
@@ -176,7 +168,7 @@ pub fn run_gui_loop(
             }
             Some(MenuOption::Exit) | None => {
                 // Exit
-                std::process::exit(0); // Exit the application
+                crate::utils::cleanup::exit_deemak(0);
             }
         }
     }

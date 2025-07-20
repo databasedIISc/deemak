@@ -72,7 +72,7 @@ pub fn get_home(sekai_path: &Path) -> Option<PathBuf> {
 /// Converts an absolute path to a path relative to WORLD_DIR
 /// Returns the original path if WORLD_DIR isn't set or if the path isn't within WORLD_DIR
 pub fn relative_deemak_path(path: &Path) -> PathBuf {
-    let world_dir = globals::get_world_dir();
+    let world_dir = globals::get_sekai_dir();
 
     path.strip_prefix(&world_dir)
         .map(|relative_path| {
