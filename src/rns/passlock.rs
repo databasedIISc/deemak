@@ -102,7 +102,7 @@ pub fn encrypt_file(input_path: &Path, output_path: &Path, password: &str) -> Re
     let key = derive_key_from_password(password);
     let cipher = Aes256Gcm::new(&key);
 
-    let plaintext = read(input_path).map_err(|e| format!("Failed to read input file: {}", e))?;
+    let plaintext = read(input_path).map_err(|e| format!("Failed to read input file: {e}"))?;
 
     let mut nonce_bytes = [0u8; NONCE_SIZE];
     OsRng.fill_bytes(&mut nonce_bytes);
@@ -113,24 +113,24 @@ pub fn encrypt_file(input_path: &Path, output_path: &Path, password: &str) -> Re
         .map_err(|_| "Encryption failed".to_string())?;
 
     let mut file =
-        File::create(output_path).map_err(|e| format!("Failed to create output file: {}", e))?;
+        File::create(output_path).map_err(|e| format!("Failed to create output file: {e}"))?;
 
     file.write_all(MAGIC_HEADER)
-        .map_err(|e| format!("Failed to write header: {}", e))?;
+        .map_err(|e| format!("Failed to write header: {e}"))?;
     file.write_all(&nonce_bytes)
-        .map_err(|e| format!("Failed to write nonce: {}", e))?;
+        .map_err(|e| format!("Failed to write nonce: {e}"))?;
     file.write_all(&ciphertext)
-        .map_err(|e| format!("Failed to write ciphertext: {}", e))?;
+        .map_err(|e| format!("Failed to write ciphertext: {e}"))?;
 
     xattr::set(output_path, "pass.deemak", password.as_bytes())
-        .map_err(|e| format!("Failed to set xattr metadata: {}", e))?;
+        .map_err(|e| format!("Failed to set xattr metadata: {e}"))?;
 
     Ok(())
 }
 
 pub fn check_dmk_magic(sekai_path: &Path) -> Result<bool, String> {
     let data =
-        std::fs::read(sekai_path).map_err(|e| format!("Failed to read input file: {}", e))?;
+        std::fs::read(sekai_path).map_err(|e| format!("Failed to read input file: {e}"))?;
 
     // Check magic header exists and matches
     let magic_ok = data.len() >= MAGIC_HEADER.len() + NONCE_SIZE && data.starts_with(MAGIC_HEADER);
@@ -145,7 +145,7 @@ pub fn decrypt_file(input_path: &Path, output_path: &Path) -> Result<(), String>
     if !check_dmk_magic(input_path)? {
         return Err("File does not have the correct magic header".to_string());
     }
-    let data = read(input_path).map_err(|e| format!("Failed to read input file: {}", e))?;
+    let data = read(input_path).map_err(|e| format!("Failed to read input file: {e}"))?;
 
     if data.len() < MAGIC_HEADER.len() + NONCE_SIZE {
         return Err("Invalid encrypted file".to_string());
@@ -160,7 +160,7 @@ pub fn decrypt_file(input_path: &Path, output_path: &Path) -> Result<(), String>
     let nonce = Nonce::from_slice(nonce_bytes);
 
     let password_bytes = xattr::get(input_path, "pass.deemak")
-        .map_err(|e| format!("Failed to read metadata: {}", e))?
+        .map_err(|e| format!("Failed to read metadata: {e}"))?
         .ok_or_else(|| "Missing password metadata".to_string())?;
 
     let password = String::from_utf8(password_bytes)
@@ -173,7 +173,7 @@ pub fn decrypt_file(input_path: &Path, output_path: &Path) -> Result<(), String>
         .decrypt(nonce, ciphertext)
         .map_err(|_| "Decryption failed — wrong password or corrupted file".to_string())?;
 
-    write(output_path, plaintext).map_err(|e| format!("Failed to write decrypted file: {}", e))?;
+    write(output_path, plaintext).map_err(|e| format!("Failed to write decrypted file: {e}"))?;
 
     Ok(())
 }

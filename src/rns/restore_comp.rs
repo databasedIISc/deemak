@@ -113,8 +113,7 @@ pub fn backup_sekai(usage: &str, root_path: &Path) -> io::Result<String> {
         true, // Force encryption
     ) {
         return Err(Error::other(format!(
-            "Failed to create Deemak encrypted file: {}",
-            e
+            "Failed to create Deemak encrypted file: {e}"
         )));
     }
     Ok(format!("Backup {usage} created at {backup_file:?}"))
@@ -175,8 +174,7 @@ pub fn restore_sekai(usage: &str, root_path: &Path) -> io::Result<String> {
         Ok(path) => path,
         Err(e) => {
             return Err(Error::other(format!(
-                "Failed to restore Sekai to temporary directory: {}",
-                e
+                "Failed to restore Sekai to temporary directory: {e}"
             )));
         }
     };

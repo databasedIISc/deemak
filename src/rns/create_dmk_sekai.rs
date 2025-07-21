@@ -37,7 +37,7 @@ pub fn deemak_encrypt_sekai(
 
     // Compress first
     if sekai_path.is_dir() {
-        zlib_compress(sekai_path, &temp_zlib).map_err(|e| format!("Compression failed: {}", e))?;
+        zlib_compress(sekai_path, &temp_zlib).map_err(|e| format!("Compression failed: {e}"))?;
         log::log_info(
             "Deemak Encryption",
             format!("Successfully compressed Sekai: {}", temp_zlib.display()).as_str(),
@@ -47,10 +47,10 @@ pub fn deemak_encrypt_sekai(
     }
     // Then encrypt
     encrypt_file(&temp_zlib, encryption_path, password)
-        .map_err(|e| format!("Encryption failed: {}", e))?;
+        .map_err(|e| format!("Encryption failed: {e}"))?;
 
     // Clean up
-    std::fs::remove_file(&temp_zlib).map_err(|e| format!("Failed to clean up temp file: {}", e))?;
+    std::fs::remove_file(&temp_zlib).map_err(|e| format!("Failed to clean up temp file: {e}"))?;
     log::log_info(
         "DEEMAK",
         &format!("Successfully encrypted to {}", encryption_path.display()),
@@ -103,11 +103,11 @@ pub fn original_from_encrypted_sekai(
     let result = (|| {
         // Decrypt first
         decrypt_file(encrypted_path, &temp_zlib)
-            .map_err(|e| format!("Decryption failed: {}", e))?;
+            .map_err(|e| format!("Decryption failed: {e}"))?;
 
         // Then decompress
         zlib_decompress(&temp_zlib, &output_dir)
-            .map_err(|e| format!("Decompression failed: {}", e))?;
+            .map_err(|e| format!("Decompression failed: {e}"))?;
 
         Ok(&output_dir)
     })();
@@ -115,7 +115,7 @@ pub fn original_from_encrypted_sekai(
     // Clean up temp file in all cases
     if temp_zlib.exists() {
         if let Err(e) = std::fs::remove_file(&temp_zlib) {
-            log::log_error("DEEMAK", &format!("Failed to clean up temp file: {}", e));
+            log::log_error("DEEMAK", &format!("Failed to clean up temp file: {e}"));
         }
     }
 
