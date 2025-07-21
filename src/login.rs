@@ -471,8 +471,8 @@ impl AuthHandler {
                 fields.password.entering = true;
                 fields.username.warning = false;
             }
-        } else if fields.password.entering {
-            if !fields.password.value.is_empty() {
+        } else if fields.password.entering
+            && !fields.password.value.is_empty() {
                 let username = fields.username.value.trim();
                 let password = fields.password.value.trim();
                 if let Some(user) = users.iter().find(|u| u.username == username) {
@@ -501,7 +501,6 @@ impl AuthHandler {
                     fields.username.warning_text = "Username not found!".to_string();
                 }
             }
-        }
         None
     }
 
@@ -515,8 +514,8 @@ impl AuthHandler {
                 fields.password.entering = true;
                 fields.username.warning = false;
             }
-        } else if fields.password.entering {
-            if !fields.password.value.is_empty() {
+        } else if fields.password.entering
+            && !fields.password.value.is_empty() {
                 let username = fields.username.value.trim();
                 let password = fields.password.value.trim();
                 if users.iter().any(|u| u.username == username) {
@@ -553,7 +552,6 @@ impl AuthHandler {
                     }
                 }
             }
-        }
         None
     }
 }
@@ -573,7 +571,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
     let font_d = rl.get_font_default();
 
     // Load users and initialize components
-    let users_result = std::panic::catch_unwind(|| crate::utils::auth::load_users());
+    let users_result = std::panic::catch_unwind(crate::utils::auth::load_users);
     let mut users = match users_result {
         Ok(u) => u,
         Err(_) => {

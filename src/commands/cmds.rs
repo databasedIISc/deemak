@@ -61,7 +61,7 @@ pub fn cmd_manager(
     match parts[0] {
         "echo" => CommandResult::Output(echo(&parts[1..])),
         "whoami" => match get_current_username() {
-            Some(name) => CommandResult::Output(format!("Current user: {}", name)),
+            Some(name) => CommandResult::Output(format!("Current user: {name}")),
             None => {
                 CommandResult::Output("Current user: [Not logged in] (Default User)".to_string())
             }
