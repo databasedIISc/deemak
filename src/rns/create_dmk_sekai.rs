@@ -1,14 +1,38 @@
 use super::passlock::{check_dmk_magic, decrypt_file, encrypt_file};
-use super::restore_comp::{zlib_compress, zlib_decompress};
+use super::passlock::{zlib_compress, zlib_decompress};
 use crate::utils::log;
 use std::path::{Path, PathBuf};
 
 /// Encrypts a Sekai folder into a Deemak encrypted file
-pub fn deemak_encrypt_sekai(sekai_path: &Path, password: &str) -> Result<(), String> {
-    let output_path = sekai_path.with_extension("deemak");
+pub fn deemak_encrypt_sekai(
+    sekai_path: &Path,
+    output_path: &Path,
+    password: &str,
+) -> Result<(), String> {
+    log::log_debug(
+        "Encryption_deemak_sekai",
+        &format!(
+            "Input Sekai Path: {}, Output Path: {}, Password: {}",
+            sekai_path.display(),
+            output_path.display(),
+            password
+        ),
+    );
+    // Based on the type of output path, we make the encryption path
+    let encryption_path: &Path = if output_path.extension().is_some_and(|ext| ext == "deemak") {
+        output_path
+    } else {
+        let filename = sekai_path.file_name().unwrap();
+        &output_path.join(filename).with_extension("deemak")
+    };
+
+    log::log_debug(
+        "Encryption_deemak_sekai",
+        &format!("Encryption Path: {}", encryption_path.display()),
+    );
 
     // Skip if already encrypted
-    if output_path.exists() && check_dmk_magic(&output_path)? {
+    if encryption_path.exists() && check_dmk_magic(encryption_path)? {
         log::log_info("DEEMAK", "File already encrypted, skipping");
         return Ok(());
     }
@@ -22,56 +46,99 @@ pub fn deemak_encrypt_sekai(sekai_path: &Path, password: &str) -> Result<(), Str
     } else {
         return Err("Input must be a directory".to_string());
     }
-
     // Then encrypt
-    encrypt_file(&temp_zlib, &output_path, password)
+    encrypt_file(&temp_zlib, encryption_path, password)
         .map_err(|e| format!("Encryption failed: {}", e))?;
 
     // Clean up
     std::fs::remove_file(&temp_zlib).map_err(|e| format!("Failed to clean up temp file: {}", e))?;
     log::log_info(
         "DEEMAK",
-        &format!("Successfully encrypted to {}", output_path.display()),
+        &format!("Successfully encrypted to {}", encryption_path.display()),
     );
     println!(
         "Successfully encrypted Sekai folder to {}",
-        output_path.display()
+        encryption_path.display()
     );
 
     Ok(())
 }
 
 /// Extracts original path from encrypted Sekai file
-pub fn original_from_encrypted_sekai(encrypted_path: &Path) -> Result<PathBuf, String> {
-    // Validate input
+pub fn original_from_encrypted_sekai(
+    encrypted_path: &Path,
+    output_path: &Path,
+) -> Result<PathBuf, String> {
+    // Validate input path
+    if !encrypted_path.exists() {
+        return Err("Specified path does not exist".to_string());
+    }
     if !encrypted_path.is_file() {
-        return Err("Path is not a file. Please input correct Deemak file.".to_string());
+        return Err("Path must be a Deemak encrypted file".to_string());
     }
 
+    // Check file magic header
     if !check_dmk_magic(encrypted_path)? {
-        return Err("Not a valid Deemak file".to_string());
+        return Err("Invalid Deemak file format".to_string());
     }
 
-    let output_dir = encrypted_path.with_extension("");
-    let temp_zlib = encrypted_path.with_extension("tmp.zlib");
+    // Prepare paths
+    let output_dir = if output_path.is_dir() {
+        output_path.join(
+            encrypted_path
+                .file_stem()
+                .ok_or("Invalid encrypted filename")?
+                .to_string_lossy()
+                .trim_end_matches(".deemak"),
+        )
+    } else {
+        output_path.to_path_buf()
+    };
 
-    // Decrypt first
-    decrypt_file(encrypted_path, &temp_zlib).map_err(|e| format!("Decryption failed: {}", e))?;
+    let temp_zlib = output_dir.with_extension("tmp.zlib");
 
-    // Then decompress
-    zlib_decompress(&temp_zlib, &output_dir).map_err(|e| format!("Decompression failed: {}", e))?;
+    // Ensure clean state
+    if output_dir.exists() {
+        return Err(format!(
+            "Output path already exists: {}",
+            output_dir.display()
+        ));
+    }
 
-    // Clean up
-    std::fs::remove_file(&temp_zlib).map_err(|e| format!("Failed to clean up temp file: {}", e))?;
+    // Perform operations with proper error handling and cleanup
+    let result = (|| {
+        // Decrypt first
+        decrypt_file(encrypted_path, &temp_zlib)
+            .map_err(|e| format!("Decryption failed: {}", e))?;
 
-    log::log_info(
-        "DEEMAK",
-        &format!("Successfully decrypted to {}", output_dir.display()),
-    );
-    println!(
-        "Successfully restored Sekai folder to {}",
-        output_dir.display()
-    );
+        // Then decompress
+        zlib_decompress(&temp_zlib, &output_dir)
+            .map_err(|e| format!("Decompression failed: {}", e))?;
 
-    Ok(output_dir)
+        Ok(&output_dir)
+    })();
+
+    // Clean up temp file in all cases
+    if temp_zlib.exists() {
+        if let Err(e) = std::fs::remove_file(&temp_zlib) {
+            log::log_error("DEEMAK", &format!("Failed to clean up temp file: {}", e));
+        }
+    }
+
+    match result {
+        Ok(dir) => {
+            log::log_info(
+                "DEEMAK",
+                &format!("Successfully decrypted to {}", dir.display()),
+            );
+            Ok(dir.to_path_buf())
+        }
+        Err(e) => {
+            // Clean up partial output if operation failed
+            if output_dir.exists() {
+                let _ = std::fs::remove_dir_all(&output_dir);
+            }
+            Err(e)
+        }
+    }
 }

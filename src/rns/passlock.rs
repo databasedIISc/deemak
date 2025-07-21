@@ -10,8 +10,43 @@ use std::path::Path;
 use tar::{Archive, Builder};
 use walkdir::WalkDir;
 
+use crate::utils::log;
+
 const NONCE_SIZE: usize = 12;
 const MAGIC_HEADER: &[u8; 8] = b"dbdeemak";
+
+/*
+ORDER OF OPERATIONS FOR DEEMAK ENCRYPTION:
+
+Naming Convention:
+- Zlib Compressed File: `.tmp.zlib`
+- Deemak Encrypted File: `.deemak`
+
+I. Creating a Deemak Encrypted Sekai file:
+Requirements: - Sekai file/directory which is already not encrypted
+            - Password for encryption
+
+Process:
+1. Check for requirements and proceed if valid.
+2. Compress the Sekai directory to a zlib tarball.
+3. Encrypt the zlib tarball using AES-GCM with the provided password.
+4. Write the encrypted data to a file with a .deemak extension and add headers.
+5. Clean up temporary files if necessary.
+
+II. Restoring original Sekai from Deemak Encrypted file:
+Requirements: - Deemak encrypted file
+
+Process:
+1. Check if the file is a valid Deemak file by checking the magic header and xattr metadata.
+2. Read password from xattr metadata.
+3. Decrypt the file using AES-GCM with the password to obtain the zlib tarball.
+4. Decompress the zlib tarball to restore the original Sekai directory.
+5. Clean up temporary files if necessary.
+
+USE CASES OF THIS MODULE:
+1. Deemak will read a Sekai file which is Deemak Encrypted.
+2. restore_me, save_me, etc. files will all be Deemak Encrypted files.
+*/
 
 /// Compresses a file/directory to a zlib tarball
 pub fn zlib_compress(source_path: &Path, output_file: &Path) -> io::Result<()> {
@@ -54,6 +89,16 @@ fn derive_key_from_password(password: &str) -> Key<Aes256Gcm> {
 }
 
 pub fn encrypt_file(input_path: &Path, output_path: &Path, password: &str) -> Result<(), String> {
+    log::log_debug(
+        "Encryption",
+        &format!(
+            "Input Path: {}, Output Path: {}",
+            input_path.display(),
+            output_path.display()
+        ),
+    );
+
+    let output_path = &output_path.with_extension("deemak");
     let key = derive_key_from_password(password);
     let cipher = Aes256Gcm::new(&key);
 

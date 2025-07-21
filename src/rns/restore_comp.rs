@@ -1,4 +1,5 @@
-use super::passlock::{decrypt_file, encrypt_file};
+use super::create_dmk_sekai::{deemak_encrypt_sekai, original_from_encrypted_sekai};
+use crate::utils::log;
 use std::collections::hash_map::DefaultHasher;
 use std::fs;
 use std::hash::{Hash, Hasher};
@@ -6,8 +7,8 @@ use std::io;
 use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 
-const RESTORE_FILE: &str = "restore_me";
-const SAVE_FILE: &str = "save_me";
+const RESTORE_FILE: &str = "restore_me.deemak";
+const SAVE_FILE: &str = "save_me.deemak";
 
 fn generate_temp_path(usage: &str, root_path: &Path) -> PathBuf {
     let mut hasher = DefaultHasher::new();
@@ -16,6 +17,7 @@ fn generate_temp_path(usage: &str, root_path: &Path) -> PathBuf {
     PathBuf::from(format!("/tmp/deemak-{usage}-{hash:x}"))
 }
 
+/// Backs up Sekai data to a Deemak encrypted file
 pub fn backup_sekai(usage: &str, root_path: &Path) -> io::Result<String> {
     let dir_info_path = root_path.join(".dir_info");
     fs::create_dir_all(&dir_info_path)?;
@@ -35,23 +37,28 @@ pub fn backup_sekai(usage: &str, root_path: &Path) -> io::Result<String> {
         return Ok("Restore file already exists, skipping creation.".to_string());
     }
 
-    encrypt_file(
-        &root_path.join(".dir_info").join(RESTORE_FILE),
-        &backup_file,
-        format!(
-            "{sekai}_{usage}",
-            sekai = root_path.display(),
-            usage = usage
-        )
-        .as_str(),
-    );
+    let random_pass_hash = format!("{:x}", rand::random::<u64>());
+    let password = random_pass_hash + "_" + usage;
+
+    if let Err(e) = deemak_encrypt_sekai(
+        root_path,
+        &root_path.join(".dir_info").join(&backup_file),
+        password.as_str(),
+    ) {
+        return Err(Error::other(format!(
+            "Failed to create Deemak encrypted file: {}",
+            e
+        )));
+    }
     Ok(format!("Backup {usage} created at {backup_file:?}"))
 }
 
-pub fn restore_sekai(usage: &str, root_path: &Path) -> io::Result<()> {
-    let source_file = match usage {
-        "restore" => root_path.join(".dir_info").join(RESTORE_FILE),
-        "save" => root_path.join(".dir_info").join(SAVE_FILE),
+/// Restores Sekai data from a Deemak encrypted file
+pub fn restore_sekai(usage: &str, root_path: &Path) -> io::Result<String> {
+    // Validate usage parameter
+    let backup_file = match usage {
+        "restore" => RESTORE_FILE,
+        "save" => SAVE_FILE,
         _ => {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
@@ -60,7 +67,10 @@ pub fn restore_sekai(usage: &str, root_path: &Path) -> io::Result<()> {
         }
     };
 
+    let source_file = root_path.join(".dir_info").join(backup_file);
     let temp_path = generate_temp_path(usage, root_path);
+
+    // Copy backup to temp location
     fs::copy(&source_file, &temp_path)?;
 
     // Clear directory while preserving .dir_info
@@ -85,9 +95,35 @@ pub fn restore_sekai(usage: &str, root_path: &Path) -> io::Result<()> {
         }
     }
 
-    zlib_decompress(&temp_path, root_path)?;
+    // Decrypt the backup
+    let restored_path = match original_from_encrypted_sekai(
+        &temp_path,
+        &root_path.join(".dir_info").join(backup_file),
+    ) {
+        Ok(path) => {
+            log::log_info(
+                "SEKAI",
+                &format!("Successfully restored Sekai to: {}", path.display()),
+            );
+            path
+        }
+        Err(e) => {
+            // Clean up temp file before returning error
+            let _ = fs::remove_file(&temp_path);
+            return Err(Error::other(format!(
+                "Failed to restore Sekai from backup: {}",
+                e
+            )));
+        }
+    };
+
+    // Clean up temp file
     fs::remove_file(temp_path)?;
-    Ok(())
+
+    Ok(format!(
+        "Successfully restored Sekai from {usage} file at: {}",
+        restored_path.display()
+    ))
 }
 
 pub fn can_restore(root_path: &Path) -> bool {

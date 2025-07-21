@@ -14,11 +14,11 @@ mod rns_test {
         assert!(!can_save(&root_path));
 
         fs::create_dir_all(root_path.join(".dir_info")).unwrap();
-        File::create(root_path.join(".dir_info").join("restore_me")).unwrap();
+        File::create(root_path.join(".dir_info").join("restore_me.deemak")).unwrap();
         assert!(can_restore(&root_path));
         assert!(!can_save(&root_path));
 
-        File::create(root_path.join(".dir_info").join("save_me")).unwrap();
+        File::create(root_path.join(".dir_info").join("save_me.deemak")).unwrap();
         assert!(can_restore(&root_path));
         assert!(can_save(&root_path));
     }
@@ -66,7 +66,12 @@ mod rns_test {
         // Create a restore point
         assert!(backup_sekai("restore", &root_path).is_ok());
         assert!(can_restore(&root_path));
-        assert!(root_path.join(".dir_info").join("restore_me").exists());
+        assert!(
+            root_path
+                .join(".dir_info")
+                .join("restore_me.deemak")
+                .exists()
+        );
 
         // Modify the directory
         remove_file(root_path.join("file1.txt"));
