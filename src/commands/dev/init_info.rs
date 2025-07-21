@@ -32,14 +32,15 @@ Examples:
 
 pub static level_order:Vec<String>=vec![room_2,room_3,room_4,room_5,room_6,room_7,room_8,room_9,room_10];
 
-pub fn dev_remove_level_status(path_to_obj:&Path,path_to_next_level:Option<&Path>)->Resukt<(),String>{
+pub fn dev_remove_level_status(path_to_obj:&Path,path_to_next_level:Option<&Path>)->Result<(),String>{
     //validate path_to_obj, get info_path
     //check if the object is a level
     //check if the object is locked at all
     //remove decrypt_me and compare_me
     //set locked to "00"
 }
-pub fn create_level_lock(
+
+pub fn dev_create_level_lock(
     solve_from_path: &Path,
     set_lock_to_path: &Path,
     current_dir:&Path,
@@ -81,10 +82,20 @@ pub fn create_level_lock(
                 log::log_error("solve", err_msg.as_str());
                 return err_msg;
             };
+    let Ok(level_2_name)=path_2
+                .file_name()
+                .and_then(|s| s.to_str())
+                .ok_or("Invalid level name")
+            else {
+                err_msg += "Failed to get level name from path.";
+                log::log_error("solve", err_msg.as_str());
+                return err_msg;
+            };
 
-    let decrypt_me_paht_1=encrypt(&characterise_enc_key(level_name,solution),&flag);
+    let decrypt_me_paht_1=encrypt(&characterise_enc_key(level_1_name,solution),&flag);
     // comare_me_path_2=?
-    object_salt_2=read_get_obj_info(info_path: &Path, obj_name: &str) 
+    info_path_2=path_1.
+    level_2_info=read_get_obj_info(info_path:, obj_name: &str) 
     hash_1=argonhash()
 
 
@@ -101,7 +112,7 @@ pub fn dev_lock_chest(args: &[&str],
         //if locked still ask to lock with new answer
 
     }
-    pub fn dev_unlock_chest(args: &[&str],
+pub fn dev_unlock_chest(args: &[&str],
     current_dir: &Path,
     root_dir: &Path)->Result<(),String>{
         //check if path valid and get info path
