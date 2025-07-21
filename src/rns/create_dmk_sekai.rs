@@ -11,12 +11,11 @@ pub fn deemak_encrypt_sekai(
     force: bool,
 ) -> Result<(), String> {
     log::log_debug(
-        "Encryption_deemak_sekai",
+        "Deemak Encryption",
         &format!(
-            "Input Sekai Path: {}, Output Path: {}, Password: {}",
+            "Input Sekai Path: {}, Output Path: {}",
             sekai_path.display(),
             output_path.display(),
-            password
         ),
     );
     // Based on the type of output path, we make the encryption path
@@ -26,11 +25,6 @@ pub fn deemak_encrypt_sekai(
         let filename = sekai_path.file_name().unwrap();
         &output_path.join(filename).with_extension("deemak")
     };
-
-    log::log_debug(
-        "Encryption_deemak_sekai",
-        &format!("Encryption Path: {}", encryption_path.display()),
-    );
 
     // Skip if already encrypted
     if !force && encryption_path.exists() && check_dmk_magic(encryption_path)? {

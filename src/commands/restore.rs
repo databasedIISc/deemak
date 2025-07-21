@@ -61,7 +61,7 @@ pub fn restore(args: &[&str], root_path: &Path, prompter: &mut dyn UserPrompter)
                 {
                     return "Restore cancelled by user.".to_string();
                 }
-                log::log_info("restore", "SAVE  PARSED");
+                log::log_info("restore", "SAVE PARSED");
                 // Restore operation
                 if can_save(root_path) {
                     // `save_me` file already exists.

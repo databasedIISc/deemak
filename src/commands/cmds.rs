@@ -16,8 +16,8 @@ pub static RESTRICTED_FILES: [&str; 5] = [
     ".dir_info",
     "info.json",
     ".DS_Store",
-    "restore_me",
-    "save_me",
+    "restore_me.deemak",
+    "save_me.deemak",
 ];
 
 /// Normalizes a path by removing `.` and `..` components

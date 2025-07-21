@@ -97,8 +97,10 @@ pub fn backup_sekai(usage: &str, root_path: &Path) -> io::Result<String> {
         }
     };
 
-    if usage == "restore" && backup_file.exists() {
-        return Ok("Restore file already exists, skipping creation.".to_string());
+    if backup_file.exists() {
+        return Ok(format!(
+            "{backup_file:?} file already exists, skipping creation."
+        ));
     }
 
     let random_pass_hash = format!("{:x}", rand::random::<u64>());

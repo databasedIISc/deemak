@@ -77,7 +77,7 @@ mod rns_test {
         remove_file(root_path.join("file1.txt"));
         create_file(root_path.join("subdir1/file2.txt"), "new content");
 
-        // Restore from the restore point
+        // Restore from the starting point
         assert!(restore_sekai("restore", &root_path).is_ok());
 
         // Check if the directory is restored to its original state
