@@ -7,6 +7,23 @@ use std::io;
 use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
 
+/*
+RESTORE MECHANISM EXPLANATION:
+
+When restoring, all the files including the `.dir_info` directory(of HOME as well), will be compressed into a zlib file and encrypted with Deemak Encryption.
+This is called `restore_me.deemak` or `save_me.deemak` depending on the usage. Both should exist/created at the start of the Shell.
+
+Any of these restore files should not contain the (HOME/.dir_info/)restore_me.deemak or save_me.deemak files.
+When restoring, the sekai will be cleared and restored from the restore file
+During the whole program, `restore_me.deemak` will remain untouched and unchanged. Only `save_me.deemak` will be created or updated with the current state of Sekai.
+
+- When `restore` is called, it will look for `restore_me.deemak` in the `.dir_info` directory.
+In this case, the `restore_me.deemak` will be copied to `save_me.deemak` so that it starts with a fresh state.
+
+- When `save` is called, it will look for `save_me.deemak` in the `.dir_info` directory.
+In this case, the `restore_me.deemak` will remain unchanged, and the `save_me.deemak` will be created or updated with the current state of Sekai.
+*/
+
 const RESTORE_FILE: &str = "restore_me.deemak";
 const SAVE_FILE: &str = "save_me.deemak";
 
@@ -44,6 +61,7 @@ pub fn backup_sekai(usage: &str, root_path: &Path) -> io::Result<String> {
         root_path,
         &root_path.join(".dir_info").join(&backup_file),
         password.as_str(),
+        true, // Force encryption
     ) {
         return Err(Error::other(format!(
             "Failed to create Deemak encrypted file: {}",

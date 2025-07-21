@@ -40,9 +40,29 @@ struct DeemakArgs {
     #[arg(long, short, default_value_t = false)]
     create_deemak: bool,
 
-    /// Restore Sekai from a Deemak Encrypted file.
-    #[arg(long, short, default_value_t = false)]
-    restore_sekai: bool,
+#[derive(Subcommand, Debug)]
+enum DeemakEncrypt {
+    /// Create new Deemak Encrypted file from your existing Sekai directory
+    Create {
+        /// Password for encryption
+        #[arg(short, long)]
+        password: Option<String>,
+
+        /// Output directory (defaults to current directory)
+        #[arg(short, long)]
+        output: Option<std::path::PathBuf>,
+
+        /// Force overwrite existing Deemak file(if it exists)
+        #[arg(short, long, default_value_t = false)]
+        force: bool,
+    },
+
+    /// Restore Sekai from a Deemak Encrypted file
+    Restore {
+        /// Output directory (defaults to current directory)
+        #[arg(short, long)]
+        output: Option<std::path::PathBuf>,
+    },
 }
 
 fn main() {
@@ -92,20 +112,81 @@ fn main() {
         &format!("Sekai directory provided: {sekai_path:?}"),
     );
 
-    if args.create_deemak {
-        log::log_info("Application", "Creating Deemak Encrypted Sekai file");
-        // Get input password
-        println!(
-            "Enter password for your Sekai' Deemak encryption. Note that you can only run deemak on the file made:"
-        );
-        let password = dialoguer::Password::new()
-            .with_prompt("Password")
-            .interact()
-            .expect("Failed to read password");
-        if let Err(e) = create_dmk_sekai::deemak_encrypt_sekai(&sekai_path, password.as_str()) {
-            log::log_error("SEKAI", &format!("Failed to create Deemak file: {e}"));
-            eprintln!("Error: Failed to create Deemak file: {e}");
-            std::process::exit(1);
+    log::log_info("Application", "Creating Deemak Encrypted Sekai file");
+    if let Some(encrypt_cmd) = args.encrypt {
+        match encrypt_cmd {
+            DeemakEncrypt::Create {
+                password: _,
+                output,
+                force,
+            } => {
+                // Get input password securely
+                let password = match dialoguer::Password::new()
+                    .with_prompt("Enter password for your Sekai's Deemak encryption")
+                    .with_confirmation("Confirm password", "Passwords don't match!")
+                    .interact()
+                {
+                    Ok(pwd) => pwd,
+                    Err(e) => {
+                        log::log_error("SEKAI", &format!("Password input failed: {e}"));
+                        eprintln!("Error: Password input failed: {e}");
+                        std::process::exit(1);
+                    }
+                };
+                let output_path = output.unwrap_or_else(|| {
+                    std::env::current_dir()
+                        .expect("Failed to get current directory")
+                        .join("deemak_sekai.dmk")
+                });
+
+                // Handle encryption
+                match create_dmk_sekai::deemak_encrypt_sekai(
+                    &sekai_path,
+                    &output_path,
+                    &password,
+                    force,
+                ) {
+                    Ok(_) => {
+                        log::log_info(
+                            "SEKAI",
+                            &format!(
+                                "Successfully created Deemak file at: {}",
+                                sekai_path.display()
+                            ),
+                        );
+                    }
+                    Err(e) => {
+                        log::log_error("SEKAI", &format!("Encryption failed: {e}"));
+                        eprintln!("Error: Encryption failed: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            DeemakEncrypt::Restore { output } => {
+                log::log_info("SEKAI", "Restoring Sekai from Deemak Encrypted file");
+                let output_path = output.unwrap_or_else(|| {
+                    std::env::current_dir()
+                        .expect("Failed to get current directory")
+                        .join("default.deemak")
+                });
+
+                match create_dmk_sekai::original_from_encrypted_sekai(&sekai_path, &output_path) {
+                    Ok(restored_path) => {
+                        log::log_info(
+                            "SEKAI",
+                            &format!(
+                                "Successfully restored Sekai to: {}",
+                                restored_path.display()
+                            ),
+                        );
+                    }
+                    Err(e) => {
+                        log::log_error("SEKAI", &format!("Restoration failed: {e}"));
+                        eprintln!("Error: Restoration failed: {e}");
+                        std::process::exit(1);
+                    }
+                }
+            }
         }
         return;
     }

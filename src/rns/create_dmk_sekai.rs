@@ -8,6 +8,7 @@ pub fn deemak_encrypt_sekai(
     sekai_path: &Path,
     output_path: &Path,
     password: &str,
+    force: bool,
 ) -> Result<(), String> {
     log::log_debug(
         "Encryption_deemak_sekai",
@@ -32,7 +33,7 @@ pub fn deemak_encrypt_sekai(
     );
 
     // Skip if already encrypted
-    if encryption_path.exists() && check_dmk_magic(encryption_path)? {
+    if !force && encryption_path.exists() && check_dmk_magic(encryption_path)? {
         log::log_info("DEEMAK", "File already encrypted, skipping");
         return Ok(());
     }
@@ -43,6 +44,10 @@ pub fn deemak_encrypt_sekai(
     // Compress first
     if sekai_path.is_dir() {
         zlib_compress(sekai_path, &temp_zlib).map_err(|e| format!("Compression failed: {}", e))?;
+        log::log_info(
+            "Deemak Encryption",
+            format!("Successfully compressed Sekai: {}", temp_zlib.display()).as_str(),
+        );
     } else {
         return Err("Input must be a directory".to_string());
     }
@@ -56,11 +61,6 @@ pub fn deemak_encrypt_sekai(
         "DEEMAK",
         &format!("Successfully encrypted to {}", encryption_path.display()),
     );
-    println!(
-        "Successfully encrypted Sekai folder to {}",
-        encryption_path.display()
-    );
-
     Ok(())
 }
 
