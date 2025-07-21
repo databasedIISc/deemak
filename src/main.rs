@@ -26,9 +26,11 @@ pub static SEKAI_DIR: OnceLock<String> = OnceLock::new();
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct DeemakArgs {
-    /// Path to the Sekai directory to parse.
-    sekai_directory: std::path::PathBuf,
-    /// Enable debug mode for more verbose logging.
+    /// Path to the Deemak Encrypted Sekai (World) file or directory
+    #[arg(required = true, value_name = "SEKAI_PATH")]
+    sekai: std::path::PathBuf,
+
+    /// Enable debug mode for more verbose logging
     #[arg(long, default_value_t = false)]
     debug: bool,
 
@@ -112,7 +114,6 @@ fn main() {
         &format!("Sekai directory provided: {sekai_path:?}"),
     );
 
-    log::log_info("Application", "Creating Deemak Encrypted Sekai file");
     if let Some(encrypt_cmd) = args.encrypt {
         match encrypt_cmd {
             DeemakEncrypt::Create {
@@ -120,6 +121,7 @@ fn main() {
                 output,
                 force,
             } => {
+                log::log_info("DEEMAK", "Creating Deemak Encrypted Sekai file");
                 // Get input password securely
                 let password = match dialoguer::Password::new()
                     .with_prompt("Enter password for your Sekai's Deemak encryption")
@@ -147,12 +149,18 @@ fn main() {
                     force,
                 ) {
                     Ok(_) => {
+                        let absolute_created_path = std::fs::canonicalize(&output_path)
+                            .unwrap_or_else(|_| output_path.clone());
                         log::log_info(
                             "SEKAI",
                             &format!(
                                 "Successfully created Deemak file at: {}",
-                                sekai_path.display()
+                                absolute_created_path.display()
                             ),
+                        );
+                        println!(
+                            "Successfully created Deemak file at: {}",
+                            absolute_created_path.display()
                         );
                     }
                     Err(e) => {
@@ -161,23 +169,29 @@ fn main() {
                         std::process::exit(1);
                     }
                 }
+                return;
             }
             DeemakEncrypt::Restore { output } => {
                 log::log_info("SEKAI", "Restoring Sekai from Deemak Encrypted file");
                 let output_path = output.unwrap_or_else(|| {
                     std::env::current_dir()
                         .expect("Failed to get current directory")
-                        .join("default.deemak")
+                        .join("restored_deemak_sekai")
                 });
-
                 match create_dmk_sekai::original_from_encrypted_sekai(&sekai_path, &output_path) {
                     Ok(restored_path) => {
+                        let absolute_restored_path = std::fs::canonicalize(&restored_path)
+                            .unwrap_or_else(|_| restored_path.clone());
                         log::log_info(
                             "SEKAI",
                             &format!(
                                 "Successfully restored Sekai to: {}",
-                                restored_path.display()
+                                absolute_restored_path.display()
                             ),
+                        );
+                        println!(
+                            "Successfully restored Sekai to: {}",
+                            absolute_restored_path.display()
                         );
                     }
                     Err(e) => {
@@ -186,6 +200,7 @@ fn main() {
                         std::process::exit(1);
                     }
                 }
+                return;
             }
         }
         return;

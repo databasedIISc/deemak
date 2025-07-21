@@ -47,7 +47,7 @@ mod rns_test {
     /// multiple times does not create duplicate restore points
     #[test]
     fn test_backup_restore_idempotency() {
-        let (_temp_dir, root_path) = setup_test_dir(false);
+        let (_temp_dir, root_path) = setup_test_dir(true);
 
         let first_backup_result = backup_sekai("restore", &root_path).unwrap();
         assert!(first_backup_result.contains("created"));
@@ -60,7 +60,7 @@ mod rns_test {
     /// Test to ensure that backup and restore functionality works correctly
     #[test]
     fn test_backup_and_restore() {
-        let (_temp_dir, root_path) = setup_test_dir(false);
+        let (_temp_dir, root_path) = setup_test_dir(true);
         let initial_contents = get_dir_contents(&root_path, false);
 
         // Create a restore point
@@ -88,7 +88,7 @@ mod rns_test {
     /// Test to ensure that backup and save functionality works correctly
     #[test]
     fn test_backup_and_save_flow() {
-        let (_temp_dir, root_path) = setup_test_dir(false);
+        let (_temp_dir, root_path) = setup_test_dir(true);
 
         // 1. Create initial state and a restore point
         let initial_contents = get_dir_contents(&root_path, false);

@@ -1,8 +1,6 @@
 use super::create_dmk_sekai::{deemak_encrypt_sekai, original_from_encrypted_sekai};
 use crate::utils::log;
-use std::collections::hash_map::DefaultHasher;
 use std::fs;
-use std::hash::{Hash, Hasher};
 use std::io;
 use std::io::{Error, ErrorKind};
 use std::path::{Path, PathBuf};
@@ -27,11 +25,60 @@ In this case, the `restore_me.deemak` will remain unchanged, and the `save_me.de
 const RESTORE_FILE: &str = "restore_me.deemak";
 const SAVE_FILE: &str = "save_me.deemak";
 
-fn generate_temp_path(usage: &str, root_path: &Path) -> PathBuf {
-    let mut hasher = DefaultHasher::new();
-    root_path.hash(&mut hasher);
-    let hash = hasher.finish();
-    PathBuf::from(format!("/tmp/deemak-{usage}-{hash:x}"))
+fn generate_temp_path(usage: &str) -> PathBuf {
+    let random_pass_hash = format!("{:x}", rand::random::<u64>());
+    PathBuf::from(format!("/tmp/deemak-{usage}-{random_pass_hash}"))
+}
+
+fn copy_sekai_dir(from_location: &Path, to_location: &Path) -> io::Result<()> {
+    // Move the restored files & directories to the original root path
+    for entry in fs::read_dir(from_location)? {
+        let entry = entry?;
+        let path = entry.path();
+        let target_path = to_location.join(path.file_name().unwrap());
+
+        if path.is_dir() {
+            // For directories, we need to create the directory and move contents
+            fs::create_dir_all(&target_path)?;
+            for file_entry in fs::read_dir(&path)? {
+                let file_entry = file_entry?;
+                let file_path = file_entry.path();
+                let file_target = target_path.join(file_entry.file_name());
+
+                // Use copy-then-delete for cross-device compatibility
+                if file_path.is_dir() {
+                    copy_dir_all(&file_path, &file_target)?;
+                    fs::remove_dir_all(&file_path)?;
+                } else {
+                    fs::copy(&file_path, &file_target)?;
+                    fs::remove_file(&file_path)?;
+                }
+            }
+            // Remove the now-empty source directory
+            fs::remove_dir(&path)?;
+        } else {
+            // For files, use copy-then-delete
+            fs::copy(&path, &target_path)?;
+            fs::remove_file(&path)?;
+        }
+    }
+
+    // Helper function to recursively copy directories
+    fn copy_dir_all(src: &Path, dst: &Path) -> io::Result<()> {
+        fs::create_dir_all(dst)?;
+        for entry in fs::read_dir(src)? {
+            let entry = entry?;
+            let ty = entry.file_type()?;
+            let target = dst.join(entry.file_name());
+            if ty.is_dir() {
+                copy_dir_all(&entry.path(), &target)?;
+            } else {
+                fs::copy(entry.path(), &target)?;
+            }
+        }
+        Ok(())
+    }
+    Ok(())
 }
 
 /// Backs up Sekai data to a Deemak encrypted file
@@ -73,10 +120,23 @@ pub fn backup_sekai(usage: &str, root_path: &Path) -> io::Result<String> {
 
 /// Restores Sekai data from a Deemak encrypted file
 pub fn restore_sekai(usage: &str, root_path: &Path) -> io::Result<String> {
+    let dir_info_path = root_path.join(".dir_info");
+    // Save the restore/save files temporarily and delete them from the original location
+    let temp_restore = generate_temp_path("temp_restore");
+    let temp_save = generate_temp_path("temp_save");
+
+    if dir_info_path.join(RESTORE_FILE).exists() {
+        fs::copy(dir_info_path.join(RESTORE_FILE), &temp_restore)?;
+        fs::remove_file(dir_info_path.join(RESTORE_FILE))?;
+    }
+    if dir_info_path.join(SAVE_FILE).exists() {
+        fs::copy(dir_info_path.join(SAVE_FILE), &temp_save)?;
+        fs::remove_file(dir_info_path.join(SAVE_FILE))?;
+    }
     // Validate usage parameter
     let backup_file = match usage {
-        "restore" => RESTORE_FILE,
-        "save" => SAVE_FILE,
+        "restore" => &temp_restore,
+        "save" => &temp_save,
         _ => {
             return Err(Error::new(
                 ErrorKind::InvalidInput,
@@ -85,26 +145,10 @@ pub fn restore_sekai(usage: &str, root_path: &Path) -> io::Result<String> {
         }
     };
 
-    let source_file = root_path.join(".dir_info").join(backup_file);
-    let temp_path = generate_temp_path(usage, root_path);
-
-    // Copy backup to temp location
-    fs::copy(&source_file, &temp_path)?;
-
     // Clear directory while preserving .dir_info
     for entry in fs::read_dir(root_path)? {
         let entry = entry?;
         let path = entry.path();
-
-        if path == root_path.join(".dir_info") {
-            if usage == "restore" {
-                let save_path = path.join(SAVE_FILE);
-                if save_path.exists() {
-                    fs::copy(root_path.join(".dir_info").join(RESTORE_FILE), save_path)?;
-                }
-            }
-            continue;
-        }
 
         if path.is_dir() {
             fs::remove_dir_all(path)?;
@@ -113,30 +157,48 @@ pub fn restore_sekai(usage: &str, root_path: &Path) -> io::Result<String> {
         }
     }
 
+    let temp_restore_dir = generate_temp_path("temp_restore_dir");
+    fs::create_dir_all(&temp_restore_dir).unwrap_or_else(|_| {
+        log::log_error(
+            "SEKAI",
+            &format!(
+                "Failed to create temporary restore directory: {}",
+                temp_restore_dir.display()
+            ),
+        );
+    });
     // Decrypt the backup
-    let restored_path = match original_from_encrypted_sekai(
-        &temp_path,
-        &root_path.join(".dir_info").join(backup_file),
-    ) {
-        Ok(path) => {
-            log::log_info(
-                "SEKAI",
-                &format!("Successfully restored Sekai to: {}", path.display()),
-            );
-            path
-        }
+    let restored_path = match original_from_encrypted_sekai(backup_file, temp_restore_dir.as_path())
+    {
+        Ok(path) => path,
         Err(e) => {
-            // Clean up temp file before returning error
-            let _ = fs::remove_file(&temp_path);
             return Err(Error::other(format!(
-                "Failed to restore Sekai from backup: {}",
+                "Failed to restore Sekai to temporary directory: {}",
                 e
             )));
         }
     };
 
-    // Clean up temp file
-    fs::remove_file(temp_path)?;
+    // Move the restored files & directories to the original root path
+    if let Err(e) = copy_sekai_dir(&restored_path, root_path) {
+        return Err(Error::other(format!(
+            "Failed to copy restored files to original path: {e:?}",
+        )));
+    }
+    log::log_info(
+        "SEKAI",
+        &format!(
+            "Successfully restored Sekai from {usage} file to: {}",
+            root_path.display()
+        ),
+    );
+
+    // Add the restored file to the .dir_info directory
+    fs::copy(&temp_restore, dir_info_path.join(RESTORE_FILE))?;
+    fs::copy(&temp_save, dir_info_path.join(SAVE_FILE))?;
+    // Clean up temporary files
+    fs::remove_file(temp_restore)?;
+    fs::remove_file(temp_save)?;
 
     Ok(format!(
         "Successfully restored Sekai from {usage} file at: {}",
