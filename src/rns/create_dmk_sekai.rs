@@ -62,6 +62,7 @@ pub fn deemak_encrypt_sekai(
 pub fn original_from_encrypted_sekai(
     encrypted_path: &Path,
     output_path: &Path,
+    password: Option<&str>,
 ) -> Result<PathBuf, String> {
     // Validate input path
     if !encrypted_path.exists() {
@@ -102,7 +103,7 @@ pub fn original_from_encrypted_sekai(
     // Perform operations with proper error handling and cleanup
     let result = (|| {
         // Decrypt first
-        decrypt_file(encrypted_path, &temp_zlib)
+        decrypt_file(encrypted_path, &temp_zlib, password)
             .map_err(|e| format!("Decryption failed: {e}"))?;
 
         // Then decompress

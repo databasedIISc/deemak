@@ -169,15 +169,15 @@ pub fn restore_sekai(usage: &str, root_path: &Path) -> io::Result<String> {
         );
     });
     // Decrypt the backup
-    let restored_path = match original_from_encrypted_sekai(backup_file, temp_restore_dir.as_path())
-    {
-        Ok(path) => path,
-        Err(e) => {
-            return Err(Error::other(format!(
-                "Failed to restore Sekai to temporary directory: {e}"
-            )));
-        }
-    };
+    let restored_path =
+        match original_from_encrypted_sekai(backup_file, temp_restore_dir.as_path(), None) {
+            Ok(path) => path,
+            Err(e) => {
+                return Err(Error::other(format!(
+                    "Failed to restore Sekai to temporary directory: {e}"
+                )));
+            }
+        };
 
     // Move the restored files & directories to the original root path
     if let Err(e) = copy_sekai_dir(&restored_path, root_path) {

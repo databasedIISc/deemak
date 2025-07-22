@@ -129,8 +129,7 @@ pub fn encrypt_file(input_path: &Path, output_path: &Path, password: &str) -> Re
 }
 
 pub fn check_dmk_magic(sekai_path: &Path) -> Result<bool, String> {
-    let data =
-        std::fs::read(sekai_path).map_err(|e| format!("Failed to read input file: {e}"))?;
+    let data = std::fs::read(sekai_path).map_err(|e| format!("Failed to read input file: {e}"))?;
 
     // Check magic header exists and matches
     let magic_ok = data.len() >= MAGIC_HEADER.len() + NONCE_SIZE && data.starts_with(MAGIC_HEADER);
@@ -140,7 +139,11 @@ pub fn check_dmk_magic(sekai_path: &Path) -> Result<bool, String> {
     Ok(magic_ok && xattr_ok)
 }
 
-pub fn decrypt_file(input_path: &Path, output_path: &Path) -> Result<(), String> {
+pub fn decrypt_file(
+    input_path: &Path,
+    output_path: &Path,
+    input_pass: Option<&str>,
+) -> Result<(), String> {
     // Check if the file has the correct magic header
     if !check_dmk_magic(input_path)? {
         return Err("File does not have the correct magic header".to_string());
@@ -165,6 +168,13 @@ pub fn decrypt_file(input_path: &Path, output_path: &Path) -> Result<(), String>
 
     let password = String::from_utf8(password_bytes)
         .map_err(|_| "Password metadata is not valid UTF-8".to_string())?;
+
+    // We don't actually need user password, but if something is given, we check it.
+    if let Some(input_pass) = input_pass {
+        if input_pass != password {
+            return Err("Provided password does not match the file's password".to_string());
+        }
+    }
 
     let key = derive_key_from_password(&password);
     let cipher = Aes256Gcm::new(&key);
