@@ -103,11 +103,17 @@ pub fn cmd_manager(
         "restore" => CommandResult::Output(restore::restore(&parts[1..], root_dir, prompter)),
         "save" => CommandResult::Output(save::save(&parts[1..], root_dir)),
         "solve" => {
-            let msg = solve(&parts[1..], current_dir, root_dir, prompter);
+            let msg = solve::solve(&parts[1..], current_dir, root_dir, prompter);
             CommandResult::Output(msg)
         }
         "unlock" => {
-            let msg = unlock(&parts[1..], current_dir, root_dir, prompter);
+            let msg = unlock::unlock(&parts[1..], current_dir, root_dir, prompter);
+            CommandResult::Output(msg)
+        }
+        "dev" => {
+            //check if dev mode allowed else give error-to be added
+            //dev is a directory inside commands inside it dev.rs contains fn dev
+            let msg = dev::dev::dev(&parts[1..], current_dir, root_dir, prompter);
             CommandResult::Output(msg)
         }
         _ => CommandResult::NotFound,

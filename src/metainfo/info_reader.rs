@@ -42,6 +42,20 @@ impl ObjectInfo {
             .insert("obj_salt".to_string(), Value::String(obj_salt));
         obj
     }
+    pub fn with_compare_me(compare_me: String) -> Self {
+        let mut obj = Self::new();
+        obj.properties
+            .insert("compare_me".to_string(), Value::String(compare_me));
+        obj
+    }
+    pub fn without_decrypt_me(mut self) -> Self {
+        self.properties.remove("decrypt_me");
+        self
+    }
+    pub fn without_compare_me(mut self) -> Self {
+        self.properties.remove("compare_me");
+        self
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -204,6 +218,28 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
 
     info.validate()?;
     Ok(info)
+
+}
+pub fn read_about(info_path: &Path) -> Result<String, String> {
+    let info = read_validate_info(info_path);
+    if info.is_err() {
+        return Err(format!("Error reading info file: {}", info.err().unwrap()));
+    }
+    Ok(info.unwrap().about)
+}
+pub fn read_location(info_path: &Path) -> Result<String, String> {
+    let info = read_validate_info(info_path);
+    if info.is_err() {
+        return Err(format!("Error reading info file: {}", info.err().unwrap()));
+    }
+    Ok(info.unwrap().location)
+}
+pub fn write_about(info_path: &Path, new_value: String) -> Result<String, String> {
+    let mut info = read_validate_info(info_path).map_err(|e| e.to_string())?;
+    info.about = new_value;
+    let json = serde_json::to_string_pretty(&info).map_err(|e| e.to_string())?;
+    fs::write(info_path, json).map_err(|e| e.to_string())?;
+    return Ok("write successful".to_string());
 }
 
 /// Add an object to info.json with optional initial properties
@@ -252,6 +288,57 @@ pub fn del_obj_from_info(obj_path: &Path, obj_name: &str) -> Result<(), InfoErro
     }
     Ok(())
 }
+pub fn del_decrypt_me_from_info(
+    obj_path: &Path,
+    obj_name: &str,
+) -> Result<(), InfoError> {
+    let info_path = &obj_path
+        .parent()
+        .unwrap()
+        .join(".dir_info")
+        .join("info.json");
+    let mut info = read_validate_info(info_path)?;
+
+    if let Some(obj_info) = info.objects.get_mut(obj_name) {
+        obj_info.properties.remove("decrypt_me");
+        let json = serde_json::to_string_pretty(&info)?;
+        std::fs::write(info_path, json)?;
+    }
+    Ok(())
+}
+pub fn del_compare_me_from_info(
+    obj_path: &Path,
+    obj_name: &str,
+) -> Result<(), InfoError> {
+    let info_path = &obj_path
+        .parent()
+        .unwrap()
+        .join(".dir_info")
+        .join("info.json");
+    let mut obj_info = read_get_obj_info(info_path, obj_name)?;
+
+    obj_info = obj_info.without_compare_me();
+    let json = serde_json::to_string_pretty(&obj_info)?;
+    std::fs::write(info_path, json)?;
+    Ok(())
+}
+pub fn del_compare_met_from_info(
+    obj_path: &Path,
+    obj_name: &str,
+) -> Result<(), InfoError> {
+    let info_path = &obj_path
+        .parent()
+        .unwrap()
+        .join(".dir_info")
+        .join("info.json");
+    let mut obj_info = read_get_obj_info(info_path, obj_name)?;
+
+    obj_info = obj_info.without_compare_me();
+    let json = serde_json::to_string_pretty(&obj_info)?;
+    std::fs::write(info_path, json)?;
+    Ok(())
+}
+
 
 /// Update or add a status property for an object
 ///
