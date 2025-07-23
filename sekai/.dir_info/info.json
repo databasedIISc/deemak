@@ -1,79 +1,27 @@
 {
   "location": "HOME",
-  "about": "Home Sweet Home",
+  "about": "You are a UG 2nd yr student at IISc, Bengaluru. Read the README file and get to know what fate beholds you today!",
   "objects": {
-    "room_1": {
-      "locked": "10",
-      "obj_salt": "dGVzdC1zYWx0LTEyMw=="
+    "library": {
+      "locked": "00"
+    },
+    "mess": {
+      "locked": "00"
     },
     "README": {
       "locked": "00"
     },
-    "room_2": {
-      "locked": "11",
-      "compare_me": "blwwnewne0pwah",
-      "decrypt_me": "default_flag",
-      "obj_salt": "dGVzdC1zYWx0LTEyMw=="
-    },
-    "room_9": {
-      "decrypt_me": "default_flag",
-      "compare_me": "blwwnryvewne0pwah",
-      "obj_salt": "dGVzdC1zYWx0LTEyMw==",
+    "opb": {
+      "compare_me": "1234567890abcdef",
+      "obj_salt": "1234567890abcdef",
+      "decrypt_me": "blah",
       "locked": "11"
     },
-    "room_5": {
-      "decrypt_me": "default_flag",
-      "obj_salt": "dGVzdC1zYWx0LTEyMw==",
-      "compare_me": "blwwnewne0pwah",
-      "locked": "11"
-    },
-    "dog.txt": {
-      "obj_salt": "dGVzdC1zYWx0LTEyMw==",
+    "main_building": {
       "locked": "01",
-      "compare_me": "rhcenhruhce845c64684wah",
-      "decrypt_me": "default_flag"
-    },
-    "room_4": {
-      "decrypt_me": "default_flag",
-      "compare_me": "523468946",
-      "locked": "11",
-      "obj_salt": "dGVzdC1zYWx0LTEyMw=="
-    },
-    "room_10": {
-      "compare_me": "blhmc8htn8rvthurah",
-      "locked": "11",
-      "decrypt_me": "default_flag",
-      "obj_salt": "dGVzdC1zYWx0LTEyMw=="
-    },
-    "room_8": {
-      "locked": "11",
-      "obj_salt": "dGVzdC1zYWx0LTEyMw==",
-      "decrypt_me": "default_flag",
-      "compare_me": "blwwcdcnewndf de0pwah"
-    },
-    "cat.txt": {
-      "locked": "00"
-    },
-    "room_7": {
-      "locked": "11",
-      "decrypt_me": "default_flag",
-      "compare_me": "blwwnecberytc846536375ah",
-      "obj_salt": "dGVzdC1zYWx0LTEyMw=="
-    },
-    "room_3": {
-      "locked": "11",
-      "compare_me": "blwwnryvrewnhwusw8sue0pwah",
-      "decrypt_me": "default_flag",
-      "obj_salt": "dGVzdC1zYWx0LTEyMw=="
-    },
-    "some1": {
-      "locked": "00"
-    },
-    "room_6": {
-      "locked": "11",
-      "compare_me": "blwx yd cydcus dcg9sds83647",
-      "obj_salt": "dGVzdC1zYWx0LTEyMw==",
-      "decrypt_me": "default_flag"
+      "compare_me": "abcdef1234567890",
+      "obj_salt": "abcdef1234567890"
     }
   }
 }
+

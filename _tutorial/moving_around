@@ -1,0 +1,23 @@
+## Moving around Deemak
+
+Moving around Deemak is same as any shell. Type `ls` to see something like this:
+
+Objects:
+   README
+   some_book
+   some_chest (locked)
+From inside here, you can go to:
+   some_place
+   some_vault (locked)
+
+This means the location has different objects you can read. All objects are `files` physically present. You can access/read them using `read` command. You maybe asked to eat your food, read a book, talk to friend, etc. All actions are simply referring to READing that object or GOing to that directory.
+
+Use the `go` command to change your current location to a possible destination. You can do so by typing `go some_place`. As simple as that!
+
+Here are IMPORTANT things to note:
+1) If you see `(none)` in the list of objects/places, this means there are no objects or places to go to.
+2) If you see `(locked)` next to an object or place, this means you cannot access it right now. You will have to solve/unlock them first using a key. Check out `classroom/secrets` file to understand how to unlock them.
+3) Try `help <COMMAND>` to see help for a specific command, and more use-cases of that command. It will definitely come in handy.
+
+* Great! Now go inside classroom to learn more!
+

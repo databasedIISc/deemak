@@ -1,0 +1,15 @@
+ _____ _ _      ____            _                 
+|  ___(_) | ___/ ___| _   _ ___| |_ ___ _ __ ___  
+| |_  | | |/ _ \___ \| | | / __| __/ _ \ '_ ` _ \ 
+|  _| | | |  __/___) | |_| \__ \ ||  __/ | | | | |
+|_|   |_|_|\___|____/ \__, |___/\__\___|_| |_| |_|
+                      |___/                       
+
+A filesystem is a method used by operating systems to organize and store files on storage devices. It defines how data is named, stored, and retrieved.
+
+On Linux, the filesystem is hierarchical, starting from the root directory `/`. Common directories include `/home` for user files and `/etc` for configuration. Linux supports various filesystem types like ext4, XFS, and Btrfs.
+
+In Deemak, we will the Linux filesystem Structure. You can go to any subdirectory by jumping around too. Here is how:
+1) Use `dir1/sub_object` to directly access that location. Now you may use `ls`, `read`, `go`, `copy`, etc. command to that file.
+2) To go back a directory, we use `..`. So say you want to go back a directory, go inside a sibling directory and read a file, you can do `read ../sibling_dir/my_file`. Linux uses `.` to refer current directory and `..` to refer parent directory(if it exists).
+

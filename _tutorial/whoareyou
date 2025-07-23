@@ -1,0 +1,10 @@
+Every shell has these basic commands, maybe with a different name. These are utilities which may come in handy sometimes.
+
+- `echo`: Print out any text you give as argument. It's a Mic Check.
+- `clear`: To clear shell screen. Especially for people with OCD(No offence).
+- `whoami`: To know where User you are.  Very convenient for a person with amnesia.
+- `whereami`: To know which directory you are in currently. Again, very convenient for people with bad direction sense, like Zoro.
+- `exit`: Quit the Shell and go back to menu. It's a life lesson - "Always save your progress before quiting."
+
+Try `help` command on each of the commands to gave a better idea of what's going on with each of them.
+
