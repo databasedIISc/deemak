@@ -107,13 +107,16 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
         );
     }
 
+    assert!(canonical_path.starts_with(root_dir)); // It should always be true
     // Check if directory is locked
-    if let Err(e) = lock_perm::operation_locked_perm(
-        &canonical_path,
-        "go",
-        "Cannot enter locked directory. Unlock it first",
-    ) {
-        return (current_dir.clone(), e);
+    if canonical_path != root_dir {
+        if let Err(e) = lock_perm::operation_locked_perm(
+            &canonical_path,
+            "go",
+            "Cannot enter locked directory. Unlock it first",
+        ) {
+            return (current_dir.clone(), e);
+        }
     }
 
     // Get directory info if available
