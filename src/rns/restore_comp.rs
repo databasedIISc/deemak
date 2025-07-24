@@ -97,7 +97,7 @@ pub fn backup_sekai(usage: &str, root_path: &Path) -> io::Result<String> {
         }
     };
 
-    if backup_file.exists() {
+    if usage == "restore" && backup_file.exists() {
         return Ok(format!(
             "{backup_file:?} file already exists, skipping creation."
         ));
@@ -125,14 +125,18 @@ pub fn restore_sekai(usage: &str, root_path: &Path) -> io::Result<String> {
     // Save the restore/save files temporarily and delete them from the original location
     let temp_restore = generate_temp_path("temp_restore");
     let temp_save = generate_temp_path("temp_save");
+    let mut restore_moved = false;
+    let mut save_moved = false;
 
     if dir_info_path.join(RESTORE_FILE).exists() {
         fs::copy(dir_info_path.join(RESTORE_FILE), &temp_restore)?;
         fs::remove_file(dir_info_path.join(RESTORE_FILE))?;
+        restore_moved = true;
     }
     if dir_info_path.join(SAVE_FILE).exists() {
         fs::copy(dir_info_path.join(SAVE_FILE), &temp_save)?;
         fs::remove_file(dir_info_path.join(SAVE_FILE))?;
+        save_moved = true;
     }
     // Validate usage parameter
     let backup_file = match usage {
@@ -194,11 +198,14 @@ pub fn restore_sekai(usage: &str, root_path: &Path) -> io::Result<String> {
     );
 
     // Add the restored file to the .dir_info directory
-    fs::copy(&temp_restore, dir_info_path.join(RESTORE_FILE))?;
-    fs::copy(&temp_save, dir_info_path.join(SAVE_FILE))?;
-    // Clean up temporary files
-    fs::remove_file(temp_restore)?;
-    fs::remove_file(temp_save)?;
+    if restore_moved {
+        fs::copy(&temp_restore, dir_info_path.join(RESTORE_FILE))?;
+        fs::remove_file(temp_restore)?;
+    }
+    if save_moved {
+        fs::copy(&temp_save, dir_info_path.join(SAVE_FILE))?;
+        fs::remove_file(temp_save)?;
+    }
 
     Ok(format!(
         "Successfully restored Sekai from {usage} file at: {}",

@@ -28,6 +28,8 @@ pub fn save(args: &[&str], root_path: &Path) -> String {
                 err_msg += "Failed to save Sekai. Please check the logs for more details.";
                 log::log_error("save", err_msg.as_str());
                 return err_msg;
+            } else {
+                log::log_info("save", "Sekai saved successfully.");
             }
             "Sekai saved successfully \n".to_string()
         }
