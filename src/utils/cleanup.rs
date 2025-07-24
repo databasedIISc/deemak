@@ -10,7 +10,7 @@ pub const DEEMAK_PREFIX: [&str; 2] = ["deemak_", "deemak-"];
 fn log_cleanup_warning(context: &str, path_display: &str, error: &Error) {
     log::log_warning(
         "Cleanup",
-        &format!("Failed to {} {}: {}", context, path_display, error),
+        &format!("Failed to {context} {path_display}: {error}"),
     );
 }
 
@@ -18,7 +18,7 @@ fn log_cleanup_warning(context: &str, path_display: &str, error: &Error) {
 fn log_cleanup_success(context: &str, path_display: &str) {
     log::log_info(
         "Cleanup",
-        &format!("Successfully {} {}", context, path_display),
+        &format!("Successfully {context} {path_display}"),
     );
 }
 
@@ -43,12 +43,12 @@ fn cleanup_at_location(dir: &str) -> Result<(), String> {
     let path = Path::new(dir);
 
     for entry in read_dir(path).map_err(|e| {
-        let msg = format!("Failed to read directory {}: {}", dir, e);
+        let msg = format!("Failed to read directory {dir}: {e}");
         log_cleanup_warning("read directory", dir, &e);
         msg
     })? {
         let entry = entry.map_err(|e| {
-            let msg = format!("Failed to read directory entry in {}: {}", dir, e);
+            let msg = format!("Failed to read directory entry in {dir}: {e}");
             log_cleanup_warning("read directory entry", dir, &e);
             msg
         })?;
@@ -79,18 +79,18 @@ pub fn cleanup_deemak() -> Result<(), String> {
 
     // Cleaning up the current working directory with `.tmp.zlib` extension
     let cwd = std::env::current_dir().map_err(|e| {
-        let msg = format!("Failed to get current working directory: {}", e);
+        let msg = format!("Failed to get current working directory: {e}");
         log_cleanup_warning("get current directory", "current", &e);
         msg
     })?;
 
     for entry in read_dir(&cwd).map_err(|e| {
-        let msg = format!("Failed to read current directory: {}", e);
+        let msg = format!("Failed to read current directory: {e}");
         log_cleanup_warning("read current directory", "current", &e);
         msg
     })? {
         let entry = entry.map_err(|e| {
-            let msg = format!("Failed to read directory entry in current directory: {}", e);
+            let msg = format!("Failed to read directory entry in current directory: {e}");
             log_cleanup_warning("read directory entry", "current", &e);
             msg
         })?;
@@ -117,7 +117,7 @@ pub fn exit_deemak(code: i32) -> ! {
     let clean_result = cleanup_deemak();
     if let Err(e) = clean_result {
         log::log_error("Cleanup", &e);
-        eprintln!("Error during cleanup: {}", e);
+        eprintln!("Error during cleanup: {e}");
     } else {
         log::log_info("Cleanup", "Temporary files cleaned up successfully.");
     }
