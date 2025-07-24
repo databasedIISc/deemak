@@ -1,4 +1,5 @@
-use crate::utils::config::{self, FONT_OPTIONS};
+use crate::utils::{config, globals::FONT_OPTIONS};
+
 use raylib::prelude::*;
 use std::time::{Duration, Instant};
 

@@ -42,12 +42,12 @@ impl ObjectInfo {
             .insert("obj_salt".to_string(), Value::String(obj_salt));
         obj
     }
-    pub fn with_compare_me(compare_me: String) -> Self {
-        let mut obj = Self::new();
-        obj.properties
+    pub fn with_compare_me(mut self, compare_me: String) -> Self {
+        self.properties
             .insert("compare_me".to_string(), Value::String(compare_me));
-        obj
+        self
     }
+    
     pub fn without_decrypt_me(mut self) -> Self {
         self.properties.remove("decrypt_me");
         self
@@ -318,6 +318,23 @@ pub fn del_compare_me_from_info(
     let mut obj_info = read_get_obj_info(info_path, obj_name)?;
 
     obj_info = obj_info.without_compare_me();
+    let json = serde_json::to_string_pretty(&obj_info)?;
+    std::fs::write(info_path, json)?;
+    Ok(())
+}
+pub fn create_compare_me_in_info(
+    obj_path: &Path,
+    obj_name: &str,
+    compare_me: String,
+) -> Result<(), InfoError> {
+    let info_path = &obj_path
+        .parent()
+        .unwrap()
+        .join(".dir_info")
+        .join("info.json");
+    let mut obj_info = read_get_obj_info(info_path, obj_name)?;
+
+    obj_info = obj_info.with_compare_me(compare_me);
     let json = serde_json::to_string_pretty(&obj_info)?;
     std::fs::write(info_path, json)?;
     Ok(())

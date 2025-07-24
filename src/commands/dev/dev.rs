@@ -27,7 +27,7 @@ pub fn dev(
 
     match parts[0] {
         "lock" => {
-            let msg = lock::dev_lock(&parts[1..], current_dir, root_dir);
+            let msg = lock::dev_lock(&parts[1..], current_dir, root_dir,prompter);
             if msg.is_err() {
                 return msg.err().unwrap();
             }
@@ -35,7 +35,7 @@ pub fn dev(
         }
         "info" => {
             let msg = init_info::dev_info(&parts[1..], current_dir, root_dir);
-            if msg.is_err() {
+            if msg.is_err() {   
                 return msg.err().unwrap();
             }
             return msg.unwrap();
