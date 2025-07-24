@@ -2,24 +2,24 @@
   "location": "HOME",
   "about": "You are a UG 2nd yr student at IISc, Bengaluru. Read the README file and get to know what fate beholds you today!",
   "objects": {
-    "library": {
-      "locked": "00"
-    },
     "opb": {
-      "obj_salt": "1234567890abcdef",
       "compare_me": "1234567890abcdef",
+      "obj_salt": "1234567890abcdef",
       "locked": "11",
       "decrypt_me": "blah"
-    },
-    "main_building": {
-      "compare_me": "abcdef1234567890",
-      "obj_salt": "abcdef1234567890",
-      "locked": "01"
     },
     "README": {
       "locked": "00"
     },
+    "main_building": {
+      "obj_salt": "abcdef1234567890",
+      "locked": "01",
+      "compare_me": "abcdef1234567890"
+    },
     "mess": {
+      "locked": "00"
+    },
+    "library": {
       "locked": "00"
     }
   }

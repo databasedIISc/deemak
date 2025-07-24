@@ -2,19 +2,19 @@
   "location": "HOME/opb",
   "about": "You are in 'HOME/opb'. Look around and explore!",
   "objects": {
-    "wifiroom": {
+    ".lost_notebook": {
       "locked": "00"
     },
-    "ugcl": {
+    "wifiroom": {
       "locked": "00"
     },
     "labs": {
       "locked": "00"
     },
-    ".lost_notebook": {
+    "senpai": {
       "locked": "00"
     },
-    "senpai": {
+    "ugcl": {
       "locked": "00"
     }
   }

@@ -97,7 +97,7 @@ fn input_password(confirm: bool) -> String {
         Err(e) => {
             log::log_error("SEKAI", &format!("Password input failed: {e}"));
             eprintln!("Error: Password input failed: {e}");
-            std::process::exit(1);
+            exit_deemak(1);
         }
     }
 }
@@ -142,7 +142,7 @@ fn main() {
             "Error: Sekai directory does not exist: {}",
             sekai_path.display()
         );
-        std::process::exit(1);
+        exit_deemak(1);
     }
     log::log_info(
         "SEKAI",
@@ -206,7 +206,7 @@ fn main() {
                         Err(e) => {
                             log::log_error("SEKAI", &e.to_string());
                             eprintln!("Error: {e}");
-                            std::process::exit(1);
+                            exit_deemak(1);
                         }
                     }
                     return;
@@ -249,7 +249,7 @@ fn main() {
                         Err(e) => {
                             log::log_error("SEKAI", &format!("Restoration failed: {e}"));
                             eprintln!("Error: Restoration failed: {e}");
-                            std::process::exit(1);
+                            exit_deemak(1);
                         }
                     }
                     return;
@@ -297,7 +297,7 @@ fn main() {
                 &format!("Process failed while finding Sekai HOME. Error: {e}. Exiting."),
             );
             eprintln!("Process failed while finding Sekai HOME. Error: {e}. Exiting.");
-            std::process::exit(1);
+            exit_deemak(1);
         }
     }
 
