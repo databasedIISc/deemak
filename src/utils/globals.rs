@@ -157,7 +157,8 @@ pub fn get_sekai_dir() -> PathBuf {
         }
         return PathBuf::from(dir);
     }
-    PathBuf::new()
+    // `!` is the default path if WORLD_DIR is not set, something you wont expect initially.
+    PathBuf::from("!")
 }
 
 /// Set the WORLD_DIR global variable.

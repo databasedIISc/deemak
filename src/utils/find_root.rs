@@ -71,16 +71,37 @@ pub fn get_home(sekai_path: &Path) -> Option<PathBuf> {
 
 /// Converts an absolute path to a path relative to WORLD_DIR
 /// Returns the original path if WORLD_DIR isn't set or if the path isn't within WORLD_DIR
-pub fn relative_deemak_path(path: &Path) -> PathBuf {
-    let world_dir = globals::get_sekai_dir();
+/// Also adds DEEMAK_TEMP prefix if the path is a temporary file
+pub fn relative_deemak_path(path: &Path, sekai_dir: Option<&Path>) -> PathBuf {
+    let world_dir = if let Some(dir) = sekai_dir {
+        dir
+    } else {
+        &globals::get_sekai_dir()
+    };
+    let temp_dir_prefix = PathBuf::from("/tmp");
 
-    path.strip_prefix(&world_dir)
-        .map(|relative_path| {
-            if relative_path.components().count() == 0 {
-                PathBuf::from("HOME")
-            } else {
-                PathBuf::from("HOME").join(relative_path)
-            }
-        })
-        .unwrap_or_else(|_| path.to_path_buf())
+    // Check if it's prefixed by world_dir
+    if let Ok(relative_path) = path.strip_prefix(world_dir) {
+        if relative_path.components().count() == 0 {
+            // Path is exactly world_dir, represent as "HOME"
+            PathBuf::from("HOME")
+        } else {
+            PathBuf::from("HOME").join(relative_path)
+        }
+    }
+    // Else, check if it's prefixed by /tmp
+    else if let Ok(relative_path) = path.strip_prefix(&temp_dir_prefix) {
+        let deemak_temp_prefix = PathBuf::from("DEEMAK_TEMP");
+
+        if relative_path.components().count() == 0 {
+            // Path is exactly /tmp, represent as "DEEMAK_TEMP"
+            deemak_temp_prefix
+        } else {
+            deemak_temp_prefix.join(relative_path)
+        }
+    }
+    // Else return the original path
+    else {
+        path.to_path_buf()
+    }
 }
