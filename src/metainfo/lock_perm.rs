@@ -1,4 +1,4 @@
-use super::info_reader::{update_obj_status,read_validate_info};
+use super::info_reader::{read_validate_info, update_obj_status};
 use crate::utils::log;
 use crate::utils::relative_deemak_path;
 use std::path::Path;
@@ -49,8 +49,6 @@ pub fn read_lock_perm(obj_path: &Path) -> Result<(bool, bool), String> {
     // Return tuple with first_bit of bits at right end
     Ok((bits[0], bits[1]))
 }
- 
- 
 
 /// Checks if the operation can be performed if object is unlocked.
 /// Returns: Ok if operation can proceed, Err with message if locked. OR Err if lock status cannot

@@ -471,36 +471,35 @@ impl AuthHandler {
                 fields.password.entering = true;
                 fields.username.warning = false;
             }
-        } else if fields.password.entering
-            && !fields.password.value.is_empty() {
-                let username = fields.username.value.trim();
-                let password = fields.password.value.trim();
-                if let Some(user) = users.iter().find(|u| u.username == username) {
-                    if crate::utils::auth::verify_password(
-                        &password.to_string(),
-                        &user.salt,
-                        &user.password_hash,
-                    ) {
-                        // Create and authenticate UserInfo
-                        let mut user_info = UserInfo::new(
-                            username.to_string(),
-                            user.salt.clone(),
-                            user.password_hash.clone(),
-                        );
-                        user_info.authenticate(); // Mark as authenticated with timestamp
+        } else if fields.password.entering && !fields.password.value.is_empty() {
+            let username = fields.username.value.trim();
+            let password = fields.password.value.trim();
+            if let Some(user) = users.iter().find(|u| u.username == username) {
+                if crate::utils::auth::verify_password(
+                    &password.to_string(),
+                    &user.salt,
+                    &user.password_hash,
+                ) {
+                    // Create and authenticate UserInfo
+                    let mut user_info = UserInfo::new(
+                        username.to_string(),
+                        user.salt.clone(),
+                        user.password_hash.clone(),
+                    );
+                    user_info.authenticate(); // Mark as authenticated with timestamp
 
-                        // Set global user info
-                        set_user_info(user_info).ok();
-                        return Some(true);
-                    } else {
-                        fields.password.warning = true;
-                        fields.password.warning_text = "Invalid password!".to_string();
-                    }
+                    // Set global user info
+                    set_user_info(user_info).ok();
+                    return Some(true);
                 } else {
-                    fields.username.warning = true;
-                    fields.username.warning_text = "Username not found!".to_string();
+                    fields.password.warning = true;
+                    fields.password.warning_text = "Invalid password!".to_string();
                 }
+            } else {
+                fields.username.warning = true;
+                fields.username.warning_text = "Username not found!".to_string();
             }
+        }
         None
     }
 
@@ -514,44 +513,43 @@ impl AuthHandler {
                 fields.password.entering = true;
                 fields.username.warning = false;
             }
-        } else if fields.password.entering
-            && !fields.password.value.is_empty() {
-                let username = fields.username.value.trim();
-                let password = fields.password.value.trim();
-                if users.iter().any(|u| u.username == username) {
-                    fields.username.warning = true;
-                    fields.username.warning_text = "Username already exists!".to_string();
-                } else {
-                    match crate::utils::auth::hash_password(password) {
-                        Ok((salt, hash)) => {
-                            users.push(crate::utils::auth::User {
-                                username: username.to_string(),
-                                salt: salt.clone(),
-                                password_hash: hash.clone(),
-                            });
-                            if let Err(_) =
-                                std::panic::catch_unwind(|| crate::utils::auth::save_users(users))
-                            {
-                                fields.username.warning = true;
-                                fields.username.warning_text = "Failed to save user!".to_string();
-                            } else {
-                                // Create and authenticate UserInfo
-                                let mut user_info =
-                                    UserInfo::new(username.to_string(), salt.clone(), hash.clone());
-                                user_info.authenticate(); // Mark as authenticated with timestamp
-
-                                // Set global user info
-                                set_user_info(user_info).ok();
-                                return Some(true);
-                            }
-                        }
-                        Err(_) => {
+        } else if fields.password.entering && !fields.password.value.is_empty() {
+            let username = fields.username.value.trim();
+            let password = fields.password.value.trim();
+            if users.iter().any(|u| u.username == username) {
+                fields.username.warning = true;
+                fields.username.warning_text = "Username already exists!".to_string();
+            } else {
+                match crate::utils::auth::hash_password(password) {
+                    Ok((salt, hash)) => {
+                        users.push(crate::utils::auth::User {
+                            username: username.to_string(),
+                            salt: salt.clone(),
+                            password_hash: hash.clone(),
+                        });
+                        if let Err(_) =
+                            std::panic::catch_unwind(|| crate::utils::auth::save_users(users))
+                        {
                             fields.username.warning = true;
-                            fields.username.warning_text = "Failed to hash password!".to_string();
+                            fields.username.warning_text = "Failed to save user!".to_string();
+                        } else {
+                            // Create and authenticate UserInfo
+                            let mut user_info =
+                                UserInfo::new(username.to_string(), salt.clone(), hash.clone());
+                            user_info.authenticate(); // Mark as authenticated with timestamp
+
+                            // Set global user info
+                            set_user_info(user_info).ok();
+                            return Some(true);
                         }
+                    }
+                    Err(_) => {
+                        fields.username.warning = true;
+                        fields.username.warning_text = "Failed to hash password!".to_string();
                     }
                 }
             }
+        }
         None
     }
 }

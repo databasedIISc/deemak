@@ -47,7 +47,7 @@ impl ObjectInfo {
             .insert("compare_me".to_string(), Value::String(compare_me));
         self
     }
-    
+
     pub fn without_decrypt_me(mut self) -> Self {
         self.properties.remove("decrypt_me");
         self
@@ -218,7 +218,6 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
 
     info.validate()?;
     Ok(info)
-
 }
 pub fn read_about(info_path: &Path) -> Result<String, String> {
     let info = read_validate_info(info_path);
@@ -288,10 +287,7 @@ pub fn del_obj_from_info(obj_path: &Path, obj_name: &str) -> Result<(), InfoErro
     }
     Ok(())
 }
-pub fn del_decrypt_me_from_info(
-    obj_path: &Path,
-    obj_name: &str,
-) -> Result<(), InfoError> {
+pub fn del_decrypt_me_from_info(obj_path: &Path, obj_name: &str) -> Result<(), InfoError> {
     let info_path = &obj_path
         .parent()
         .unwrap()
@@ -306,10 +302,7 @@ pub fn del_decrypt_me_from_info(
     }
     Ok(())
 }
-pub fn del_compare_me_from_info(
-    obj_path: &Path,
-    obj_name: &str,
-) -> Result<(), InfoError> {
+pub fn del_compare_me_from_info(obj_path: &Path, obj_name: &str) -> Result<(), InfoError> {
     let info_path = &obj_path
         .parent()
         .unwrap()
@@ -339,10 +332,7 @@ pub fn create_compare_me_in_info(
     std::fs::write(info_path, json)?;
     Ok(())
 }
-pub fn del_compare_met_from_info(
-    obj_path: &Path,
-    obj_name: &str,
-) -> Result<(), InfoError> {
+pub fn del_compare_met_from_info(obj_path: &Path, obj_name: &str) -> Result<(), InfoError> {
     let info_path = &obj_path
         .parent()
         .unwrap()
@@ -355,7 +345,6 @@ pub fn del_compare_met_from_info(
     std::fs::write(info_path, json)?;
     Ok(())
 }
-
 
 /// Update or add a status property for an object
 ///

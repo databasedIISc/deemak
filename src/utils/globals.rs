@@ -53,7 +53,6 @@ pub const FONT_OPTIONS: [(&str, &str); 11] = [
     ),
 ];
 
-
 /// User information structure with expandable functionality
 #[derive(Debug, Clone)]
 pub struct UserInfo {
@@ -128,7 +127,6 @@ impl UserInfo {
         }
     }
 }
-
 
 /// Gets the global if it has been set, otherwise returns None.
 pub fn get_global_once<T: Clone>(cell: &OnceCell<T>) -> &T {
