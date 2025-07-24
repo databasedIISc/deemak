@@ -1,0 +1,21 @@
+{
+  "location": "HOME/classroom",
+  "about": "Learn important skills like unlocking doors, finding secrets, and managing files in this classroom. Happy Learning Deemak!",
+  "objects": {
+    "secret_door": {
+      "locked": "00"
+    },
+    "unlock_me": {
+      "locked": "00"
+    },
+    "secrets": {
+      "locked": "00"
+    },
+    "advanced": {
+      "locked": "00"
+    },
+    "filesystem": {
+      "locked": "00"
+    }
+  }
+}

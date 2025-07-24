@@ -1,0 +1,12 @@
+{
+  "location": "HOME/classroom/advanced/playground",
+  "about": "Playground to test around functions like copy, delete, and more. Have fun experimenting!",
+  "objects": {
+    "delete_me": {
+      "locked": "00"
+    },
+    "copy_me": {
+      "locked": "00"
+    }
+  }
+}

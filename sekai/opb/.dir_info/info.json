@@ -8,10 +8,13 @@
     "ugcl": {
       "locked": "00"
     },
-    "senpai": {
+    "labs": {
       "locked": "00"
     },
-    "labs": {
+    ".lost_notebook": {
+      "locked": "00"
+    },
+    "senpai": {
       "locked": "00"
     }
   }
