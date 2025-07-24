@@ -33,7 +33,7 @@ pub fn remove_file<P: AsRef<Path>>(path: P) {
 ///         └── file7.txt
 pub fn setup_test_dir(make_dirinfo: bool) -> (TempDir, PathBuf) {
     let temp_dir = TempDir::new().unwrap();
-    let root_path = temp_dir.path().to_path_buf();
+    let root_path = temp_dir.path().join("deemak");
 
     create_file(root_path.join("file1.txt"), "hello from file1");
 

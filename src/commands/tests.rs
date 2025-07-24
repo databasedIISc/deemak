@@ -23,7 +23,7 @@ mod commands_tests {
 
         // Navigate to subdir1
         let (new_path, msg) = navigate("subdir1", &current_dir, &root_path);
-        println!("Navigating to subdir1: {}", msg);
+        println!("Navigating to subdir1: {msg}");
         assert_eq!(new_path, root_path.join("subdir1"));
 
         // Navigate to nested1
@@ -59,7 +59,7 @@ mod commands_tests {
 
         // Navigate to a file
         let (new_path, message) = navigate("file1.txt", &current_dir, &root_path);
-        println!("{:?}, {:?}, {}", new_path, current_dir, message);
+        println!("{new_path:?}, {current_dir:?}, {message}");
         assert_eq!(new_path, current_dir);
         assert!(message.contains("Is a file"));
 
