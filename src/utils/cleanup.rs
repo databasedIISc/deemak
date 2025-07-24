@@ -16,10 +16,7 @@ fn log_cleanup_warning(context: &str, path_display: &str, error: &Error) {
 
 /// Helper function to log cleanup success consistently.
 fn log_cleanup_success(context: &str, path_display: &str) {
-    log::log_info(
-        "Cleanup",
-        &format!("Successfully {context} {path_display}"),
-    );
+    log::log_info("Cleanup", &format!("Successfully {context} {path_display}"));
 }
 
 /// Deletes a file or directory at the specified path, logging success or failure.
@@ -69,43 +66,51 @@ fn cleanup_at_location(dir: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// Clean up all temporary files in all locations.
-pub fn cleanup_deemak() -> Result<(), String> {
-    for location in LOCATIONS.iter() {
-        if let Err(e) = cleanup_at_location(location) {
-            log_cleanup_warning("cleanup at location", location, &Error::other(e));
-        }
-    }
-
-    // Cleaning up the current working directory with `.tmp.zlib` extension
+/// Clean up only `.tmp.zlib` in the current working directory, just in case present
+fn clean_cwd() -> Result<(), String> {
     let cwd = std::env::current_dir().map_err(|e| {
-        let msg = format!("Failed to get current working directory: {e}");
         log_cleanup_warning("get current directory", "current", &e);
-        msg
+        format!("Failed to get current working directory: {e}")
     })?;
 
     for entry in read_dir(&cwd).map_err(|e| {
-        let msg = format!("Failed to read current directory: {e}");
         log_cleanup_warning("read current directory", "current", &e);
-        msg
+        format!("Failed to read current directory: {e}")
     })? {
         let entry = entry.map_err(|e| {
-            let msg = format!("Failed to read directory entry in current directory: {e}");
             log_cleanup_warning("read directory entry", "current", &e);
-            msg
+            format!("Failed to read directory entry in current directory: {e}")
         })?;
 
-        let file_name = entry.file_name();
-        let file_name_str = file_name.to_string_lossy();
+        let path_to_remove = entry.path();
+        let file_name_str = path_to_remove
+            .file_name()
+            .map(|s| s.to_string_lossy())
+            .unwrap_or_default();
 
-        if file_name_str.ends_with(".tmp.zlib") {
-            let path_to_remove = entry.path();
-            // Always a file
-            if path_to_remove.is_file() {
-                if let Err(e) = fs::remove_file(&path_to_remove) {
-                    log_cleanup_warning("remove file", &file_name_str, &e);
-                }
+        if file_name_str.ends_with(".tmp.zlib") && path_to_remove.is_file() {
+            if let Err(e) = fs::remove_file(&path_to_remove) {
+                log_cleanup_warning("remove file", &file_name_str, &e);
             }
+        }
+    }
+    Ok(())
+}
+
+/// Clean up all temporary files in all locations.
+pub fn cleanup_deemak() -> Result<(), String> {
+    // clean up the current working directory first
+    if let Err(e) = clean_cwd() {
+        log_cleanup_warning(
+            "cleanup current working directory",
+            "current",
+            &Error::other(e),
+        );
+    }
+    // Clean up all specified locations
+    for location in LOCATIONS.iter() {
+        if let Err(e) = cleanup_at_location(location) {
+            log_cleanup_warning("cleanup at location", location, &Error::other(e));
         }
     }
     Ok(())

@@ -16,6 +16,17 @@ Navigate to different directories:
 
 "#;
 
+/// Remove /private prefix from paths on macOS
+fn remove_private_prefix(path: &Path) -> PathBuf {
+    let mut new_path: PathBuf;
+    if cfg!(target_os = "macos") && path.starts_with("/private") {
+        new_path = path.strip_prefix("/private").unwrap_or(path).to_path_buf();
+    } else {
+        new_path = path.to_path_buf()
+    }
+    Path::new("/").join(new_path)
+}
+
 pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (PathBuf, String) {
     let new_path = match destination {
         "HOME" | "home" => root_dir.to_path_buf(),
@@ -64,6 +75,7 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
         }
     };
 
+    let canonical_path = remove_private_prefix(&canonical_path);
     // Verify it's within root and is a directory
     if !canonical_path.starts_with(root_dir) {
         log::log_warning(
@@ -78,36 +90,22 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
             "go: Access denied: Cannot go outside root".to_string(),
         );
     }
+    assert!(canonical_path.starts_with(root_dir)); // It should always be true
 
-    if !canonical_path.is_dir() {
-        if canonical_path.is_file() {
-            log::log_warning(
-                "go",
-                &format!(
-                    "Attempted to go to a file instead of a directory: {}",
-                    canonical_path.display()
-                ),
-            );
-            return (
-                current_dir.clone(),
-                format!("go: {destination}: Is a file (try 'read {destination}')"),
-            );
-        }
-
+    if canonical_path.is_file() {
         log::log_warning(
             "go",
             &format!(
-                "Attempted to go to a non-directory path: {}",
+                "Attempted to go to a file instead of a directory: {}",
                 canonical_path.display()
             ),
         );
         return (
             current_dir.clone(),
-            format!("go: {destination}: Not a directory"),
+            format!("go: {destination}: Is a file (try 'read {destination}')"),
         );
     }
 
-    assert!(canonical_path.starts_with(root_dir)); // It should always be true
     // Check if directory is locked
     if canonical_path != root_dir {
         if let Err(e) = lock_perm::operation_locked_perm(

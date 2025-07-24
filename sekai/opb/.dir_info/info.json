@@ -2,13 +2,13 @@
   "location": "HOME/opb",
   "about": "You are in 'HOME/opb'. Look around and explore!",
   "objects": {
-    ".lost_notebook": {
-      "locked": "00"
-    },
     "wifiroom": {
       "locked": "00"
     },
     "labs": {
+      "locked": "00"
+    },
+    ".lost_notebook": {
       "locked": "00"
     },
     "senpai": {

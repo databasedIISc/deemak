@@ -101,7 +101,7 @@ impl Info {
         if home_dir {
             "HOME".to_string()
         } else {
-            relative_deemak_path(path).display().to_string()
+            relative_deemak_path(path, None).display().to_string()
         }
     }
 

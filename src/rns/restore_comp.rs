@@ -25,7 +25,7 @@ In this case, the `restore_me.deemak` will remain unchanged, and the `save_me.de
 const RESTORE_FILE: &str = "restore_me.deemak";
 const SAVE_FILE: &str = "save_me.deemak";
 
-fn generate_temp_path(usage: &str) -> PathBuf {
+pub fn generate_temp_path(usage: &str) -> PathBuf {
     let random_pass_hash = format!("{:x}", rand::random::<u64>());
     PathBuf::from(format!("/tmp/deemak-{usage}-{random_pass_hash}"))
 }

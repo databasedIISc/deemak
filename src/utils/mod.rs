@@ -1,4 +1,5 @@
 pub mod find_root;
+mod tests;
 pub use find_root::relative_deemak_path;
 pub mod log;
 pub use log::debug_mode;

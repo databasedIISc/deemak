@@ -1,5 +1,6 @@
 use super::passlock::{check_dmk_magic, decrypt_file, encrypt_file};
 use super::passlock::{zlib_compress, zlib_decompress};
+use super::restore_comp::generate_temp_path;
 use crate::utils::log;
 use std::path::{Path, PathBuf};
 
@@ -33,7 +34,7 @@ pub fn deemak_encrypt_sekai(
     }
 
     // Create temp zlib file in same directory
-    let temp_zlib = sekai_path.with_extension("tmp.zlib");
+    let temp_zlib = generate_temp_path("zlib_compress").with_extension("tmp.zlib");
 
     // Compress first
     if sekai_path.is_dir() {
@@ -90,7 +91,7 @@ pub fn original_from_encrypted_sekai(
         output_path.to_path_buf()
     };
 
-    let temp_zlib = output_dir.with_extension("tmp.zlib");
+    let temp_zlib = generate_temp_path("zlib_compress").with_extension("tmp.zlib");
 
     // Ensure clean state
     if output_dir.exists() {
