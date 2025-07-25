@@ -1,17 +1,24 @@
 #![allow(unused_variables, unused_mut, dead_code)]
 // Import everything from the library crate instead of declaring separate modules
+mod commands;
 mod gui_shell;
 mod keys;
 mod login;
+mod menu;
+mod metainfo;
+mod rns;
 mod server;
 mod utils;
-use crate::DEBUG_MODE;
+use std::sync::OnceLock;
+
+pub static DEBUG_MODE: OnceLock<bool> = OnceLock::new();
+pub static SEKAI_DIR: OnceLock<String> = OnceLock::new();
+
 use crate::gui_shell::run_gui_loop;
 use crate::metainfo::valid_sekai::validate_or_create_sekai;
 use crate::rns::restore_comp;
 use crate::utils::globals::set_world_dir;
 use crate::utils::{debug_mode, find_root, log};
-use deemak::*;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
 

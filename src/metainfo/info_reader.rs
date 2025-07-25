@@ -180,27 +180,29 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
                     obj_info.properties.remove("obj_salt");
                     obj_info.properties.remove("decrypt_me");
                     obj_info.properties.remove("compare_me");
-                }
-                // ensure it has a 'decrypt_me' property
-                if is_level && !obj_info.properties.contains_key("decrypt_me") {
-                    return Err(InfoError::ValidationError(format!(
-                        "Locked objects must have a 'decrypt_me' property. Object Info: {:?}",
-                        obj_info.properties
-                    )));
-                }
-                // obj_salt is required for locked objects
-                if !obj_info.properties.contains_key("obj_salt") {
-                    return Err(InfoError::ValidationError(format!(
-                        "Locked objects must have an 'obj_salt' property. Object Info: {:?}",
-                        obj_info.properties
-                    )));
-                }
-                // enure it has a "compare me property
-                if !obj_info.properties.contains_key("compare_me") {
-                    return Err(InfoError::ValidationError(format!(
-                        "Locked objects must have a 'compare_me' property. Object Info: {:?}",
-                        obj_info.properties
-                    )));
+                } else {
+                    // Only check these properties if the object is actually locked
+                    // ensure it has a 'decrypt_me' property
+                    if is_level && !obj_info.properties.contains_key("decrypt_me") {
+                        return Err(InfoError::ValidationError(format!(
+                            "Locked objects must have a 'decrypt_me' property. Object Info: {:?}",
+                            obj_info.properties
+                        )));
+                    }
+                    // obj_salt is required for locked objects
+                    if !obj_info.properties.contains_key("obj_salt") {
+                        return Err(InfoError::ValidationError(format!(
+                            "Locked objects must have an 'obj_salt' property. Object Info: {:?}",
+                            obj_info.properties
+                        )));
+                    }
+                    // enure it has a "compare me property
+                    if !obj_info.properties.contains_key("compare_me") {
+                        return Err(InfoError::ValidationError(format!(
+                            "Locked objects must have a 'compare_me' property. Object Info: {:?}",
+                            obj_info.properties
+                        )));
+                    }
                 }
             } else {
                 // If not locked, ensure 'decrypt_me' is not present
