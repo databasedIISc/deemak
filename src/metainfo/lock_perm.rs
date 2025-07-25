@@ -1,4 +1,4 @@
-use super::info_reader::{read_validate_info, update_obj_status};
+use super::info_reader::read_validate_info;
 use crate::utils::log;
 use crate::utils::relative_deemak_path;
 use std::path::Path;

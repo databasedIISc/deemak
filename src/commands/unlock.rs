@@ -188,7 +188,7 @@ pub fn unlock(
                             "unlock",
                             "changes regarding lock status of object made to info.json successfully",
                         );
-                        format!("{} is unlocked", locked_obj_name)
+                        format!("{locked_obj_name} is unlocked")
                     } else {
                         //flag incorrect or faced some error
                         err_msg += message.as_str();
@@ -228,7 +228,7 @@ pub fn unlock(
                             "changes regarding lock status of object made to info.json successfully",
                         );
 
-                        format!(" Chest {} is unlocked", locked_obj_name)
+                        format!(" Chest {locked_obj_name} is unlocked")
                     } else {
                         //flag incorrect or faced some error
                         err_msg += message.as_str();

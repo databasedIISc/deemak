@@ -4,15 +4,11 @@ use crate::metainfo::info_reader::{
     create_compare_me_in_info, del_compare_me_from_info, del_decrypt_me_from_info,
     read_get_obj_info, update_obj_status,
 };
-use crate::metainfo::lock_perm::operation_locked_perm;
 use crate::metainfo::read_lock_perm;
 use crate::rns::security::{argonhash, characterise_enc_key, decrypt, encrypt};
 use crate::utils::{auth::get_current_user, log, prompt::UserPrompter};
 use argon2::password_hash::SaltString;
-use rocket::http::tls::rustls::internal::msgs::message;
-use serde_json::Value;
 use std::path::Path;
-use std::result;
 
 pub const HELP_TEXT: &str = r#"
 Usage: dev lock [OPTIONS_1] [OPTIONS_2] <PATH TO OBJECT> or
@@ -53,15 +49,15 @@ pub fn dev_lock(
 
             match args[1] {
                 "-l" | "--level" => {
-                    return dev_make_level(args[2], current_dir, root_dir);
+                    dev_make_level(args[2], current_dir, root_dir)
                 }
                 "-c" | "--chest" => {
-                    return dev_make_chest(args[2], current_dir, root_dir);
+                    dev_make_chest(args[2], current_dir, root_dir)
                 }
                 _ => {
                     err_msg += "Invalid type provided. Expected -l for level or -c for chest.";
                     log::log_info("dev_lock", err_msg.as_str());
-                    return Err(err_msg);
+                    Err(err_msg)
                 }
             }
         }
@@ -76,16 +72,16 @@ pub fn dev_lock(
                     //prompt for solution
 
                     let solution =
-                        prompter.input(&format!("> Enter your solution for the lock : "));
-                    return dev_lock_chest(&args[2], &solution, current_dir, root_dir);
+                        prompter.input("> Enter your solution for the lock : ");
+                    dev_lock_chest(args[2], &solution, current_dir, root_dir)
                 }
                 "-u" | "--unlock" => {
-                    return dev_unlock_chest(&args[2], current_dir, root_dir);
+                    dev_unlock_chest(args[2], current_dir, root_dir)
                 }
                 _ => {
                     err_msg += "Invalid status provided. Expected -l for lock or -u for unlock.";
                     log::log_info("dev_lock", err_msg.as_str());
-                    return Err(err_msg);
+                    Err(err_msg)
                 }
             }
         }
@@ -97,15 +93,15 @@ pub fn dev_lock(
             }
             let solve_from_path = normalize_path(&current_dir.join(args[1]));
             let set_lock_to_path = normalize_path(&current_dir.join(args[2]));
-            let solution = prompter.input(&format!("> Enter your solution for the level lock : "));
-            let flag = prompter.input(&format!("> Enter your flag for the lock : "));
-            return dev_create_level_lock(
+            let solution = prompter.input("> Enter your solution for the level lock : ");
+            let flag = prompter.input("> Enter your flag for the lock : ");
+            dev_create_level_lock(
                 &solve_from_path,
                 &set_lock_to_path,
                 current_dir,
                 &solution,
                 &flag,
-            );
+            )
         }
         "-rm" | "--rm-level-lock" => {
             if args.len() < 2 {
@@ -115,7 +111,7 @@ pub fn dev_lock(
             }
             let path_to_level = normalize_path(&current_dir.join(args[1]));
             let path_to_next_level = normalize_path(&current_dir.join(args[2]));
-            return dev_remove_level_lock(&path_to_level, current_dir, root_dir);
+            dev_remove_level_lock(&path_to_level, current_dir, root_dir)
         }
         _ => Err(format!(
             "Invalid option: {}. Use -t, --type, -s, --status, -ll, --level-lock or -rm, --rm-level-lock",
@@ -135,7 +131,7 @@ fn dev_make_level(
         .and_then(|s| s.to_str())
         .ok_or("Invalid object name")?;
     if !path.exists() {
-        return Err(format!("Path does not exist: {}", path_to_obj));
+        return Err(format!("Path does not exist: {path_to_obj}"));
     }
     let info_path = path.parent().unwrap().join(".dir_info/info.json");
     if !info_path.exists() {
@@ -184,7 +180,7 @@ fn dev_make_chest(
         .and_then(|s| s.to_str())
         .ok_or("Invalid object name")?;
     if !path.exists() {
-        return Err(format!("Path does not exist: {}", path_to_obj));
+        return Err(format!("Path does not exist: {path_to_obj}"));
     }
     let info_path = path.parent().unwrap().join(".dir_info/info.json");
     if !info_path.exists() {
@@ -203,7 +199,7 @@ fn dev_make_chest(
     }
     let (is_level, is_locked) = lock_perm.unwrap();
     if !is_level {
-        return Ok("Object is already a chest.".to_string());
+        Ok("Object is already a chest.".to_string())
     } else {
         //is level
         //remove decrypt_me and compare_me from object info  if they exist
@@ -229,7 +225,7 @@ fn dev_make_chest(
             ));
         }
         //return success message
-        return Ok("Chest created from level successfully".into());
+        Ok("Chest created from level successfully".into())
     }
 }
 
@@ -245,7 +241,7 @@ fn dev_unlock_chest(
         .and_then(|s| s.to_str())
         .ok_or("Invalid object name")?;
     if !path.exists() {
-        return Err(format!("Path does not exist: {}", path_to_obj));
+        return Err(format!("Path does not exist: {path_to_obj}"));
     }
     let info_path = path.parent().unwrap().join(".dir_info/info.json");
     if !info_path.exists() {
@@ -295,7 +291,7 @@ fn dev_unlock_chest(
             path.display()
         ));
     }
-    return Ok(format!("Chest {} unlocked successfully.", path.display()));
+    Ok(format!("Chest {} unlocked successfully.", path.display()))
 }
 
 fn dev_lock_chest(
@@ -311,7 +307,7 @@ fn dev_lock_chest(
         .and_then(|s| s.to_str())
         .ok_or("Invalid object name")?;
     if !path.exists() {
-        return Err(format!("Path does not exist: {}", path_to_obj));
+        return Err(format!("Path does not exist: {path_to_obj}"));
     }
     let info_path = path.parent().unwrap().join(".dir_info/info.json");
     if !info_path.exists() {
@@ -358,7 +354,7 @@ fn dev_lock_chest(
             path.display()
         ));
     }
-    return Ok(format!("Chest {} unlocked successfully.", path.display()));
+    Ok(format!("Chest {} unlocked successfully.", path.display()))
 }
 
 pub fn dev_create_level_lock(
@@ -372,15 +368,14 @@ pub fn dev_create_level_lock(
     let mut err_msg = String::new();
     let path_1 = normalize_path(&current_dir.join(solve_from_path));
     if !path_1.exists() {
-        err_msg += &format!("Invalid `solve_from_path`:{:?} given", solve_from_path);
+        err_msg += &format!("Invalid `solve_from_path`:{solve_from_path:?} given");
         log::log_info("solve", err_msg.as_str());
         return Err(err_msg);
     }
     let path_2 = normalize_path(&current_dir.join(set_lock_to_path));
     if !path_2.exists() {
         err_msg += &format!(
-            "Invalid `set_lock_to_path`:{:?} path given",
-            set_lock_to_path
+            "Invalid `set_lock_to_path`:{set_lock_to_path:?} path given"
         );
         log::log_info("solve", err_msg.as_str());
         return Err(err_msg);
@@ -390,8 +385,7 @@ pub fn dev_create_level_lock(
     let lock_perm_path_1 = read_lock_perm(&path_1);
     if lock_perm_path_1.is_err() {
         return Ok(format!(
-            "unable to read `locked` for `{:?}`",
-            solve_from_path
+            "unable to read `locked` for `{solve_from_path:?}`"
         ));
     }
     let (path_1_is_level, path_1_is_locked) = lock_perm_path_1.unwrap();
@@ -399,8 +393,7 @@ pub fn dev_create_level_lock(
     let lock_perm_path_2 = read_lock_perm(&path_2);
     if lock_perm_path_2.is_err() {
         return Ok(format!(
-            "unable to read `locked` for `{:?}`",
-            set_lock_to_path
+            "unable to read `locked` for `{set_lock_to_path:?}`"
         ));
     }
     let (path_2_is_level, path_2_is_locked) = lock_perm_path_2.unwrap();
@@ -431,7 +424,7 @@ pub fn dev_create_level_lock(
     let level_2_info=//read salt from info.json
         read_get_obj_info(&path_2, level_2_name);
     if level_2_info.is_err() {
-        err_msg += &format!("Failed to read salt for level 2: {}", level_2_name);
+        err_msg += &format!("Failed to read salt for level 2: {level_2_name}");
         log::log_error("solve", err_msg.as_str());
         return Err(err_msg);
     }
@@ -439,7 +432,7 @@ pub fn dev_create_level_lock(
     let level_2_salt = level_2_info.properties.get("obj_salt");
 
     if level_2_salt.is_none() {
-        err_msg += &format!("Salt not found for level 2: {}", level_2_name);
+        err_msg += &format!("Salt not found for level 2: {level_2_name}");
         log::log_error("solve", err_msg.as_str());
         return Err(err_msg);
     }
@@ -454,7 +447,7 @@ pub fn dev_create_level_lock(
 
     //create decrypt_me and compare_me
 
-    let decrypt_me_path_1 = encrypt(&characterise_enc_key(level_1_name, solution), &flag);
+    let decrypt_me_path_1 = encrypt(&characterise_enc_key(level_1_name, solution), flag);
     // compare_me_path_2=?
     let user_info = match get_current_user() {
         Some(info) => info,
@@ -480,12 +473,12 @@ pub fn dev_create_level_lock(
             &format!("{}_{}", username, username.len()),
             &format!("{username}_{level_1_name}"),
         ),
-        &flag,
+        flag,
     );
     let l1_hashed_user_flag = argonhash(&level_2_salt, decrypted_user_flag);
     let hashed_with_usersalt = argonhash(&user_salt, l1_hashed_user_flag);
     let compare_me_path_2 = encrypt(
-        &characterise_enc_key(&level_2_salt.as_str(), level_2_name),
+        &characterise_enc_key(level_2_salt.as_str(), level_2_name),
         &hashed_with_usersalt,
     );
     //write compare_me and decrypt_me to info.json along with level permissions
@@ -516,7 +509,7 @@ pub fn dev_create_level_lock(
         log::log_error("solve", err_msg.as_str());
         return Err(err_msg);
     }
-    return Ok("created lock successfully".to_string());
+    Ok("created lock successfully".to_string())
 }
 
 pub fn dev_remove_level_lock(
@@ -529,8 +522,7 @@ pub fn dev_remove_level_lock(
     let path = normalize_path(&current_dir.join(path_to_level));
     if !path.exists() {
         return Err(format!(
-            "Path does not exist: {:?}. try again",
-            path_to_level
+            "Path does not exist: {path_to_level:?}. try again"
         ));
     }
     //info_path
@@ -567,8 +559,8 @@ pub fn dev_remove_level_lock(
             path.display()
         ));
     }
-    return Ok(format!(
+    Ok(format!(
         "Removed level lock from {} successfully.",
         path.display()
-    ));
+    ))
 }

@@ -240,7 +240,7 @@ pub fn write_about(info_path: &Path, new_value: String) -> Result<String, String
     info.about = new_value;
     let json = serde_json::to_string_pretty(&info).map_err(|e| e.to_string())?;
     fs::write(info_path, json).map_err(|e| e.to_string())?;
-    return Ok("write successful".to_string());
+    Ok("write successful".to_string())
 }
 
 /// Add an object to info.json with optional initial properties
