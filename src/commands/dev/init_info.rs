@@ -1,7 +1,5 @@
 use super::super::argparser::ArgParser;
-use crate::metainfo::info_reader::{
-    read_about, read_location, write_about,
-};
+use crate::metainfo::info_reader::{read_about, read_location, write_about};
 use std::path::Path;
 pub const HELP_TEXT: &str = r#"
 Usage: dev info [OPTIONS_1] <PROPERTY_NAME> <PROPERTY_VALUE(if writing)> 
@@ -74,12 +72,8 @@ pub fn dev_info(args: &[&str], current_dir: &Path, root_dir: &Path) -> Result<St
                 property_value = Some(args[2..].join(" "));
                 write_about(&info_path, property_value.unwrap())
             }
-            "-l" | "--location" => {
-                Err("Cannot write to location field.".to_string())
-            }
-            _ => {
-                Err("Invalid field. Use -a/--about or -l/--location.".to_string())
-            }
+            "-l" | "--location" => Err("Cannot write to location field.".to_string()),
+            _ => Err("Invalid field. Use -a/--about or -l/--location.".to_string()),
         }
     } else {
         Err("Invalid mode. Use -w/--write or -r/--read.".to_string())

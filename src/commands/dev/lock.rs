@@ -48,12 +48,8 @@ pub fn dev_lock(
             }
 
             match args[1] {
-                "-l" | "--level" => {
-                    dev_make_level(args[2], current_dir, root_dir)
-                }
-                "-c" | "--chest" => {
-                    dev_make_chest(args[2], current_dir, root_dir)
-                }
+                "-l" | "--level" => dev_make_level(args[2], current_dir, root_dir),
+                "-c" | "--chest" => dev_make_chest(args[2], current_dir, root_dir),
                 _ => {
                     err_msg += "Invalid type provided. Expected -l for level or -c for chest.";
                     log::log_info("dev_lock", err_msg.as_str());
@@ -71,13 +67,10 @@ pub fn dev_lock(
                 "-l" | "--lock" => {
                     //prompt for solution
 
-                    let solution =
-                        prompter.input("> Enter your solution for the lock : ");
+                    let solution = prompter.input("> Enter your solution for the lock : ");
                     dev_lock_chest(args[2], &solution, current_dir, root_dir)
                 }
-                "-u" | "--unlock" => {
-                    dev_unlock_chest(args[2], current_dir, root_dir)
-                }
+                "-u" | "--unlock" => dev_unlock_chest(args[2], current_dir, root_dir),
                 _ => {
                     err_msg += "Invalid status provided. Expected -l for lock or -u for unlock.";
                     log::log_info("dev_lock", err_msg.as_str());
@@ -374,9 +367,7 @@ pub fn dev_create_level_lock(
     }
     let path_2 = normalize_path(&current_dir.join(set_lock_to_path));
     if !path_2.exists() {
-        err_msg += &format!(
-            "Invalid `set_lock_to_path`:{set_lock_to_path:?} path given"
-        );
+        err_msg += &format!("Invalid `set_lock_to_path`:{set_lock_to_path:?} path given");
         log::log_info("solve", err_msg.as_str());
         return Err(err_msg);
     }
@@ -384,9 +375,7 @@ pub fn dev_create_level_lock(
     //check if solve_from_path  and set_lock_to_path is a level since only a level allows command `solve`
     let lock_perm_path_1 = read_lock_perm(&path_1);
     if lock_perm_path_1.is_err() {
-        return Ok(format!(
-            "unable to read `locked` for `{solve_from_path:?}`"
-        ));
+        return Ok(format!("unable to read `locked` for `{solve_from_path:?}`"));
     }
     let (path_1_is_level, path_1_is_locked) = lock_perm_path_1.unwrap();
 
@@ -521,9 +510,7 @@ pub fn dev_remove_level_lock(
 
     let path = normalize_path(&current_dir.join(path_to_level));
     if !path.exists() {
-        return Err(format!(
-            "Path does not exist: {path_to_level:?}. try again"
-        ));
+        return Err(format!("Path does not exist: {path_to_level:?}. try again"));
     }
     //info_path
     let info_path = path.parent().unwrap().join(".dir_info/info.json");
