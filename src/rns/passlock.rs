@@ -4,7 +4,7 @@ use flate2::Compression;
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
 use sha2::{Digest, Sha256};
-use std::fs::{File, read, write};
+use std::fs::{self, File, read, write};
 use std::io::{self, Write};
 use std::path::Path;
 use tar::{Archive, Builder};
@@ -99,6 +99,10 @@ pub fn encrypt_file(input_path: &Path, output_path: &Path, password: &str) -> Re
     );
 
     let output_path = &output_path.with_extension("deemak");
+    if output_path.exists() {
+        fs::remove_file(output_path)
+            .map_err(|e| format!("Failed to remove existing output file: {e}"))?;
+    }
     let key = derive_key_from_password(password);
     let cipher = Aes256Gcm::new(&key);
 
@@ -129,7 +133,7 @@ pub fn encrypt_file(input_path: &Path, output_path: &Path, password: &str) -> Re
 }
 
 pub fn check_dmk_magic(sekai_path: &Path) -> Result<bool, String> {
-    let data = std::fs::read(sekai_path).map_err(|e| format!("Failed to read input file: {e}"))?;
+    let data = fs::read(sekai_path).map_err(|e| format!("Failed to read input file: {e}"))?;
 
     // Check magic header exists and matches
     let magic_ok = data.len() >= MAGIC_HEADER.len() + NONCE_SIZE && data.starts_with(MAGIC_HEADER);

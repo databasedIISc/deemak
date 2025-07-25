@@ -445,37 +445,29 @@ pub fn get_encrypted_flag(path: &Path, level_name: &str) -> Result<String, Strin
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs::{self, File};
-    use std::io::Write;
-    use tempfile::tempdir;
+    use crate::utils::test_utils::{create_file, setup_test_dir};
 
     #[test]
     fn test_update_obj_status() {
         // Create a temporary directory for the test
-        let dir = tempdir().unwrap();
-        fs::create_dir_all(dir.path().join(".dir_info")).unwrap();
-        let info_path = dir.path().join(".dir_info/info.json");
-
-        // Create a dummy info.json file
-        let mut file = File::create(&info_path).unwrap();
-        file.write_all(b"{\"location\":\"test\",\"about\":\"test\",\"objects\":{}}")
-            .unwrap();
+        let (_temp_dir, root_path) = setup_test_dir(true);
+        let info_path = &root_path.join(".dir_info/info.json");
 
         // Create a dummy object file
-        let obj_path = dir.path().join("file.txt");
-        File::create(&obj_path).unwrap();
+        let obj_path = root_path.join("file.txt");
+        create_file(&obj_path, "dummy content");
 
         // Update the object's status
         update_obj_status(
             &obj_path,
             "file.txt",
             "locked",
-            serde_json::Value::Bool(true),
+            serde_json::Value::String("01".to_string()),
         )
         .unwrap();
 
         // Verify the update
-        let data = fs::read_to_string(&info_path).unwrap();
+        let data = fs::read_to_string(info_path).unwrap();
         let info: Info = serde_json::from_str(&data).unwrap();
         assert_eq!(
             info.objects
@@ -484,7 +476,7 @@ mod tests {
                 .properties
                 .get("locked")
                 .unwrap(),
-            &serde_json::Value::Bool(true)
+            &serde_json::Value::String("01".to_string())
         );
     }
 }

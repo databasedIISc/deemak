@@ -163,31 +163,6 @@ pub fn exit_deemak(code: i32) -> ! {
     } else {
         log::log_info("Cleanup", "Temporary files cleaned up successfully.");
     }
-
+    println!("\nThanks for using DEEMAK! Goodbye!\n");
     std::process::exit(code);
-}
-
-// Assuming DEEMAK_PREFIX is defined elsewhere
-// pub const DEEMAK_PREFIX: [&str; 2] = ["deemak_", "deemak-"];
-
-// Example usage context (replace with your actual function)
-fn example_function() {
-    let _tmp_dir = tempfile::tempdir().expect("Failed to create temporary directory");
-
-    let mut iter_prefix = Vec::from_iter(DEEMAK_PREFIX.iter().map(|s| s.to_string()));
-    // Get the path of the temporary directory
-    iter_prefix.push(_tmp_dir.path().to_string_lossy().to_string());
-
-    // Now `iter_prefix` contains the temporary directory path
-    // For demonstration:
-    println!("Temporary directory path added: {:?}", iter_prefix);
-
-    // The `_tmp_dir` variable will keep the directory alive until it goes out of scope.
-    // When it goes out of scope, the directory and its contents will be automatically deleted.
-}
-
-// A main function to run the example (for testing/demonstration)
-#[test]
-fn test() {
-    example_function();
 }
