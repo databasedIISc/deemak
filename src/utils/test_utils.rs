@@ -34,6 +34,7 @@ pub fn remove_file<P: AsRef<Path>>(path: P) {
 pub fn setup_test_dir(make_dirinfo: bool) -> (TempDir, PathBuf) {
     let temp_dir = TempDir::new().unwrap();
     let root_path = temp_dir.path().join("deemak");
+    fs::create_dir(&root_path).unwrap();
 
     create_file(root_path.join("file1.txt"), "hello from file1");
 

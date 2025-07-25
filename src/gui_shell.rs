@@ -24,6 +24,22 @@ use textwrap::wrap;
 pub struct ShellScreen<'a> {
     rl: &'a mut RaylibHandle,
     thread: &'a RaylibThread,
+}
+
+impl<'a> UserPrompter for ShellPrompter<'a> {
+    fn confirm(&mut self, message: &str) -> bool {
+        self.shell.prompt_yes_no(self.rl, self.thread, message)
+    }
+    fn input(&mut self, message: &str) -> String {
+        self.shell.prompt_input_text(self.rl, self.thread, message)
+    }
+    fn write(&mut self, message: &str) -> String {
+        self.shell.print(message);
+        message.to_string()
+    }
+}
+
+pub struct ShellScreen {
     input_buffer: String,
     working_buffer: Option<String>,
     output_lines: Vec<String>,
@@ -807,6 +823,14 @@ impl<'a> ShellScreen<'a> {
             }
         }
         // Reset cursor position after input
+    }
+
+    /// Print text to the output lines
+    pub fn print(&mut self, text: &str) {
+        // Split text into lines and add to output_lines
+        for line in text.lines() {
+            self.output_lines.push(line.to_string());
+        }
     }
 
     /// Helper method to get character index at screen position
