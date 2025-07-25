@@ -19,7 +19,6 @@ mod go;
 pub use go::go;
 
 mod copy;
-pub use copy::copy;
 
 mod exit;
 pub use exit::exit;
@@ -31,19 +30,13 @@ mod read;
 pub use read::read;
 
 mod argparser;
-pub use argparser::ArgParser;
 
 mod restore;
-pub use restore::restore;
 
 mod save;
-pub use save::save;
 
 mod solve;
-pub use solve::solve;
 
 mod unlock;
-pub use unlock::unlock;
 
 mod dev;
-pub use dev::dev::dev;

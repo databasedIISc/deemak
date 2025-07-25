@@ -1,20 +1,6 @@
-use super::super::argparser::ArgParser;
-use super::super::cmds::normalize_path;
 use super::{init_info, lock};
-use crate::metainfo::info_reader::{read_get_obj_info, update_obj_status};
-use crate::metainfo::lock_perm::operation_locked_perm;
-use crate::metainfo::read_lock_perm;
-use crate::rns::security::{argonhash, characterise_enc_key, decrypt, encrypt};
-use crate::utils::{
-    //globals::{USER_NAME, USER_SALT},
-    log,
-    prompt::UserPrompter,
-};
-use argon2::password_hash::SaltString;
-use rocket::http::tls::rustls::internal::msgs::message;
-use serde_json::Value;
+use crate::utils::prompt::UserPrompter;
 use std::path::Path;
-use std::result;
 pub fn dev(
     parts: &[&str],
     current_dir: &Path,
@@ -31,16 +17,16 @@ pub fn dev(
             if msg.is_err() {
                 return msg.err().unwrap();
             }
-            return msg.unwrap();
+            msg.unwrap()
         }
         "info" => {
             let msg = init_info::dev_info(&parts[1..], current_dir, root_dir);
             if msg.is_err() {
                 return msg.err().unwrap();
             }
-            return msg.unwrap();
+            msg.unwrap()
         }
 
-        _ => return "Invalid dev command".to_string(),
+        _ => "Invalid dev command".to_string(),
     }
 }

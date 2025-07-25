@@ -1,21 +1,8 @@
 use super::super::argparser::ArgParser;
-use super::super::cmds::normalize_path;
 use crate::metainfo::info_reader::{
-    read_about, read_get_obj_info, read_location, update_obj_status, write_about,
+    read_about, read_location, write_about,
 };
-use crate::metainfo::lock_perm::operation_locked_perm;
-use crate::metainfo::read_lock_perm;
-use crate::rns::security::{argonhash, characterise_enc_key, decrypt, encrypt};
-use crate::utils::{
-    //globals::{USER_NAME, USER_SALT},
-    log,
-    prompt::UserPrompter,
-};
-use argon2::password_hash::SaltString;
-use rocket::http::tls::rustls::internal::msgs::message;
-use serde_json::Value;
 use std::path::Path;
-use std::result;
 pub const HELP_TEXT: &str = r#"
 Usage: dev info [OPTIONS_1] <PROPERTY_NAME> <PROPERTY_VALUE(if writing)> 
 
@@ -85,16 +72,16 @@ pub fn dev_info(args: &[&str], current_dir: &Path, root_dir: &Path) -> Result<St
                 }
                 //join args[2..] to a string
                 property_value = Some(args[2..].join(" "));
-                return write_about(&info_path, property_value.unwrap());
+                write_about(&info_path, property_value.unwrap())
             }
             "-l" | "--location" => {
-                return Err("Cannot write to location field.".to_string());
+                Err("Cannot write to location field.".to_string())
             }
             _ => {
-                return Err("Invalid field. Use -a/--about or -l/--location.".to_string());
+                Err("Invalid field. Use -a/--about or -l/--location.".to_string())
             }
         }
     } else {
-        return Err("Invalid mode. Use -w/--write or -r/--read.".to_string());
+        Err("Invalid mode. Use -w/--write or -r/--read.".to_string())
     }
 }
