@@ -73,35 +73,40 @@ pub fn get_home(sekai_path: &Path) -> Option<PathBuf> {
 /// Returns the original path if WORLD_DIR isn't set or if the path isn't within WORLD_DIR
 /// Also adds DEEMAK_TEMP prefix if the path is a temporary file
 pub fn relative_deemak_path(path: &Path, sekai_dir: Option<&Path>) -> PathBuf {
-    let world_dir = if let Some(dir) = sekai_dir {
+    let _sekai_dir = if let Some(dir) = sekai_dir {
         dir
     } else {
         &globals::get_sekai_dir()
     };
+    let all_temp_locs = super::cleanup::get_all_cleanup_locations();
     let temp_dir_prefix = PathBuf::from("/tmp");
 
     // Check if it's prefixed by world_dir
-    if let Ok(relative_path) = path.strip_prefix(world_dir) {
+    if let Ok(relative_path) = path.strip_prefix(_sekai_dir) {
         if relative_path.components().count() == 0 {
             // Path is exactly world_dir, represent as "HOME"
             PathBuf::from("HOME")
         } else {
             PathBuf::from("HOME").join(relative_path)
         }
-    }
-    // Else, check if it's prefixed by /tmp
-    else if let Ok(relative_path) = path.strip_prefix(&temp_dir_prefix) {
-        let deemak_temp_prefix = PathBuf::from("DEEMAK_TEMP");
+    } else {
+        // Iterate through all_temp_locs to find a matching prefix
+        for temp_loc_str in &all_temp_locs {
+            let temp_prefix_path = PathBuf::from(temp_loc_str);
 
-        if relative_path.components().count() == 0 {
-            // Path is exactly /tmp, represent as "DEEMAK_TEMP"
-            deemak_temp_prefix
-        } else {
-            deemak_temp_prefix.join(relative_path)
+            if let Ok(relative_path) = path.strip_prefix(&temp_prefix_path) {
+                let deemak_temp_replacement = PathBuf::from("DEEMAK_TEMP");
+
+                if relative_path.components().count() == 0 {
+                    // Path is exactly this temp_loc, replace with "DEEMAK_TEMP"
+                    return deemak_temp_replacement;
+                } else {
+                    // Path is inside this temp_loc
+                    return deemak_temp_replacement.join(relative_path);
+                }
+            }
         }
-    }
-    // Else return the original path
-    else {
+        // If no prefixes match, return the original path
         path.to_path_buf()
     }
 }

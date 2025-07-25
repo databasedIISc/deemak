@@ -1,10 +1,45 @@
 use crate::utils::log;
+use std::collections::HashSet;
 use std::fs::{self, read_dir};
 use std::io::Error;
 use std::path::Path;
 
 pub const LOCATIONS: [&str; 2] = ["/tmp", "/var/tmp"];
-pub const DEEMAK_PREFIX: [&str; 2] = ["deemak_", "deemak-"];
+pub const DEEMAK_PREFIX: [&str; 1] = ["deemak"];
+
+/// Collects all relevant cleanup locations, handling macOS specifics.
+pub fn get_all_cleanup_locations() -> Vec<String> {
+    let mut all_locs: HashSet<String> = HashSet::new();
+
+    // Add predefined locations
+    LOCATIONS.iter().for_each(|&s| {
+        all_locs.insert(s.to_string());
+    });
+
+    // Add the standard system temporary directory
+    all_locs.insert(std::env::temp_dir().to_string_lossy().to_string());
+
+    // On macOS, symlinked /tmp and /var/tmp point to /private/tmp and /private/var/tmp
+    // We add these canonical paths to ensure cleanup.
+    if cfg!(target_os = "macos") {
+        // Clone current paths to iterate and add their /private counterparts without modifying during iteration
+        let current_known_paths: Vec<String> = all_locs.iter().cloned().collect();
+
+        for loc_str in current_known_paths {
+            let path = Path::new(&loc_str);
+            // Check if it's a common root-level temporary path that might be symlinked
+            if let Ok(stripped_root) = path.strip_prefix("/") {
+                if stripped_root == Path::new("tmp") || stripped_root == Path::new("var/tmp") {
+                    let private_path = Path::new("/private").join(stripped_root);
+                    all_locs.insert(private_path.to_string_lossy().to_string());
+                }
+            }
+        }
+    }
+
+    // Convert the HashSet back to a Vec
+    all_locs.into_iter().collect()
+}
 
 /// Helper function to log warnings consistently.
 fn log_cleanup_warning(context: &str, path_display: &str, error: &Error) {
@@ -107,8 +142,10 @@ pub fn cleanup_deemak() -> Result<(), String> {
             &Error::other(e),
         );
     }
+
+    let all_locs = get_all_cleanup_locations();
     // Clean up all specified locations
-    for location in LOCATIONS.iter() {
+    for location in all_locs.iter() {
         if let Err(e) = cleanup_at_location(location) {
             log_cleanup_warning("cleanup at location", location, &Error::other(e));
         }
@@ -128,4 +165,29 @@ pub fn exit_deemak(code: i32) -> ! {
     }
 
     std::process::exit(code);
+}
+
+// Assuming DEEMAK_PREFIX is defined elsewhere
+// pub const DEEMAK_PREFIX: [&str; 2] = ["deemak_", "deemak-"];
+
+// Example usage context (replace with your actual function)
+fn example_function() {
+    let _tmp_dir = tempfile::tempdir().expect("Failed to create temporary directory");
+
+    let mut iter_prefix = Vec::from_iter(DEEMAK_PREFIX.iter().map(|s| s.to_string()));
+    // Get the path of the temporary directory
+    iter_prefix.push(_tmp_dir.path().to_string_lossy().to_string());
+
+    // Now `iter_prefix` contains the temporary directory path
+    // For demonstration:
+    println!("Temporary directory path added: {:?}", iter_prefix);
+
+    // The `_tmp_dir` variable will keep the directory alive until it goes out of scope.
+    // When it goes out of scope, the directory and its contents will be automatically deleted.
+}
+
+// A main function to run the example (for testing/demonstration)
+#[test]
+fn test() {
+    example_function();
 }

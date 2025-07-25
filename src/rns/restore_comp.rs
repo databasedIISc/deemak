@@ -27,7 +27,13 @@ const SAVE_FILE: &str = "save_me.deemak";
 
 pub fn generate_temp_path(usage: &str) -> PathBuf {
     let random_pass_hash = format!("{:x}", rand::random::<u64>());
-    PathBuf::from(format!("/tmp/deemak-{usage}-{random_pass_hash}"))
+    let tmp_dir = tempfile::Builder::new()
+        .prefix("deemak")
+        .tempdir()
+        .expect("Failed to create temporary directory");
+    let _ = tmp_dir.path().join(format!("_{usage}_{random_pass_hash}"));
+    fs::create_dir_all(tmp_dir.path()).expect("Failed to create temp directory");
+    tmp_dir.path().to_path_buf()
 }
 
 fn copy_sekai_dir(from_location: &Path, to_location: &Path) -> io::Result<()> {
