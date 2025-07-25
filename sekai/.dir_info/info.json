@@ -2,81 +2,78 @@
   "location": "HOME",
   "about": "Home Sweet Home",
   "objects": {
-    "room_10": {
-      "compare_me": "blhmc8htn8rvthurah",
-      "locked": "11",
-      "decrypt_me": "bwehqwe,ilah",
-      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK"
-    },
-    "room_6": {
-      "decrypt_me": "beuxnahmsouji0dah  h0ap",
-      "compare_me": "blwx yd cydcus dcg9sds83647",
-      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK",
-      "locked": "11"
-    },
-    "cat.txt": {
-      "locked": "00"
-    },
-    "some1": {
-      "locked": "00"
-    },
-    "room_7": {
-      "decrypt_me": "blwe8ey73ah",
-      "compare_me": "blwwnecberytc846536375ah",
-      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK",
-      "locked": "11"
-    },
     "room_1": {
-      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK",
-      "locked": "11",
-      "decrypt_me": "blehwhr4569hw28jah",
-      "compare_me": "bdn345c4cb6n7c93045047873074vn379wah"
-    },
-    "room_5": {
-      "decrypt_me": "bleyrcmwje[oxwah",
-      "compare_me": "blwwnewne0pwah",
-      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK",
-      "locked": "11"
-    },
-    "room_3": {
-      "locked": "11",
-      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK",
-      "compare_me": "blwwnryvrewnhwusw8sue0pwah",
-      "decrypt_me": "bldwryvrdhwuch dudhwd8wuah"
-    },
-    "room_9": {
-      "locked": "11",
-      "compare_me": "blwwnryvewne0pwah",
-      "decrypt_me": "blewueryvm9sod0sdkah",
-      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK"
-    },
-    "room_4": {
-      "locked": "11",
-      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK",
-      "decrypt_me": "blwq0j,9qiyne6rerg7eah",
-      "compare_me": "523468946"
-    },
-    "room_8": {
-      "locked": "11",
-      "decrypt_me": "blajdhgrtywerjgkidhdhh",
-      "compare_me": "blwwcdcnewndf de0pwah",
-      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK"
+      "locked": "10",
+      "obj_salt": "dGVzdC1zYWx0LTEyMw=="
     },
     "README": {
       "locked": "00"
     },
     "room_2": {
-      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK",
       "locked": "11",
       "compare_me": "blwwnewne0pwah",
-      "decrypt_me": "blahdiedmhf0wh"
+      "decrypt_me": "default_flag",
+      "obj_salt": "dGVzdC1zYWx0LTEyMw=="
+    },
+    "room_9": {
+      "decrypt_me": "default_flag",
+      "compare_me": "blwwnryvewne0pwah",
+      "obj_salt": "dGVzdC1zYWx0LTEyMw==",
+      "locked": "11"
+    },
+    "room_5": {
+      "decrypt_me": "default_flag",
+      "obj_salt": "dGVzdC1zYWx0LTEyMw==",
+      "compare_me": "blwwnewne0pwah",
+      "locked": "11"
     },
     "dog.txt": {
+      "obj_salt": "dGVzdC1zYWx0LTEyMw==",
+      "locked": "01",
       "compare_me": "rhcenhruhce845c64684wah",
-
-      "obj_salt": "aGVsbG8td29ybGQtdGhpcy1pcy1hLXNhbHQK",
-      "decrypt_me": "blah",
-      "locked": "01"
+      "decrypt_me": "default_flag"
+    },
+    "room_4": {
+      "decrypt_me": "default_flag",
+      "compare_me": "523468946",
+      "locked": "11",
+      "obj_salt": "dGVzdC1zYWx0LTEyMw=="
+    },
+    "room_10": {
+      "compare_me": "blhmc8htn8rvthurah",
+      "locked": "11",
+      "decrypt_me": "default_flag",
+      "obj_salt": "dGVzdC1zYWx0LTEyMw=="
+    },
+    "room_8": {
+      "locked": "11",
+      "obj_salt": "dGVzdC1zYWx0LTEyMw==",
+      "decrypt_me": "default_flag",
+      "compare_me": "blwwcdcnewndf de0pwah"
+    },
+    "cat.txt": {
+      "locked": "00"
+    },
+    "room_7": {
+      "locked": "11",
+      "decrypt_me": "default_flag",
+      "compare_me": "blwwnecberytc846536375ah",
+      "obj_salt": "dGVzdC1zYWx0LTEyMw=="
+    },
+    "room_3": {
+      "locked": "11",
+      "compare_me": "blwwnryvrewnhwusw8sue0pwah",
+      "decrypt_me": "default_flag",
+      "obj_salt": "dGVzdC1zYWx0LTEyMw=="
+    },
+    "some1": {
+      "locked": "00"
+    },
+    "room_6": {
+      "locked": "11",
+      "compare_me": "blwx yd cydcus dcg9sds83647",
+      "obj_salt": "dGVzdC1zYWx0LTEyMw==",
+      "decrypt_me": "default_flag"
     }
   }
 }
