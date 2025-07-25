@@ -35,9 +35,9 @@ impl ObjectInfo {
             .insert("obj_salt".to_string(), Value::String(obj_salt));
         obj
     }
-    pub fn with_decrypt_me(mut self,decrypt_me:String)->Self{
+    pub fn with_decrypt_me(mut self, decrypt_me: String) -> Self {
         self.properties
-        .insert("decrypt_me".to_string(),Value::String(decrypt_me));
+            .insert("decrypt_me".to_string(), Value::String(decrypt_me));
         self
     }
     pub fn with_compare_me(mut self, compare_me: String) -> Self {
@@ -188,7 +188,7 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
                         )));
                     }
                 }
-            } 
+            }
         }
 
         // Trim any string values in properties
@@ -285,7 +285,9 @@ pub fn set_as_default_obj(obj_path: &Path, obj_name: &str) -> Result<(), InfoErr
         .or_insert_with(ObjectInfo::default);
 
     // Set the locked property to "00" (unlocked)
-    obj_info.properties.insert("locked".to_string(), Value::String("00".to_string()));
+    obj_info
+        .properties
+        .insert("locked".to_string(), Value::String("00".to_string()));
     obj_info.properties.remove("decrypt_me");
     obj_info.properties.remove("compare_me");
     // Write back the updated info
@@ -323,7 +325,6 @@ pub fn del_compare_me_from_info(obj_path: &Path, obj_name: &str) -> Result<(), I
     Ok(())
 }
 
-
 pub fn del_compare_met_from_info(obj_path: &Path, obj_name: &str) -> Result<(), InfoError> {
     let info_path = &obj_path
         .parent()
@@ -347,10 +348,7 @@ pub fn del_compare_met_from_info(obj_path: &Path, obj_name: &str) -> Result<(), 
     std::fs::write(info_path, json)?;
     Ok(())
 }
-pub fn set_to_unlocked_chest(
-    obj_path: &Path,
-    obj_name: &str,
-) -> Result<(), InfoError> {
+pub fn set_to_unlocked_chest(obj_path: &Path, obj_name: &str) -> Result<(), InfoError> {
     let info_path = &obj_path
         .parent()
         .unwrap()
@@ -365,7 +363,9 @@ pub fn set_to_unlocked_chest(
         .or_insert_with(ObjectInfo::default);
 
     // Set the locked property to "00" (unlocked)
-    obj_info.properties.insert("locked".to_string(), Value::String("00".to_string()));
+    obj_info
+        .properties
+        .insert("locked".to_string(), Value::String("00".to_string()));
 
     // Write back the updated info
     let json = serde_json::to_string_pretty(&info)?;

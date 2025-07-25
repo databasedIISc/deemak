@@ -1,8 +1,8 @@
 use super::super::argparser::ArgParser;
 use super::super::cmds::normalize_path;
 use crate::metainfo::info_reader::{
-     del_compare_me_from_info, del_decrypt_me_from_info,
-    read_get_obj_info, update_obj_status,set_as_default_obj
+    del_compare_me_from_info, del_decrypt_me_from_info, read_get_obj_info, set_as_default_obj,
+    update_obj_status,
 };
 use crate::metainfo::read_lock_perm;
 use crate::rns::security::{argonhash, characterise_enc_key, decrypt, encrypt};
@@ -102,7 +102,7 @@ pub fn dev_lock(
                 log::log_info("dev_lock", err_msg.as_str());
                 return Err(err_msg);
             }
-            let path_to_level = normalize_path(&current_dir.join(args[1])); 
+            let path_to_level = normalize_path(&current_dir.join(args[1]));
             dev_remove_level_lock(&path_to_level, current_dir, root_dir)
         }
         _ => Err(format!(
@@ -132,7 +132,7 @@ fn dev_make_level(
             info_path.display()
         ));
     }
-    
+
     let lock_perm = read_lock_perm(&path);
     if lock_perm.is_err() {
         return Err(format!(
@@ -144,8 +144,9 @@ fn dev_make_level(
     if is_level {
         return Err(format!("Object at {} is already a level.", path.display()));
     }
-    let level_name=&path.parent().
-        and_then(|s| s.file_name())
+    let level_name = &path
+        .parent()
+        .and_then(|s| s.file_name())
         .and_then(|s| s.to_str())
         .ok_or("Invalid level name")?;
 
@@ -161,9 +162,14 @@ fn dev_make_level(
             path.display()
         ));
     }
-    //insert empty string at compare me 
-    let attempt_2=update_obj_status(&path, level_name, "decrypt_me",serde_json::Value::String("default_flag".to_string()));
-    if attempt_2.is_err(){
+    //insert empty string at compare me
+    let attempt_2 = update_obj_status(
+        &path,
+        level_name,
+        "decrypt_me",
+        serde_json::Value::String("default_flag".to_string()),
+    );
+    if attempt_2.is_err() {
         return Err("unable to set default decrypt_me ".to_string());
     }
     Ok("Level created successfully".into())
@@ -335,7 +341,12 @@ fn dev_lock_chest(
     //check if is locked
 
     //create compare_me
-    let attempt1 = update_obj_status(&path, obj_name, "compare_me", serde_json::Value::String(solution.to_string()));
+    let attempt1 = update_obj_status(
+        &path,
+        obj_name,
+        "compare_me",
+        serde_json::Value::String(solution.to_string()),
+    );
     if attempt1.is_err() {
         return Err(format!(
             "Failed to remove compare_me from info for the chest: {}",
@@ -546,8 +557,8 @@ pub fn dev_remove_level_lock(
     if !is_level {
         return Err(format!("Object {} is not a level.", path.display()));
     }
-    let attempt_set_as_default=set_as_default_obj(&path,obj_name);
-    //change lock perm 
+    let attempt_set_as_default = set_as_default_obj(&path, obj_name);
+    //change lock perm
     if attempt_set_as_default.is_err() {
         return Err(format!(
             "Failed to set object as default: {}",
