@@ -2,10 +2,10 @@
   "location": "HOME/room_3",
   "about": "You are in 'HOME/room_3'. Look around and explore!",
   "objects": {
-    "books.txt": {
+    "shit.txt": {
       "locked": "00"
     },
-    "shit.txt": {
+    "books.txt": {
       "locked": "00"
     }
   }

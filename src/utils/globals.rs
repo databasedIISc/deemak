@@ -5,9 +5,53 @@ use std::sync::Mutex;
 
 /// Shell history to store the commands executed by the user.
 pub static SHELL_HISTORY: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
-
 /// Global user information instance
 pub static USER_INFO: OnceCell<UserInfo> = OnceCell::new();
+
+/// Font options available in the application.
+pub const FONT_OPTIONS: [(&str, &str); 11] = [
+    (
+        "JetBrains Mono Medium",
+        "fontbook/fonts/ttf/JetBrainsMono-Medium.ttf",
+    ),
+    (
+        "JetBrains Mono Regular",
+        "fontbook/fonts/ttf/JetBrainsMono-Regular.ttf",
+    ),
+    (
+        "JetBrains Mono NL Light",
+        "fontbook/fonts/ttf/JetBrainsMonoNL-Light.ttf",
+    ),
+    (
+        "JetBrains Mono NL Medium",
+        "fontbook/fonts/ttf/JetBrainsMonoNL-Medium.ttf",
+    ),
+    (
+        "JetBrains Mono NL Regular",
+        "fontbook/fonts/ttf/JetBrainsMonoNL-Regular.ttf",
+    ),
+    (
+        "JetBrains Mono NL Thin",
+        "fontbook/fonts/ttf/JetBrainsMonoNL-Thin.ttf",
+    ),
+    (
+        "JetBrains Mono NL Thin Italic",
+        "fontbook/fonts/ttf/JetBrainsMonoNL-ThinItalic.ttf",
+    ),
+    ("Hack Nerd", "fontbook/fonts/ttf/HackNerdFont-Regular.ttf"),
+    (
+        "Hack Nerd Mono",
+        "fontbook/fonts/ttf/HackNerdFontMono-Regular.ttf",
+    ),
+    (
+        "Hack Nerd Propo",
+        "fontbook/fonts/ttf/HackNerdFontPropo-Regular.ttf",
+    ),
+    (
+        "Meslo LGS NF Regular",
+        "fontbook/fonts/ttf/MesloLGS NF Regular.ttf",
+    ),
+];
 
 /// User information structure with expandable functionality
 #[derive(Debug, Clone)]

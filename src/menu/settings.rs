@@ -1,4 +1,5 @@
-use crate::utils::config::{self, FONT_OPTIONS};
+use crate::utils::{config, globals::FONT_OPTIONS};
+
 use raylib::prelude::*;
 use std::time::{Duration, Instant};
 
@@ -39,7 +40,7 @@ pub fn show_font_selection(
         .iter()
         .map(|(_, path)| {
             rl.load_font_ex(thread, path, 30, None)
-                .unwrap_or_else(|e| panic!("Failed to load font: {}. Error: {}", path, e))
+                .unwrap_or_else(|e| panic!("Failed to load font: {path}. Error: {e}"))
         })
         .collect();
 
@@ -115,7 +116,7 @@ pub fn show_font_selection(
 
             // Create the display text with the "(default)" label for the first option.
             let display_text = if i == 0 {
-                format!("{} (default)", name)
+                format!("{name} (default)")
             } else {
                 name.to_string()
             };
@@ -370,7 +371,7 @@ fn wrap_text(font: &Font, text: &str, font_size: f32, spacing: f32, max_width: f
         let test_line = if current_line.is_empty() {
             word.to_string()
         } else {
-            format!("{} {}", current_line, word)
+            format!("{current_line} {word}")
         };
 
         let text_size = font.measure_text(&test_line, font_size, spacing);
