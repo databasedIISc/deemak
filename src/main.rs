@@ -1,23 +1,12 @@
 #![allow(unused_variables, unused_mut, dead_code)]
-mod commands;
-mod gui_main;
-mod gui_shell;
-mod keys;
-mod login;
-mod menu;
-mod metainfo;
-mod rns;
-mod server;
-mod utils;
 use crate::gui_main::{run_gui_loop, sekai_initialize};
 use crate::gui_shell::DEEMAK_BANNER;
+use crate::metainfo::valid_sekai::validate_or_create_sekai;
+use crate::rns::create_dmk_sekai::original_from_encrypted_sekai;
+use crate::rns::{passlock, restore_comp::generate_temp_path};
 use crate::utils::{cleanup::exit_deemak, debug_mode, find_root, log};
 use crate::{rns::create_dmk_sekai, utils::globals::set_sekai_dir};
 use clap::{Parser, Subcommand};
-use deemak::metainfo::valid_sekai::validate_or_create_sekai;
-use deemak::rns::create_dmk_sekai::original_from_encrypted_sekai;
-use deemak::rns::passlock;
-use deemak::rns::restore_comp::generate_temp_path;
 use deemak::*;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
@@ -108,16 +97,6 @@ fn input_password(confirm: bool) -> String {
 fn main() {
     println!("{DEEMAK_BANNER}");
     let args = DeemakArgs::parse();
-
-    log::log_info("Application", "Starting DEEMAK Shell");
-
-    // get absolute path to the sekai directory
-    let sekai_path = args.sekai_directory.clone();
-    log::log_info(
-        "SEKAI",
-        &format!("Sekai directory provided: {sekai_path:?}"),
-    );
-
     // Set Debug Mode if given
     if args.debug {
         DEBUG_MODE.set(true).expect("DEBUG_MODE already set");
@@ -275,17 +254,6 @@ fn main() {
                 }
             },
         }
-        return;
-    }
-
-    if args.restore_sekai {
-        log::log_info("Application", "Restoring Sekai from Deemak Encrypted file");
-        if let Err(e) = create_dmk_sekai::original_from_encrypted_sekai(&sekai_path) {
-            log::log_error("SEKAI", &format!("Failed to restore Sekai: {e}"));
-            eprintln!("Error: Failed to restore Sekai: {e}");
-            std::process::exit(1);
-        }
-        return;
     }
 
     if sekai_path.is_dir() {
@@ -312,7 +280,7 @@ fn main() {
                 &format!("Found root directory for Sekai: {}", sekai_dir.display()),
             );
             // Set the global Sekai directory
-            set_world_dir(sekai_dir);
+            set_sekai_dir(sekai_dir);
         }
         Ok(None) => {
             log::log_error(
@@ -323,7 +291,7 @@ fn main() {
                 "Error: Failed to find root directory for Sekai. Creating meta directories for Sekai."
             );
             validate_or_create_sekai(&sekai_path, true);
-            set_world_dir(sekai_path.clone());
+            set_sekai_dir(sekai_path.clone());
             validate_or_create_sekai(&sekai_path, false);
         }
         Err(e) => {
@@ -347,10 +315,10 @@ fn main() {
     if args.web {
         // TODO: Remove the extra sekai_no_hajimari call, it will be shifted to the server module
         // later on.
-        sekai_no_hajimari(&sekai_path);
+        sekai_initialize(&sekai_path);
         log::log_info("Application", "Running in web mode");
         // server::launch_web(sekai_dir.clone().unwrap());
-        let _ = server::server();
+        let _ = deemak::server::server();
         return;
     }
 
