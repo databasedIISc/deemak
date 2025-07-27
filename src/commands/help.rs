@@ -16,6 +16,8 @@ pub fn get_command_help(command: &str) -> Option<&'static str> {
         "clear" => Some("clear: Clears the screen."),
         "restore" => Some(restore::HELP_TEXT),
         "save" => Some(save::HELP_TEXT),
+        "solve" => Some(solve::HELP_TEXT),
+        "unlock" => Some(unlock::HELP_TXT),
         _ => Some("No help available for this command. Check if the command is valid."),
     }
 }

@@ -29,18 +29,30 @@ impl ObjectInfo {
         obj
     }
 
-    pub fn with_decrypt_me(decrypt_me: String) -> Self {
-        let mut obj = Self::new();
-        obj.properties
-            .insert("decrypt_me".to_string(), Value::String(decrypt_me));
-        obj
-    }
-
     pub fn with_obj_salt(obj_salt: String) -> Self {
         let mut obj = Self::new();
         obj.properties
             .insert("obj_salt".to_string(), Value::String(obj_salt));
         obj
+    }
+    pub fn with_decrypt_me(mut self, decrypt_me: String) -> Self {
+        self.properties
+            .insert("decrypt_me".to_string(), Value::String(decrypt_me));
+        self
+    }
+    pub fn with_compare_me(mut self, compare_me: String) -> Self {
+        self.properties
+            .insert("compare_me".to_string(), Value::String(compare_me));
+        self
+    }
+
+    pub fn without_decrypt_me(mut self) -> Self {
+        self.properties.remove("decrypt_me");
+        self
+    }
+    pub fn without_compare_me(mut self) -> Self {
+        self.properties.remove("compare_me");
+        self
     }
 }
 
@@ -161,33 +173,21 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
                 s.chars().next().map(|c| c == '1'),
                 s.chars().nth(1).map(|c| c == '1'),
             ) {
-                if !is_locked {
-                    continue; // Not locked, skip further checks
+                if is_locked {
+                    // enure it has a "compare me property
+                    if !obj_info.properties.contains_key("compare_me") {
+                        return Err(InfoError::ValidationError(format!(
+                            "Locked objects must have a 'compare_me' property. Object Info: {:?}",
+                            obj_info.properties
+                        )));
+                    }
+                    if !obj_info.properties.contains_key("obj_salt") {
+                        return Err(InfoError::ValidationError(format!(
+                            "Locked objects must have an 'obj_salt' property. Object Info: {:?}",
+                            obj_info.properties
+                        )));
+                    }
                 }
-                // ensure it has a 'decrypt_me' property
-                if is_level && !obj_info.properties.contains_key("decrypt_me") {
-                    return Err(InfoError::ValidationError(format!(
-                        "Locked objects must have a 'decrypt_me' property. Object Info: {:?}",
-                        obj_info.properties
-                    )));
-                }
-                // obj_salt is required for locked objects
-                if !obj_info.properties.contains_key("obj_salt") {
-                    return Err(InfoError::ValidationError(format!(
-                        "Locked objects must have an 'obj_salt' property. Object Info: {:?}",
-                        obj_info.properties
-                    )));
-                }
-                // enure it has a "compare me property
-                if !obj_info.properties.contains_key("compare_me") {
-                    return Err(InfoError::ValidationError(format!(
-                        "Locked objects must have a 'compare_me' property. Object Info: {:?}",
-                        obj_info.properties
-                    )));
-                }
-            } else {
-                // If not locked, ensure 'decrypt_me' is not present
-                obj_info.properties.remove("decrypt_me");
             }
         }
 
@@ -201,6 +201,27 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
 
     info.validate()?;
     Ok(info)
+}
+pub fn read_about(info_path: &Path) -> Result<String, String> {
+    let info = read_validate_info(info_path);
+    if info.is_err() {
+        return Err(format!("Error reading info file: {}", info.err().unwrap()));
+    }
+    Ok(info.unwrap().about)
+}
+pub fn read_location(info_path: &Path) -> Result<String, String> {
+    let info = read_validate_info(info_path);
+    if info.is_err() {
+        return Err(format!("Error reading info file: {}", info.err().unwrap()));
+    }
+    Ok(info.unwrap().location)
+}
+pub fn write_about(info_path: &Path, new_value: String) -> Result<String, String> {
+    let mut info = read_validate_info(info_path).map_err(|e| e.to_string())?;
+    info.about = new_value;
+    let json = serde_json::to_string_pretty(&info).map_err(|e| e.to_string())?;
+    fs::write(info_path, json).map_err(|e| e.to_string())?;
+    Ok("write successful".to_string())
 }
 
 /// Add an object to info.json with optional initial properties
@@ -247,6 +268,109 @@ pub fn del_obj_from_info(obj_path: &Path, obj_name: &str) -> Result<(), InfoErro
         let json = serde_json::to_string_pretty(&info)?;
         std::fs::write(info_path, json)?;
     }
+    Ok(())
+}
+pub fn set_as_default_obj(obj_path: &Path, obj_name: &str) -> Result<(), InfoError> {
+    let info_path = &obj_path
+        .parent()
+        .unwrap()
+        .join(".dir_info")
+        .join("info.json");
+    let mut info = read_validate_info(info_path)?;
+
+    // Get or create the object entry
+    let obj_info = info
+        .objects
+        .entry(obj_name.to_string())
+        .or_insert_with(ObjectInfo::default);
+
+    // Set the locked property to "00" (unlocked)
+    obj_info
+        .properties
+        .insert("locked".to_string(), Value::String("00".to_string()));
+    obj_info.properties.remove("decrypt_me");
+    obj_info.properties.remove("compare_me");
+    // Write back the updated info
+    let json = serde_json::to_string_pretty(&info)?;
+    std::fs::write(info_path, json)?;
+
+    Ok(())
+}
+pub fn del_decrypt_me_from_info(obj_path: &Path, obj_name: &str) -> Result<(), InfoError> {
+    let info_path = &obj_path
+        .parent()
+        .unwrap()
+        .join(".dir_info")
+        .join("info.json");
+    let mut info = read_validate_info(info_path)?;
+
+    if let Some(obj_info) = info.objects.get_mut(obj_name) {
+        obj_info.properties.remove("decrypt_me");
+        let json = serde_json::to_string_pretty(&info)?;
+        std::fs::write(info_path, json)?;
+    }
+    Ok(())
+}
+pub fn del_compare_me_from_info(obj_path: &Path, obj_name: &str) -> Result<(), InfoError> {
+    let info_path = &obj_path
+        .parent()
+        .unwrap()
+        .join(".dir_info")
+        .join("info.json");
+    let mut obj_info = read_get_obj_info(info_path, obj_name)?;
+
+    obj_info = obj_info.without_compare_me();
+    let json = serde_json::to_string_pretty(&obj_info)?;
+    std::fs::write(info_path, json)?;
+    Ok(())
+}
+
+pub fn del_compare_met_from_info(obj_path: &Path, obj_name: &str) -> Result<(), InfoError> {
+    let info_path = &obj_path
+        .parent()
+        .unwrap()
+        .join(".dir_info")
+        .join("info.json");
+    if !info_path.exists() {
+        return Err(InfoError::NotFound(info_path.display().to_string()));
+    }
+    println!("info_path: {}", info_path.display());
+    let obj_info = read_get_obj_info(info_path, obj_name);
+    if obj_info.is_err() {
+        return Err(InfoError::ValidationError(
+            "Object not found in info.json".to_string(),
+        ));
+    }
+    let mut obj_info = obj_info.unwrap();
+
+    obj_info = obj_info.without_compare_me();
+    let json = serde_json::to_string_pretty(&obj_info)?;
+    std::fs::write(info_path, json)?;
+    Ok(())
+}
+pub fn set_to_unlocked_chest(obj_path: &Path, obj_name: &str) -> Result<(), InfoError> {
+    let info_path = &obj_path
+        .parent()
+        .unwrap()
+        .join(".dir_info")
+        .join("info.json");
+    let mut info = read_validate_info(info_path)?;
+
+    // Get or create the object entry
+    let obj_info = info
+        .objects
+        .entry(obj_name.to_string())
+        .or_insert_with(ObjectInfo::default);
+
+    // Set the locked property to "00" (unlocked)
+    obj_info
+        .properties
+        .insert("locked".to_string(), Value::String("00".to_string()));
+
+    // Write back the updated info
+    let json = serde_json::to_string_pretty(&info)?;
+    std::fs::write(info_path, json)?;
+
     Ok(())
 }
 
