@@ -1,6 +1,5 @@
 use crate::metainfo::info_reader::{InfoError, read_validate_info};
-use crate::utils::globals;
-use crate::utils::log;
+use crate::utils::{globals, log};
 use std::path::{Path, PathBuf};
 
 /// Find the root directory of a sekai by finding "location": "home"
@@ -51,11 +50,9 @@ pub fn get_home(sekai_path: &Path) -> Option<PathBuf> {
     }
 }
 
-/// Converts an absolute path to a path relative to WORLD_DIR
-/// Returns the original path if WORLD_DIR isn't set or if the path isn't within WORLD_DIR
-/// Also adds DEEMAK_TEMP prefix if the path is a temporary file
-pub fn relative_deemak_path(path: &Path, sekai_dir: Option<&Path>) -> PathBuf {
-    let _sekai_dir = if let Some(dir) = sekai_dir {
+/// Get the relative deemak path for a given path w.r.t sekai root directory.
+pub fn relative_deemak_path(path: &Path, sekai_root_dir: Option<&Path>) -> PathBuf {
+    let _sekai_dir = if let Some(dir) = sekai_root_dir {
         dir
     } else {
         &globals::get_sekai_dir()

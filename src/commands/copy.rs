@@ -2,6 +2,7 @@ use super::argparser::ArgParser;
 use super::cmds::normalize_path;
 use super::display_relative_path;
 use crate::commands::cmds::check_dir_info;
+use crate::epr_log_error;
 use crate::metainfo::info_reader::*;
 use crate::metainfo::lock_perm;
 use crate::metainfo::valid_sekai::create_dir_info;
@@ -39,7 +40,7 @@ fn _print_dir_contents(path: &Path) {
             }
         }
     } else {
-        println!("Failed to read directory: {}", path.display());
+        epr_log_error!("copy", "Failed to read directory: {}", path.display());
     }
 }
 

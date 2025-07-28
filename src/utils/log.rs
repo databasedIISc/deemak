@@ -1,9 +1,9 @@
-use crate::DEBUG_MODE;
+use crate::DEV_MODE;
 use crate::utils::relative_deemak_path;
 use std::path::Path;
 
 pub fn debug_mode() -> bool {
-    *DEBUG_MODE.get().unwrap_or(&false)
+    *DEV_MODE.get().unwrap_or(&false)
 }
 
 /// Replaces the Paths in the message with their relative paths.

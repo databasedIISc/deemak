@@ -73,6 +73,31 @@ pub fn zlib_compress(source_path: &Path, output_file: &Path) -> io::Result<()> {
     Ok(())
 }
 
+/// Set Xattr password to a file
+pub fn set_xattr_password(file_path: &Path, password: &str) -> Result<(), String> {
+    log::log_debug(
+        "Xattr Set",
+        &format!("Setting xattr password for file: {}", file_path.display()),
+    );
+    xattr::set(file_path, "pass.deemak", password.as_bytes())
+        .map_err(|e| format!("Failed to set xattr metadata: {e}"))?;
+    Ok(())
+}
+
+/// Get Xattr password from a file
+pub fn get_xattr_password(file_path: &Path) -> String {
+    let password_bytes =
+        xattr::get(file_path, "pass.deemak").expect("Failed to read xattr metadata");
+    match password_bytes {
+        Some(bytes) => String::from_utf8(bytes).expect("Password metadata is not valid UTF-8"),
+        _ => {
+            let new_pass = format!("sekai_{}", rand::random::<u64>());
+            let _ = set_xattr_password(file_path, &new_pass);
+            new_pass
+        }
+    }
+}
+
 /// Decompresses a zlib tarball to a file/directory
 pub fn zlib_decompress(archive_path: &Path, output_path: &Path) -> io::Result<()> {
     let file = File::open(archive_path)?;
@@ -133,6 +158,9 @@ pub fn encrypt_file(input_path: &Path, output_path: &Path, password: &str) -> Re
 }
 
 pub fn check_dmk_magic(sekai_path: &Path) -> Result<bool, String> {
+    if !sekai_path.is_file() {
+        return Err("Provided path is not a file".to_string());
+    }
     let data = fs::read(sekai_path).map_err(|e| format!("Failed to read input file: {e}"))?;
 
     // Check magic header exists and matches

@@ -6,6 +6,7 @@ pub use log::debug_mode;
 pub mod auth;
 pub mod cleanup;
 pub mod config;
+pub mod file_mgr;
 pub mod globals;
 pub mod prompt;
 pub mod shell_history;

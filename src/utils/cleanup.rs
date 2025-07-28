@@ -1,3 +1,4 @@
+use crate::epr_log_error;
 use crate::utils::log;
 use std::collections::HashSet;
 use std::fs::{self, read_dir};
@@ -158,8 +159,7 @@ pub fn exit_deemak(code: i32) -> ! {
     log::log_info("Application", "Exiting DEEMAK Shell");
     let clean_result = cleanup_deemak();
     if let Err(e) = clean_result {
-        log::log_error("Cleanup", &e);
-        eprintln!("Error during cleanup: {e}");
+        epr_log_error!("Cleanup", "Error during cleanup: {e}");
     } else {
         log::log_info("Cleanup", "Temporary files cleaned up successfully.");
     }

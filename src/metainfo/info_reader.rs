@@ -334,7 +334,6 @@ pub fn del_compare_met_from_info(obj_path: &Path, obj_name: &str) -> Result<(), 
     if !info_path.exists() {
         return Err(InfoError::NotFound(info_path.display().to_string()));
     }
-    println!("info_path: {}", info_path.display());
     let obj_info = read_get_obj_info(info_path, obj_name);
     if obj_info.is_err() {
         return Err(InfoError::ValidationError(
