@@ -1,7 +1,7 @@
 use super::argparser::ArgParser;
 use crate::rns::restore_comp::backup_sekai;
 use crate::utils::log;
-use std::path::PathBuf;
+use std::path::Path;
 
 pub const HELP_TEXT: &str = r#"
 Usage: save
@@ -10,7 +10,7 @@ Saves the progress of your sekai progress. This means all your progress is saved
 - save  : Save your current progress of the Sekai.
 "#;
 
-pub fn save(args: &[&str], root_path: &PathBuf) -> String {
+pub fn save(args: &[&str], root_path: &Path) -> String {
     let mut parser = ArgParser::new(&[]);
     let args_string: Vec<String> = args.iter().map(|s| s.to_string()).collect();
 
@@ -28,6 +28,8 @@ pub fn save(args: &[&str], root_path: &PathBuf) -> String {
                 err_msg += "Failed to save Sekai. Please check the logs for more details.";
                 log::log_error("save", err_msg.as_str());
                 return err_msg;
+            } else {
+                log::log_info("save", "Sekai saved successfully.");
             }
             "Sekai saved successfully \n".to_string()
         }

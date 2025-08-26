@@ -70,10 +70,10 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
 
                 // Check if directory is locked
                 let dir_path = current_dir.join(dir_name);
-                if let Ok((_, is_locked)) = lock_perm::read_lock_perm(&dir_path) {
-                    if is_locked {
-                        return format!("{dir_name} is locked. To list contents, unlock it first.");
-                    }
+                if let Ok((_, is_locked)) = lock_perm::read_lock_perm(&dir_path)
+                    && is_locked
+                {
+                    return format!("{dir_name} is locked. To list contents, unlock it first.");
                 }
 
                 if check_dir_info(Path::new(dir_name)) {
@@ -106,19 +106,20 @@ pub fn ls(args: &[&str], current_dir: &Path, root_dir: &Path) -> String {
                 directories_vec.retain(|d| !is_hidden(d));
             }
 
-            if files_vec.is_empty() && directories_vec.is_empty() {
-                if let Err(e) = std::fs::read_dir(&target_path) {
-                    let error_msg = if e.kind() == std::io::ErrorKind::NotFound {
-                        "No such file or directory".to_string()
-                    } else {
-                        e.to_string()
-                    };
-                    return format!(
-                        "ls: cannot access '{}': {}",
-                        display_relative_path(&target_path, root_dir),
-                        error_msg
-                    );
-                }
+            if files_vec.is_empty()
+                && directories_vec.is_empty()
+                && let Err(e) = std::fs::read_dir(&target_path)
+            {
+                let error_msg = if e.kind() == std::io::ErrorKind::NotFound {
+                    "No such file or directory".to_string()
+                } else {
+                    e.to_string()
+                };
+                return format!(
+                    "ls: cannot access '{}': {}",
+                    display_relative_path(&target_path, root_dir),
+                    error_msg
+                );
             }
             // Check lock status
             // Check lock status and format display names

@@ -1,4 +1,5 @@
 use crate::keys::key_to_char;
+use crate::utils::auth;
 use crate::utils::globals::{UserInfo, set_user_info};
 use raylib::ffi::{DrawTextEx, LoadFontEx, MeasureTextEx, SetExitKey, Vector2};
 use raylib::prelude::*;
@@ -79,12 +80,12 @@ impl LoginAnimation {
             }
         }
 
-        if self.animation_done && !self.show_input {
-            if let Some(start) = self.pause_start {
-                if start.elapsed() >= Duration::from_secs(0) {
-                    self.show_input = true;
-                }
-            }
+        if self.animation_done
+            && !self.show_input
+            && let Some(start) = self.pause_start
+            && start.elapsed() >= Duration::from_secs(0)
+        {
+            self.show_input = true;
         }
 
         if self.stream_index < full_text.len() && self.last_stream_time.elapsed() >= stream_delay {
@@ -212,20 +213,16 @@ impl FieldPair {
         self.username.draw(
             d,
             font,
-            config.base_x,
-            user_y,
-            config.box_width,
-            config.box_height,
+            (config.base_x, user_y),
+            (config.box_width, config.box_height),
             highlight_color,
             false,
         );
         self.password.draw(
             d,
             font,
-            config.base_x,
-            pass_y,
-            config.box_width,
-            config.box_height,
+            (config.base_x, pass_y),
+            (config.box_width, config.box_height),
             highlight_color,
             true,
         );
@@ -381,10 +378,8 @@ impl InputField {
         &self,
         d: &mut RaylibDrawHandle,
         font: raylib::ffi::Font,
-        base_x: f32,
-        base_y: f32,
-        box_width: f32,
-        box_height: f32,
+        (base_x, base_y): (f32, f32),
+        (box_width, box_height): (f32, f32),
         highlight_color: Color,
         mask: bool, // true for password fields
     ) {
@@ -464,7 +459,7 @@ const REGISTER_FOOTER: &str = "Welcome to Deemak by DBD! Use up/down keys to swi
 struct AuthHandler;
 
 impl AuthHandler {
-    fn handle_login(fields: &mut FieldPair, users: &[crate::utils::auth::User]) -> Option<bool> {
+    fn handle_login(fields: &mut FieldPair, users: &[auth::User]) -> Option<bool> {
         if fields.username.entering {
             if !fields.username.value.is_empty() {
                 fields.username.entering = false;
@@ -475,11 +470,7 @@ impl AuthHandler {
             let username = fields.username.value.trim();
             let password = fields.password.value.trim();
             if let Some(user) = users.iter().find(|u| u.username == username) {
-                if crate::utils::auth::verify_password(
-                    &password.to_string(),
-                    &user.salt,
-                    &user.password_hash,
-                ) {
+                if auth::verify_password(&password.to_string(), &user.salt, &user.password_hash) {
                     // Create and authenticate UserInfo
                     let mut user_info = UserInfo::new(
                         username.to_string(),
@@ -503,10 +494,7 @@ impl AuthHandler {
         None
     }
 
-    fn handle_register(
-        fields: &mut FieldPair,
-        users: &mut Vec<crate::utils::auth::User>,
-    ) -> Option<bool> {
+    fn handle_register(fields: &mut FieldPair, users: &mut Vec<auth::User>) -> Option<bool> {
         if fields.username.entering {
             if !fields.username.value.is_empty() {
                 fields.username.entering = false;
@@ -520,27 +508,28 @@ impl AuthHandler {
                 fields.username.warning = true;
                 fields.username.warning_text = "Username already exists!".to_string();
             } else {
-                match crate::utils::auth::hash_password(password) {
+                match auth::hash_password(password) {
                     Ok((salt, hash)) => {
-                        users.push(crate::utils::auth::User {
+                        users.push(auth::User {
                             username: username.to_string(),
                             salt: salt.clone(),
                             password_hash: hash.clone(),
                         });
-                        if let Err(_) =
-                            std::panic::catch_unwind(|| crate::utils::auth::save_users(users))
-                        {
-                            fields.username.warning = true;
-                            fields.username.warning_text = "Failed to save user!".to_string();
-                        } else {
-                            // Create and authenticate UserInfo
-                            let mut user_info =
-                                UserInfo::new(username.to_string(), salt.clone(), hash.clone());
-                            user_info.authenticate(); // Mark as authenticated with timestamp
+                        match std::panic::catch_unwind(|| auth::save_users(users)) {
+                            Err(_) => {
+                                fields.username.warning = true;
+                                fields.username.warning_text = "Failed to save user!".to_string();
+                            }
+                            Ok(_) => {
+                                // Create and authenticate UserInfo
+                                let mut user_info =
+                                    UserInfo::new(username.to_string(), salt.clone(), hash.clone());
+                                user_info.authenticate(); // Mark as authenticated with timestamp
 
-                            // Set global user info
-                            set_user_info(user_info).ok();
-                            return Some(true);
+                                // Set global user info
+                                set_user_info(user_info).ok();
+                                return Some(true);
+                            }
                         }
                     }
                     Err(_) => {
@@ -569,7 +558,7 @@ pub fn show_login(rl: &mut RaylibHandle, thread: &RaylibThread, _font_size: f32)
     let font_d = rl.get_font_default();
 
     // Load users and initialize components
-    let users_result = std::panic::catch_unwind(crate::utils::auth::load_users);
+    let users_result = std::panic::catch_unwind(auth::load_users);
     let mut users = match users_result {
         Ok(u) => u,
         Err(_) => {

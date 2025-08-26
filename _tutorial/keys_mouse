@@ -1,0 +1,39 @@
+,---,---,---,---,---,---,---,---,---,---,---,---,---,-------,
+|1/2| 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0 | + | ' | <-    |
+|---'-,-'-,-'-,-'-,-'-,-'-,-'-,-'-,-'-,-'-,-'-,-'-,-'-,-----|
+| ->| | Q | W | E | R | T | Y | U | I | O | P | ] | ^ |     |
+|-----',--',--',--',--',--',--',--',--',--',--',--',--'|    |
+| Caps | A | S | D | F | G | H | J | K | L | \ | [ | * |    |
+|----,-'-,-'-,-'-,-'-,-'-,-'-,-'-,-'-,-'-,-'-,-'-,-'---'----|
+|    | < | Z | X | C | V | B | N | M | , | . | - |          |
+|----'-,-',--'--,'---'---'---'---'---'---'-,-'---',--,------|
+| ctrl |  | alt |     Deemak Keyboard      |altgr |  | ctrl |
+'------'  '-----'--------------------------'------'  '------'
+
+Deemak has some convenient keyboard shortcuts like - 
+1) Ctrl-C : Directly move on to th next prompt without running the current one.
+2) Ctrl-K : Clear Screen. The same output as for `clear` command.
+3) Ctrl-Shift-C : Copy the mouse highlighted text.
+4) Ctrl-Shift-V : Paste the text from your clipboard.
+5) TAB: Press TAB when you are writing a file name to autocomplete. It will only work for the current directory instead of nested subdirectory autocompletion after your first `/`.
+
+    ,d88b
+ ,8P'    `8,
+ 8'       _.8._
+8       .'  |  '.
+       /    |    \
+      |    [_]    |
+      |     |     |
+      |-----'-----|
+      |           |
+      |           |
+      |;         .|
+      ;\         /;
+       \\       //
+   jgs  \'._ _.'/
+         '-...-'
+
+You can drag text using your mouse to highlight them and then copy it as mentioned before.
+
+Try dragging the Above Mouse and keyboard ASCII art, copying it and pasting it to your friend on Social Media!
+This can be convenient since you would need to copy the flags and paste it instead of manually typing the flag yourself.

@@ -1,0 +1,16 @@
+ _____             ____       _ 
+|_   _|_ _ _ __   |  _ \  ___| |
+  | |/ _` | '_ \  | | | |/ _ \ |
+  | | (_| | |_) | | |_| |  __/ |
+  |_|\__,_| .__/  |____/ \___|_|
+          |_|                   
+
+Do you wanna know how to create and delete files? Simple, use `tap` command to create files/directories and use `del` to delete them. You might need to check out `help` for each of them to know what parameters to pass.
+
+Try creating a file with `tap my_first_file`. You can also be creative and directory add it to your HOME directory with `..` as you learnt in the `filesystem` lecture.
+
+Now go inside `playground` and delete the `delete_me` file. Try on creating and deleting directories to understand more of what's going on.
+
+
+PS. Sorry, you can write text inside them yet. Well, why do you need to? Just focus on cracking and Solving. Deemak will take input's from you when needed. 
+If you are creating your own SEKAI, please use this command to create and delete files since it will automatically handle the object metadata handling itself.

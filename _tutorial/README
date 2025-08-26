@@ -11,14 +11,14 @@ Welcome to deemak shell. This is a small tutorial to help you get started with b
 ## Motivation
 This is a game based approach of a usual terminal you work with in real world. But many people find it difficult to work with terminal. So this is a game based approach to help you learn the basics of terminal and also Crack some COOL Puzzles!
 
-## Basics
-For starters, you can read objects and go into directories. Try running `ls` to see the list of objects and directories in your current location.
+For startes, you can use the command `help` to see the list of commands available in deemak shell. First let's start with the basics motions. Do `read moving_around` to learn how to move around in deemak shell.
 
-Then you can use `go <directory_name>` to go into a directory. Complete the tasks to move forward in the tutorial.
-## NOTE: These tasks are not checked by the game. It is just to help you learn the basics of deemak shell. Good Luck!
+Have fun!
 
-## Story Line
-You are a second-year student about to begin your third semester of college. As you progress, new opportunities and areas become accessible—places that were off-limits during your first year. Unravel your story for today!
+--------------------------
+Credits:
+Tutorial designed by: Anirudh Gupta
 
-** TASK 1: Go to mess and talk to your friend **
+DataBased Club, IISc Bengaluru
+GitHub: https://github.com/databasedIISc/deemak
 

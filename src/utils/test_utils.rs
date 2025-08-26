@@ -33,7 +33,8 @@ pub fn remove_file<P: AsRef<Path>>(path: P) {
 ///         └── file7.txt
 pub fn setup_test_dir(make_dirinfo: bool) -> (TempDir, PathBuf) {
     let temp_dir = TempDir::new().unwrap();
-    let root_path = temp_dir.path().to_path_buf();
+    let root_path = temp_dir.path().join("deemak");
+    fs::create_dir(&root_path).unwrap();
 
     create_file(root_path.join("file1.txt"), "hello from file1");
 
@@ -77,11 +78,11 @@ fn get_text_files_contents(path: &Path) -> HashMap<PathBuf, String> {
             let mut file = fs::File::open(entry_path).unwrap();
             let mut buffer = Vec::new();
             // Try to read to end, and then check if it's valid utf8
-            if file.read_to_end(&mut buffer).is_ok() {
-                if let Ok(content) = String::from_utf8(buffer) {
-                    let relative_path = entry_path.strip_prefix(path).unwrap().to_path_buf();
-                    contents.insert(relative_path, content.trim().to_string());
-                }
+            if file.read_to_end(&mut buffer).is_ok()
+                && let Ok(content) = String::from_utf8(buffer)
+            {
+                let relative_path = entry_path.strip_prefix(path).unwrap().to_path_buf();
+                contents.insert(relative_path, content.trim().to_string());
             }
         }
     }

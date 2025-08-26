@@ -54,7 +54,7 @@ pub const FONT_OPTIONS: [(&str, &str); 11] = [
 ];
 
 /// User information structure with expandable functionality
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct UserInfo {
     pub username: String,
     pub salt: String,
@@ -70,17 +70,6 @@ impl UserInfo {
             username,
             salt,
             password_hash,
-            is_authenticated: false,
-            login_time: None,
-        }
-    }
-
-    /// Create a default UserInfo instance
-    pub fn default() -> Self {
-        Self {
-            username: String::new(),
-            salt: String::new(),
-            password_hash: String::new(),
             is_authenticated: false,
             login_time: None,
         }
@@ -158,7 +147,7 @@ pub fn init_user_info(username: String, salt: String, password_hash: String) {
 }
 
 // Specialized getter/setter for WORLD_DIR
-pub fn get_world_dir() -> PathBuf {
+pub fn get_sekai_dir() -> PathBuf {
     let world_dir = SEKAI_DIR.get();
 
     // Return original path if WORLD_DIR is empty
@@ -168,11 +157,12 @@ pub fn get_world_dir() -> PathBuf {
         }
         return PathBuf::from(dir);
     }
-    PathBuf::new()
+    // `!` is the default path if WORLD_DIR is not set, something you wont expect initially.
+    PathBuf::from("!")
 }
 
 /// Set the WORLD_DIR global variable.
-pub fn set_world_dir(path: PathBuf) {
+pub fn set_sekai_dir(path: PathBuf) {
     SEKAI_DIR
         .set(path.to_string_lossy().to_string())
         .expect("WORLD_DIR already set");

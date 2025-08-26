@@ -1,0 +1,9 @@
+{
+  "location": "HOME/classroom/secret_door",
+  "about": "You are in 'HOME/classroom/secret_door'. Look around and explore!",
+  "objects": {
+    "congratulations": {
+      "locked": "00"
+    }
+  }
+}

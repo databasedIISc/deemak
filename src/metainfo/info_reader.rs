@@ -101,7 +101,7 @@ impl Info {
         if home_dir {
             "HOME".to_string()
         } else {
-            relative_deemak_path(path).display().to_string()
+            relative_deemak_path(path, None).display().to_string()
         }
     }
 
@@ -110,17 +110,17 @@ impl Info {
         let mut objects = HashMap::new();
 
         // If the path is a directory, read its files/dir and add to objects
-        if path.is_dir() {
-            if let Ok(entries) = std::fs::read_dir(path) {
-                for entry in entries.filter_map(|e| e.ok()) {
-                    if let Some(name) = entry.file_name().to_str() {
-                        if name != ".dir_info" {
-                            objects.insert(
-                                name.to_string(),
-                                ObjectInfo::with_locked(DEFAULT_PERMISSIONS.to_string()),
-                            );
-                        }
-                    }
+        if path.is_dir()
+            && let Ok(entries) = std::fs::read_dir(path)
+        {
+            for entry in entries.filter_map(|e| e.ok()) {
+                if let Some(name) = entry.file_name().to_str()
+                    && name != ".dir_info"
+                {
+                    objects.insert(
+                        name.to_string(),
+                        ObjectInfo::with_locked(DEFAULT_PERMISSIONS.to_string()),
+                    );
                 }
             }
         }
@@ -172,21 +172,20 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
             if let (Some(is_level), Some(is_locked)) = (
                 s.chars().next().map(|c| c == '1'),
                 s.chars().nth(1).map(|c| c == '1'),
-            ) {
-                if is_locked {
-                    // enure it has a "compare me property
-                    if !obj_info.properties.contains_key("compare_me") {
-                        return Err(InfoError::ValidationError(format!(
-                            "Locked objects must have a 'compare_me' property. Object Info: {:?}",
-                            obj_info.properties
-                        )));
-                    }
-                    if !obj_info.properties.contains_key("obj_salt") {
-                        return Err(InfoError::ValidationError(format!(
-                            "Locked objects must have an 'obj_salt' property. Object Info: {:?}",
-                            obj_info.properties
-                        )));
-                    }
+            ) && is_locked
+            {
+                // enure it has a "compare me property
+                if !obj_info.properties.contains_key("compare_me") {
+                    return Err(InfoError::ValidationError(format!(
+                        "Locked objects must have a 'compare_me' property. Object Info: {:?}",
+                        obj_info.properties
+                    )));
+                }
+                if !obj_info.properties.contains_key("obj_salt") {
+                    return Err(InfoError::ValidationError(format!(
+                        "Locked objects must have an 'obj_salt' property. Object Info: {:?}",
+                        obj_info.properties
+                    )));
                 }
             }
         }
@@ -334,7 +333,6 @@ pub fn del_compare_met_from_info(obj_path: &Path, obj_name: &str) -> Result<(), 
     if !info_path.exists() {
         return Err(InfoError::NotFound(info_path.display().to_string()));
     }
-    println!("info_path: {}", info_path.display());
     let obj_info = read_get_obj_info(info_path, obj_name);
     if obj_info.is_err() {
         return Err(InfoError::ValidationError(
@@ -445,37 +443,29 @@ pub fn get_encrypted_flag(path: &Path, level_name: &str) -> Result<String, Strin
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs::{self, File};
-    use std::io::Write;
-    use tempfile::tempdir;
+    use crate::utils::test_utils::{create_file, setup_test_dir};
 
     #[test]
     fn test_update_obj_status() {
         // Create a temporary directory for the test
-        let dir = tempdir().unwrap();
-        fs::create_dir_all(dir.path().join(".dir_info")).unwrap();
-        let info_path = dir.path().join(".dir_info/info.json");
-
-        // Create a dummy info.json file
-        let mut file = File::create(&info_path).unwrap();
-        file.write_all(b"{\"location\":\"test\",\"about\":\"test\",\"objects\":{}}")
-            .unwrap();
+        let (_temp_dir, root_path) = setup_test_dir(true);
+        let info_path = &root_path.join(".dir_info/info.json");
 
         // Create a dummy object file
-        let obj_path = dir.path().join("file.txt");
-        File::create(&obj_path).unwrap();
+        let obj_path = root_path.join("file.txt");
+        create_file(&obj_path, "dummy content");
 
         // Update the object's status
         update_obj_status(
             &obj_path,
             "file.txt",
             "locked",
-            serde_json::Value::Bool(true),
+            serde_json::Value::String("01".to_string()),
         )
         .unwrap();
 
         // Verify the update
-        let data = fs::read_to_string(&info_path).unwrap();
+        let data = fs::read_to_string(info_path).unwrap();
         let info: Info = serde_json::from_str(&data).unwrap();
         assert_eq!(
             info.objects
@@ -484,7 +474,7 @@ mod tests {
                 .properties
                 .get("locked")
                 .unwrap(),
-            &serde_json::Value::Bool(true)
+            &serde_json::Value::String("01".to_string())
         );
     }
 }

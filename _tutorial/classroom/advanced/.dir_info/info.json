@@ -1,0 +1,15 @@
+{
+  "location": "HOME/classroom/advanced",
+  "about": "This is an advance classroom where you learn more complicated commands like copying files, creating and deleting files, and more. These commands are not essential for a Deemak User, but for a Deemak Developer, sine they automatically take care of managing metadata and file structures.",
+  "objects": {
+    "creation_deletion": {
+      "locked": "00"
+    },
+    "playground": {
+      "locked": "00"
+    },
+    "copy_files": {
+      "locked": "00"
+    }
+  }
+}

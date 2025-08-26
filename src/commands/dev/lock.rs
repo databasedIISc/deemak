@@ -21,9 +21,7 @@ Option_1:
                         Option_2: -l, --lock, -u, --unlock
     -ll, --level_lock   Create a level lock with a solution and flag
     -rm, --rm_level_lock
-                        Remove level status from a level and delete decrypt_me and compare_me files if they exist
-
-Examples:
+                        Remove level status from a level and delete decrypt_me and compare_me files if they exist:
 "#;
 pub fn dev_lock(
     args: &[&str],

@@ -1,4 +1,5 @@
 pub mod cmds;
+mod tests;
 
 mod echo;
 pub use echo::echo;

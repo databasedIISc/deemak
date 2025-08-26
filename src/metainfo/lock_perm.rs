@@ -61,20 +61,20 @@ pub fn operation_locked_perm(
     // Check all parents up to root
     let mut current = obj_path;
     while let Some(parent) = current.parent() {
-        if let Ok((_, locked)) = read_lock_perm(current) {
-            if locked {
-                let rel_path = relative_deemak_path(current);
-                log::log_warning(
-                    operation,
-                    &format!("Locked path: {} - {}", rel_path.display(), message),
-                );
-                return Err(format!(
-                    "{}: {} is locked. {}",
-                    operation,
-                    rel_path.display(),
-                    message
-                ));
-            }
+        if let Ok((_, locked)) = read_lock_perm(current)
+            && locked
+        {
+            let rel_path = relative_deemak_path(current, None);
+            log::log_warning(
+                operation,
+                &format!("Locked path: {} - {}", rel_path.display(), message),
+            );
+            return Err(format!(
+                "{}: {} is locked. {}",
+                operation,
+                rel_path.display(),
+                message
+            ));
         }
         current = parent;
     }
@@ -82,7 +82,7 @@ pub fn operation_locked_perm(
     // Check the object itself
     match read_lock_perm(obj_path) {
         Ok((_, true)) => {
-            let rel_path = relative_deemak_path(obj_path);
+            let rel_path = relative_deemak_path(obj_path, None);
             log::log_warning(
                 operation,
                 &format!("Locked: {} - {}", rel_path.display(), message),
@@ -100,7 +100,7 @@ pub fn operation_locked_perm(
                 operation,
                 &format!(
                     "Lock check failed for {}: {}",
-                    relative_deemak_path(obj_path).display(),
+                    relative_deemak_path(obj_path, None).display(),
                     e
                 ),
             );

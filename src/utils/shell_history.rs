@@ -4,10 +4,10 @@ use crate::utils::globals::SHELL_HISTORY;
 pub fn add_to_history(input: &str) {
     if let Ok(mut history) = SHELL_HISTORY.lock() {
         // if the current input is same as the last one, do not add it again
-        if let Some(last) = history.last() {
-            if last == input {
-                return;
-            }
+        if let Some(last) = history.last()
+            && last == input
+        {
+            return;
         }
         history.push(input.to_string());
     }

@@ -104,23 +104,23 @@ impl MenuInput {
     }
 
     fn handle_input(&mut self, rl: &mut RaylibHandle, config: &MenuConfig) -> Option<MenuOption> {
-        if self.last_change.elapsed() > config.input_delay {
-            if let Some(key) = rl.get_key_pressed() {
-                match key {
-                    KeyboardKey::KEY_UP => {
-                        self.selected = (self.selected + MenuOption::opts().len() - 1)
-                            % MenuOption::opts().len();
-                        self.last_change = Instant::now();
-                    }
-                    KeyboardKey::KEY_DOWN => {
-                        self.selected = (self.selected + 1) % MenuOption::opts().len();
-                        self.last_change = Instant::now();
-                    }
-                    KeyboardKey::KEY_ENTER => {
-                        return Some(MenuOption::opts()[self.selected]);
-                    }
-                    _ => {}
+        if self.last_change.elapsed() > config.input_delay
+            && let Some(key) = rl.get_key_pressed()
+        {
+            match key {
+                KeyboardKey::KEY_UP => {
+                    self.selected =
+                        (self.selected + MenuOption::opts().len() - 1) % MenuOption::opts().len();
+                    self.last_change = Instant::now();
                 }
+                KeyboardKey::KEY_DOWN => {
+                    self.selected = (self.selected + 1) % MenuOption::opts().len();
+                    self.last_change = Instant::now();
+                }
+                KeyboardKey::KEY_ENTER => {
+                    return Some(MenuOption::opts()[self.selected]);
+                }
+                _ => {}
             }
         }
         None

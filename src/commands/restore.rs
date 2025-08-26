@@ -2,7 +2,7 @@ use super::argparser::ArgParser;
 use crate::rns::restore_comp::{backup_sekai, can_restore, can_save, restore_sekai};
 use crate::utils::log;
 use crate::utils::prompt::UserPrompter;
-use std::path::PathBuf;
+use std::path::Path;
 
 pub const HELP_TEXT: &str = r#"
 Usage: restore
@@ -11,7 +11,7 @@ Usage: restore
 - restore -f | --force        : This means all your progress is gone, and you will have to start over from scratch.
 "#;
 
-pub fn restore(args: &[&str], root_path: &PathBuf, prompter: &mut dyn UserPrompter) -> String {
+pub fn restore(args: &[&str], root_path: &Path, prompter: &mut dyn UserPrompter) -> String {
     let mut parser = ArgParser::new(&["-f", "--force"]);
     let args_string: Vec<String> = args.iter().map(|s| s.to_string()).collect();
 
@@ -61,7 +61,7 @@ pub fn restore(args: &[&str], root_path: &PathBuf, prompter: &mut dyn UserPrompt
                 {
                     return "Restore cancelled by user.".to_string();
                 }
-                log::log_info("restore", "SAVE  PARSED");
+                log::log_info("restore", "SAVE PARSED");
                 // Restore operation
                 if can_save(root_path) {
                     // `save_me` file already exists.

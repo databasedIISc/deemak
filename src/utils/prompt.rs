@@ -4,6 +4,8 @@ pub trait UserPrompter {
     fn confirm(&mut self, message: &str) -> bool;
     /// Returns a prompt message for the user.
     fn input(&mut self, message: &str) -> String;
+    /// Prints a message to the user.
+    fn write(&mut self, message: &str) -> String;
 }
 impl UserPrompter for DummyPrompter {
     fn confirm(&mut self, _message: &str) -> bool {
@@ -13,5 +15,10 @@ impl UserPrompter for DummyPrompter {
     fn input(&mut self, _message: &str) -> String {
         // Return an empty string for dummy prompter
         String::new()
+    }
+
+    fn write(&mut self, message: &str) -> String {
+        // Print the message and return it
+        message.to_string()
     }
 }

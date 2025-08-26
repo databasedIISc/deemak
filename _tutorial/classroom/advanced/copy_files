@@ -1,0 +1,23 @@
+  ____                    ____           _       
+ / ___|___  _ __  _   _  |  _ \ __ _ ___| |_ ___ 
+| |   / _ \| '_ \| | | | | |_) / _` / __| __/ _ \
+| |__| (_) | |_) | |_| | |  __/ (_| \__ \ ||  __/
+ \____\___/| .__/ \__, | |_|   \__,_|___/\__\___|
+           |_|    |___/                          
+
+Deemak provides a feature of Copy-Pasting and moving around files too. One command for all purposes, that is `copy`.
+
+- You can copy a file, move it(means cut and paste). 
+- You can also do the same for directories. 
+- You can overwrite one with yours using `force` parameter.
+
+Very convenient to use. Just see `help copy` for the options to use.
+
+Go to `playground` and try the below operations - 
+1) Copy `copy_me` file to `i_am_copied` by using `copy copy_me i_am_copied`
+2) Move(or cut) `copy_me` to `i_am_moved` file outside playground with `-x` flag.
+3) Try moving the `playground` directory outside classroom to the ROOT.
+
+Great! Now you know how to copy and move around files.
+
+PS. This command comes in handy only when you are creating your own SEKAI.
