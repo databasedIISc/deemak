@@ -78,12 +78,11 @@ fn get_text_files_contents(path: &Path) -> HashMap<PathBuf, String> {
             let mut file = fs::File::open(entry_path).unwrap();
             let mut buffer = Vec::new();
             // Try to read to end, and then check if it's valid utf8
-            if file.read_to_end(&mut buffer).is_ok() {
-                if let Ok(content) = String::from_utf8(buffer) {
+            if file.read_to_end(&mut buffer).is_ok()
+                && let Ok(content) = String::from_utf8(buffer) {
                     let relative_path = entry_path.strip_prefix(path).unwrap().to_path_buf();
                     contents.insert(relative_path, content.trim().to_string());
                 }
-            }
         }
     }
     contents

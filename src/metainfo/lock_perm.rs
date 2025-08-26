@@ -61,8 +61,8 @@ pub fn operation_locked_perm(
     // Check all parents up to root
     let mut current = obj_path;
     while let Some(parent) = current.parent() {
-        if let Ok((_, locked)) = read_lock_perm(current) {
-            if locked {
+        if let Ok((_, locked)) = read_lock_perm(current)
+            && locked {
                 let rel_path = relative_deemak_path(current, None);
                 log::log_warning(
                     operation,
@@ -75,7 +75,6 @@ pub fn operation_locked_perm(
                     message
                 ));
             }
-        }
         current = parent;
     }
 

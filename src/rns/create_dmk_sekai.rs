@@ -102,11 +102,10 @@ pub fn original_from_encrypted_sekai(
     })();
 
     // Clean up temp file in all cases
-    if temp_zlib.exists() {
-        if let Err(e) = std::fs::remove_file(&temp_zlib) {
+    if temp_zlib.exists()
+        && let Err(e) = std::fs::remove_file(&temp_zlib) {
             log::log_error("DEEMAK", &format!("Failed to clean up temp file: {e}"));
         }
-    }
 
     match result {
         Ok(dir) => {

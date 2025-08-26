@@ -104,8 +104,8 @@ impl MenuInput {
     }
 
     fn handle_input(&mut self, rl: &mut RaylibHandle, config: &MenuConfig) -> Option<MenuOption> {
-        if self.last_change.elapsed() > config.input_delay {
-            if let Some(key) = rl.get_key_pressed() {
+        if self.last_change.elapsed() > config.input_delay
+            && let Some(key) = rl.get_key_pressed() {
                 match key {
                     KeyboardKey::KEY_UP => {
                         self.selected = (self.selected + MenuOption::opts().len() - 1)
@@ -122,7 +122,6 @@ impl MenuInput {
                     _ => {}
                 }
             }
-        }
         None
     }
 }

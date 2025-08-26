@@ -29,12 +29,11 @@ pub fn get_all_cleanup_locations() -> Vec<String> {
         for loc_str in current_known_paths {
             let path = Path::new(&loc_str);
             // Check if it's a common root-level temporary path that might be symlinked
-            if let Ok(stripped_root) = path.strip_prefix("/") {
-                if stripped_root == Path::new("tmp") || stripped_root == Path::new("var/tmp") {
+            if let Ok(stripped_root) = path.strip_prefix("/")
+                && (stripped_root == Path::new("tmp") || stripped_root == Path::new("var/tmp")) {
                     let private_path = Path::new("/private").join(stripped_root);
                     all_locs.insert(private_path.to_string_lossy().to_string());
                 }
-            }
         }
     }
 
@@ -124,11 +123,10 @@ fn clean_cwd() -> Result<(), String> {
             .map(|s| s.to_string_lossy())
             .unwrap_or_default();
 
-        if file_name_str.ends_with(".tmp.zlib") && path_to_remove.is_file() {
-            if let Err(e) = fs::remove_file(&path_to_remove) {
+        if file_name_str.ends_with(".tmp.zlib") && path_to_remove.is_file()
+            && let Err(e) = fs::remove_file(&path_to_remove) {
                 log_cleanup_warning("remove file", &file_name_str, &e);
             }
-        }
     }
     Ok(())
 }

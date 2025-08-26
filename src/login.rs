@@ -80,13 +80,11 @@ impl LoginAnimation {
             }
         }
 
-        if self.animation_done && !self.show_input {
-            if let Some(start) = self.pause_start {
-                if start.elapsed() >= Duration::from_secs(0) {
+        if self.animation_done && !self.show_input
+            && let Some(start) = self.pause_start
+                && start.elapsed() >= Duration::from_secs(0) {
                     self.show_input = true;
                 }
-            }
-        }
 
         if self.stream_index < full_text.len() && self.last_stream_time.elapsed() >= stream_delay {
             self.stream_index += 1;

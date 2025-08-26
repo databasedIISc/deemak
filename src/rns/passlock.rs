@@ -202,11 +202,10 @@ pub fn decrypt_file(
         .map_err(|_| "Password metadata is not valid UTF-8".to_string())?;
 
     // We don't actually need user password, but if something is given, we check it.
-    if let Some(input_pass) = input_pass {
-        if input_pass != password {
+    if let Some(input_pass) = input_pass
+        && input_pass != password {
             return Err("Provided password does not match the file's password".to_string());
         }
-    }
 
     let key = derive_key_from_password(&password);
     let cipher = Aes256Gcm::new(&key);

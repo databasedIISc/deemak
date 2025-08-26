@@ -186,8 +186,8 @@ fn process_directory_recursive(dir: &Path, is_home: bool) -> bool {
         all_valid = false;
     }
     // Process subdirectories if current directory is valid
-    if all_valid {
-        if let Ok(entries) = std::fs::read_dir(dir) {
+    if all_valid
+        && let Ok(entries) = std::fs::read_dir(dir) {
             for entry in entries.filter_map(|e| e.ok()) {
                 let path = entry.path();
                 if path.is_dir() {
@@ -195,7 +195,6 @@ fn process_directory_recursive(dir: &Path, is_home: bool) -> bool {
                 }
             }
         }
-    }
 
     all_valid
 }
