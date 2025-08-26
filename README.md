@@ -113,7 +113,7 @@ If you are a developer(in Dev Mode), too avoid pain going to the temporary locat
 
 ## 📝 TODO's
 
-- [ ] Debug input folder/demak format file for developers, with appropriate location of run.
+- [ ] Debug input folder/deemak format file for developers, with appropriate location of run.
 - [ ] Fix unlocking feature.
 - [ ] Release a stable version.
 - [ ] Create User Info and data for saving game progress.
