@@ -177,7 +177,12 @@ impl DeemakSekaiMgr {
                 // If no password is set, generate a new one
                 log::log_warning("Xattr Set", "No password found, generating a random one.");
                 let new_pass = format!("sekai_{}", rand::random::<u64>());
-                let _ = self.set_password(false);
+                self.password = Some(new_pass.clone());
+                let _ = xattr::set(
+                    &self.abs_path,
+                    "pass.deemak",
+                    new_pass.as_bytes(),
+                );
                 new_pass
             }
         }
