@@ -111,17 +111,19 @@ impl Info {
 
         // If the path is a directory, read its files/dir and add to objects
         if path.is_dir()
-            && let Ok(entries) = std::fs::read_dir(path) {
-                for entry in entries.filter_map(|e| e.ok()) {
-                    if let Some(name) = entry.file_name().to_str()
-                        && name != ".dir_info" {
-                            objects.insert(
-                                name.to_string(),
-                                ObjectInfo::with_locked(DEFAULT_PERMISSIONS.to_string()),
-                            );
-                        }
+            && let Ok(entries) = std::fs::read_dir(path)
+        {
+            for entry in entries.filter_map(|e| e.ok()) {
+                if let Some(name) = entry.file_name().to_str()
+                    && name != ".dir_info"
+                {
+                    objects.insert(
+                        name.to_string(),
+                        ObjectInfo::with_locked(DEFAULT_PERMISSIONS.to_string()),
+                    );
                 }
             }
+        }
         objects
     }
 
@@ -170,22 +172,22 @@ pub fn read_validate_info(info_path: &Path) -> Result<Info, InfoError> {
             if let (Some(is_level), Some(is_locked)) = (
                 s.chars().next().map(|c| c == '1'),
                 s.chars().nth(1).map(|c| c == '1'),
-            )
-                && is_locked {
-                    // enure it has a "compare me property
-                    if !obj_info.properties.contains_key("compare_me") {
-                        return Err(InfoError::ValidationError(format!(
-                            "Locked objects must have a 'compare_me' property. Object Info: {:?}",
-                            obj_info.properties
-                        )));
-                    }
-                    if !obj_info.properties.contains_key("obj_salt") {
-                        return Err(InfoError::ValidationError(format!(
-                            "Locked objects must have an 'obj_salt' property. Object Info: {:?}",
-                            obj_info.properties
-                        )));
-                    }
+            ) && is_locked
+            {
+                // enure it has a "compare me property
+                if !obj_info.properties.contains_key("compare_me") {
+                    return Err(InfoError::ValidationError(format!(
+                        "Locked objects must have a 'compare_me' property. Object Info: {:?}",
+                        obj_info.properties
+                    )));
                 }
+                if !obj_info.properties.contains_key("obj_salt") {
+                    return Err(InfoError::ValidationError(format!(
+                        "Locked objects must have an 'obj_salt' property. Object Info: {:?}",
+                        obj_info.properties
+                    )));
+                }
+            }
         }
 
         // Trim any string values in properties

@@ -62,19 +62,20 @@ pub fn operation_locked_perm(
     let mut current = obj_path;
     while let Some(parent) = current.parent() {
         if let Ok((_, locked)) = read_lock_perm(current)
-            && locked {
-                let rel_path = relative_deemak_path(current, None);
-                log::log_warning(
-                    operation,
-                    &format!("Locked path: {} - {}", rel_path.display(), message),
-                );
-                return Err(format!(
-                    "{}: {} is locked. {}",
-                    operation,
-                    rel_path.display(),
-                    message
-                ));
-            }
+            && locked
+        {
+            let rel_path = relative_deemak_path(current, None);
+            log::log_warning(
+                operation,
+                &format!("Locked path: {} - {}", rel_path.display(), message),
+            );
+            return Err(format!(
+                "{}: {} is locked. {}",
+                operation,
+                rel_path.display(),
+                message
+            ));
+        }
         current = parent;
     }
 

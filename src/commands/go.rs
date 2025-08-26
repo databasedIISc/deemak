@@ -112,9 +112,10 @@ pub fn navigate(destination: &str, current_dir: &PathBuf, root_dir: &Path) -> (P
             &canonical_path,
             "go",
             "Cannot enter locked directory. Unlock it first",
-        ) {
-            return (current_dir.clone(), e);
-        }
+        )
+    {
+        return (current_dir.clone(), e);
+    }
 
     // Get directory info if available
     let info_path = canonical_path.join(".dir_info/info.json");
