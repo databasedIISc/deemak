@@ -1,3 +1,4 @@
+use crate::epr_log_error;
 use crate::gui_shell::ShellScreen;
 use crate::menu::{self, menu_options::MenuOption};
 use crate::metainfo::valid_sekai::validate_or_create_sekai;
@@ -12,26 +13,12 @@ pub fn sekai_initialize(sekai_path: &Path) {
         "SEKAI",
         format!("Starting Sekai validation for: {}", sekai_path.display()).as_str(),
     );
-    // First Validate Home
-    if !validate_or_create_sekai(sekai_path, true) {
-        log::log_error(
-            "SEKAI",
-            &format!(
-                "Sekai directory HOME is not valid. Creating default `.dir_info` for HOME at {sekai_path:?}"
-            ),
-        );
-    }
     // Just check first for HOME directory validity and create if not.
     // If not valid, create .dir_info for each of them.
     if !validate_or_create_sekai(sekai_path, false) {
-        log::log_error(
+        epr_log_error!(
             "SEKAI",
-            &format!(
-                "Sekai directory is not valid even after creating default `.dir_info`. Sekai: {sekai_path:?}"
-            ),
-        );
-        eprintln!(
-            "Error: Sekai directory is not valid even after creating default `.dir_info`. Please check the sekai validity. Sekai: {sekai_path:?}"
+            "Sekai directory is not valid even after creating default `.dir_info`. Sekai: {sekai_path:?}"
         );
         return;
     } else {

@@ -6,9 +6,10 @@
       "locked": "00"
     },
     "main_building": {
-      "obj_salt": "abcdef1234567890",
+      "obj_salt": "dGVzdC1zYWx0LTEyMw==",
       "locked": "01",
-      "compare_me": "abcdef1234567890"
+      "compare_me": "rhcenhruhce845c64684wah",
+      "decrypt_me": "default_flag"
     },
     "README": {
       "locked": "00"
@@ -17,10 +18,11 @@
       "locked": "00"
     },
     "opb": {
-      "decrypt_me": "blah",
-      "obj_salt": "1234567890abcdef",
+      "decrypt_me": "default_flag",
+      "obj_salt": "blwwnewne0pwah",
       "locked": "11",
-      "compare_me": "1234567890abcdef"
+      "compare_me": "dGVzdC1zYWx0LTEyMw=="
     }
   }
 }
+

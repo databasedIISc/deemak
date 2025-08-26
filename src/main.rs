@@ -5,7 +5,7 @@ use crate::rns::create_dmk_sekai::{self, original_from_encrypted_sekai};
 use crate::utils::file_mgr::DeemakSekaiMgr;
 use crate::utils::{cleanup::exit_deemak, debug_mode, log};
 use clap::{Parser, Subcommand};
-use deemak::utils::file_mgr::SekaiOperation;
+use deemak::utils::file_mgr::{SekaiOperation, input_file_password};
 use deemak::*;
 use raylib::ffi::{SetConfigFlags, SetTargetFPS};
 use raylib::prelude::get_monitor_width;
@@ -75,7 +75,6 @@ enum DeemakDev {
         password: Option<String>,
     },
 }
-
 fn main() {
     println!("{DEEMAK_BANNER}");
     log::log_info("Application", "Starting DEEMAK Shell");
@@ -88,6 +87,10 @@ fn main() {
             "Sekai path provided does not exist: {}. Please provide a valid Sekai file or directory.",
             args.sekai_directory.clone().display()
         );
+    }
+    // Set DEV MODE true if Dev commands are present
+    if let Some(DeemakCommands::Dev { .. }) = args.command {
+        DEV_MODE.set(true).unwrap_or_default();
     }
 
     // This object will manage the whole Sekai operations for us.
@@ -108,18 +111,28 @@ fn main() {
     let sekai_path = sekai_obj.abs_path.clone();
     log::log_info("SEKAI", &format!("Sekai path provided: {sekai_path:?}"));
 
-    let possible_sekai_opers = sekai_obj.oper_allowed();
+    let (possible_sekai_opers, criteria) = sekai_obj.oper_allowed();
     if SekaiOperation::Invalid.is_present(possible_sekai_opers.clone()) {
         fatal_error!(
             "SEKAI",
-            "Invalid Sekai operation detected. Sekai Criterion Unmet. Please check the Sekai file or directory."
+            "Invalid Sekai operation detected. Sekai Criterion Unmet: {criteria}. Please check the Sekai file or directory."
         );
     }
 
     if let Some(_cmd) = args.command {
         match _cmd {
             DeemakCommands::Dev { subcommand } => {
-                DEV_MODE.set(true).expect("DEV_MODE already set");
+                // Match the password of deemak file first
+                if !sekai_obj.is_directory {
+                    println!("Please confirm the password of deemak file before proceeding ahead.");
+                    let _pass_check_user = input_file_password(false);
+                    if sekai_obj.get_password() != _pass_check_user {
+                        fatal_error!(
+                            "SEKAI",
+                            "Oops! Password didn't match with the deemak sekai file."
+                        )
+                    }
+                }
                 match subcommand {
                     DeemakDev::Create {
                         password,
@@ -128,7 +141,7 @@ fn main() {
                     } => {
                         // Make sure Create Criteria is met, as mentioned in file_mgr
                         if !SekaiOperation::Create.is_present(possible_sekai_opers) {
-                            SekaiOperation::Create.log_err();
+                            SekaiOperation::Create.log_err(Some(criteria));
                             exit_deemak(1);
                         }
 
@@ -185,7 +198,7 @@ fn main() {
                     }
                     DeemakDev::Restore { output, password } => {
                         if !SekaiOperation::Restore.is_present(possible_sekai_opers) {
-                            SekaiOperation::Restore.log_err();
+                            SekaiOperation::Restore.log_err(Some(criteria));
                             exit_deemak(1);
                         }
                         log::log_info("SEKAI", "Restoring Sekai from Deemak Encrypted file");
@@ -195,14 +208,12 @@ fn main() {
                                 .join("restored_deemak_sekai")
                         });
                         let mut output_obj = DeemakSekaiMgr::new(output_path, None);
-                        // Get input password securely
-                        output_obj.set_password(true).unwrap_or_else(|e| {
-                            fatal_error!(
-                                "SEKAI",
-                                "Failed to set password for output Sekai: {}",
-                                e.to_string()
-                            );
-                        });
+                        pr_info!(
+                            "SEKAI",
+                            "Password already checked previously. Restoring in process..."
+                        );
+                        output_obj.password = sekai_obj.password;
+
                         match create_dmk_sekai::original_from_encrypted_sekai(
                             &sekai_obj.abs_path,
                             &output_obj.abs_path,
@@ -226,7 +237,7 @@ fn main() {
                     DeemakDev::Play => {
                         // Make sure Play Criteria is met, as mentioned in file_mgr
                         if !SekaiOperation::Play.is_present(possible_sekai_opers) {
-                            SekaiOperation::Play.log_err();
+                            SekaiOperation::Play.log_err(Some(criteria));
                             exit_deemak(1);
                         }
                         /*

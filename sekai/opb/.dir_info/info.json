@@ -5,16 +5,16 @@
     "wifiroom": {
       "locked": "00"
     },
-    "labs": {
-      "locked": "00"
-    },
-    ".lost_notebook": {
+    "ugcl": {
       "locked": "00"
     },
     "senpai": {
       "locked": "00"
     },
-    "ugcl": {
+    "labs": {
+      "locked": "00"
+    },
+    ".lost_notebook": {
       "locked": "00"
     }
   }

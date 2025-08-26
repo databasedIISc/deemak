@@ -1,9 +1,0 @@
-{
-  "location": "HOME/room_1",
-  "about": "You are in 'HOME/room_1'. Look around and explore!",
-  "objects": {
-    "cat.txt": {
-      "locked": "00"
-    }
-  }
-}

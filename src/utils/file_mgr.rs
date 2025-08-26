@@ -36,12 +36,13 @@ impl SekaiOperation {
         }
     }
 
-    pub fn log_err(&self) {
+    pub fn log_err(&self, msg: Option<String>) {
         let oper_str = self.oper_to_string();
         epr_log_error!(
             "SEKAI",
-            "{} operation is not allowed. Criterion Failed.",
-            oper_str
+            "{} operation is not allowed. Criterion Failed. Allowed Operation(s): {}",
+            oper_str,
+            msg.unwrap_or_default()
         );
     }
 }
@@ -104,33 +105,38 @@ impl DeemakSekaiMgr {
     }
 
     /// Manage if the sekai_path is a file or a directory.
-    /// 1. If it's a directory, you can create a new sekai or play the sekai only in dev mode.
-    /// 2. If it's a file, then user can play the sekai or Restore command is allowed.
-    pub fn oper_allowed(&mut self) -> Vec<SekaiOperation> {
+    pub fn oper_allowed(&mut self) -> (Vec<SekaiOperation>, String) {
         let dev_mode = *DEV_MODE.get().unwrap_or(&false);
+        println!("{dev_mode:?}");
         let mut allowed_opers: Vec<SekaiOperation> = Vec::new();
+        let mut crit_msg = String::new();
         if self.valid_sekai {
             if self.is_directory {
-                // Point number 1
+                // 1. If it's a directory, you can create a new sekai or play the sekai(only in dev mode).
                 allowed_opers.push(SekaiOperation::Create);
+                crit_msg += "Creation ";
                 if dev_mode {
+                    crit_msg += "Play for Developer ";
                     allowed_opers.push(SekaiOperation::Play);
                 }
             } else {
-                // Point number 2
+                // 2. If it's a file, then user can play the sekai or Restore command is allowed
+                crit_msg += "Restore ";
                 allowed_opers.push(SekaiOperation::Restore);
                 if !dev_mode {
                     self.temp_location = generate_temp_path("sekai_wd");
+                    crit_msg += "Play for User ";
                     allowed_opers.push(SekaiOperation::Play);
                 }
             }
         } else {
             allowed_opers.push(SekaiOperation::Invalid);
+            crit_msg += "Sekai Directory Not Valid."
         }
         if SekaiOperation::Invalid.is_present(allowed_opers.clone()) {
             allowed_opers = vec![SekaiOperation::Invalid];
         }
-        allowed_opers
+        (allowed_opers, crit_msg)
     }
 
     /// Set Xattr password to the file

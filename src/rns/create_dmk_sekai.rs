@@ -65,19 +65,6 @@ pub fn original_from_encrypted_sekai(
     output_path: &Path,
     password: Option<&str>,
 ) -> Result<PathBuf, String> {
-    // Validate input path
-    if !encrypted_path.exists() {
-        return Err("Specified path does not exist".to_string());
-    }
-    if !encrypted_path.is_file() {
-        return Err("Path must be a Deemak encrypted file".to_string());
-    }
-
-    // Check file magic header
-    if !check_dmk_magic(encrypted_path)? {
-        return Err("Invalid Deemak file format".to_string());
-    }
-
     // Prepare paths
     let output_dir = if output_path.is_dir() {
         output_path.join(
