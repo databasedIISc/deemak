@@ -18,7 +18,7 @@ tar = "0.4.44"
 once_cell = "1.18"
 dotenvy = "0.15"       # For environment variables
 rocket = { version = "0.5.1", features = ["json","tls"]} # For  backend server
-jsonwebtoken = "9"     # For JWT
+jsonwebtoken = "10"     # For JWT
 rand = "0.9.1"           # Salt generation
 rocket_cors = "0.6"    # for frontend requests
 ring = "0.17"
